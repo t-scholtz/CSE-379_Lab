@@ -7,7 +7,11 @@ U0FR: 	.equ 0x18	; UART0 Flag Register
 lab3:
 	PUSH {r4-r12,lr}
 
+		; Your test code starts here.
+		; For example, the following two lines read a character from the
+		; user and then print it to PuTTy.
 
+		BL Uart_init
 INFLOOP:
 		BL read_character
 		BL output_character
@@ -21,6 +25,73 @@ INFLOOP:
 	POP {r4-r12,lr}
 	mov pc, lr
 
+Uart_init:	;sub routine handles setting up connection to Uart
+	PUSH {r4-r12,lr}
+
+	MOV r4, #0xE618
+	MOVT r4,#0x400F
+	MOV r5, #1
+	STR r5,[r4]		;Provide clock to UART0
+
+	MOV r4, #0xE608
+	MOVT r4,#0x400F
+	MOV r5, #1
+	STR r5,[r4]		;Enable clock to PortA
+
+	MOV r4, #0xC030
+	MOVT r4,#0x4000
+	MOV r5, #0
+	STR r5, [r4]		; Disable UART0 Control
+
+	MOV r4, #0xC024
+	MOVT r4,#0x4000
+	MOV r5, #8
+	STR r5,[r4]		; Set UART0_IBRD_R for 115,200 baud
+
+	MOV r4, #0xC028
+	MOVT r4,#0x4000
+	MOV r5, #44
+	STR  r5,[r4]		; Set UART0_FBRD_R for 115,200 baud
+
+	MOV r4, #0xCFC8
+	MOVT r4,#0x4000
+	MOV r5, #0
+	STR r5,[r4]		; * Use System Clock
+
+	MOV r4, #0xC02C
+	MOVT r4,#0x4000
+	MOV r5, #0x60
+	STR r5,[r4]		;Use 8-bit word length, 1 stop bit, no parity
+
+	MOV r4, #0xC030
+	MOVT r4,#0x4000
+	MOV r5,#0x301
+	STR  r5,[r4]		;Enable UART0 Control
+
+	;OR operational setup
+	MOV r4,#0x451C
+	MOVT r4, #0x4000	;Load Memory address
+
+	LDR r5, [r4] ;make P0 and PA1 as a Digital Ports
+	ORR r5, r5, #0x03
+	STR r5, [r4]
+
+	MOV r4,#0x4420
+	MOVT r4, #0x4000
+
+	LDR r5, [r4] ;change P0, PA1 to use alternate function
+	ORR r5, r5, #0x03
+	STR r5, [r4]
+
+	MOV r4,#0x452C
+	MOVT r4, #0x4000
+
+	LDR r5, [r4] ;configure P0, PA1 for UART
+	ORR r5, r5, #0x11
+	STR r5, [r4]
+
+	POP {r4-r12,lr}
+	mov pc, lr
 
 output_character: 	; Your code to output a character to be displayed in PuTTy
 					; is placed here.  The character to be displayed is passed

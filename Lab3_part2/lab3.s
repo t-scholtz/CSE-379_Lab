@@ -6,7 +6,7 @@
 	.global quotient
 	.global remainder
 
-prompt:		.string "Your prompts are placed here", 0
+prompt:		.string "Enter 2 integers", 0
 dividend: 	.string "Place holder string for your dividend", 0
 divisor:  	.string "Place holder string for your divisor", 0
 quotient:	.string "Your quotient is stored here", 0
@@ -24,6 +24,9 @@ ptr_to_divisor:		.word divisor
 ptr_to_quotient:		.word quotient
 ptr_to_remainder:		.word remainder
 
+
+;LAB 3 - function call
+;*****************************************************************************
 lab3:
 		PUSH {r4-r12,lr}
 
@@ -41,8 +44,10 @@ lab3_end:
 
 	POP {r4-r12,lr}
 	mov pc, lr
+;*****************************************************************************
 
-
+;UART INIT - initializes the user UART
+;*****************************************************************************
 uart_init:
 	PUSH {r4-r12,lr}
 
@@ -110,8 +115,10 @@ uart_init:
 
 	POP {r4-r12,lr}
 	mov pc, lr
+;*****************************************************************************
 
-
+;READ CHARACTER - reads a character which is received by the UART and outputs it to ro
+;*****************************************************************************
 read_character:  			;The character is received in r0.
 	PUSH {r4-r12,lr}
 
@@ -127,8 +134,11 @@ FINISHRC:
 
 	POP {r4-r12,lr}
 	mov pc, lr
+;*****************************************************************************
 
 
+;READ STRING - reads a string entered in PuTTy and stores it as a NULL-terminated ASCII string in memory, base address passed in ro
+;*****************************************************************************
 read_string:
 	PUSH {r4-r12,lr} 	; Store any registers in the range of r4 through r12
 							; that are used in your routine.  Include lr if this
@@ -139,9 +149,11 @@ read_string:
 	POP {r4-r12,lr}   ; Restore registers all registers preserved in the
 							; PUSH at the top of this routine from the stack.
 	mov pc, lr
+;*****************************************************************************
 
-
-output_character: 		; The character to be displayed is passed into the routine in r0.
+;OUTPUT CHARACTER - The character to be displayed is passed into the routine in r0.
+;*****************************************************************************
+output_character:
 	PUSH {r4-r12,lr}
 	MOV r4,#0xC000
 	MOVT r4, #0x4000	;Load Memory address into r4
@@ -156,8 +168,10 @@ WAITFORCHAR:			;loop to keep waiting for flag to be flipped
 
 	POP {r4-r12,lr}
 	mov pc, lr
+;*****************************************************************************
 
-
+;OUTPUT STRING - transmits a NULL-terminated ASCII string, for display in PuTT, pass in mem address to r0
+;*****************************************************************************
 output_string:
 	PUSH {r4-r12,lr} 	; Store any registers in the range of r4 through r12
 							; that are used in your routine.  Include lr if this
@@ -168,8 +182,11 @@ output_string:
 	POP {r4-r12,lr}   ; Restore registers all registers preserved in the
 							; PUSH at the top of this routine from the stack.
 	mov pc, lr
+;*****************************************************************************
 
 
+;INT 2 STRING - stores the integer passed into the routine in r1 as a NULL terminated ASCII string in memory at the address passed into the routine in r0.
+;*****************************************************************************
 int2string:
 	PUSH {r4-r12,lr} 	; Store any registers in the range of r4 through r12
 							; that are used in your routine.  Include lr if this
@@ -180,8 +197,11 @@ int2string:
 	POP {r4-r12,lr}   ; Restore registers all registers preserved in the
 							; PUSH at the top of this routine from the stack.
 	mov pc, lr
+;*****************************************************************************
 
 
+;STRING 2 INT - converts the NULL terminated ASCII string pointed to by the address passed into the routine in r0 to an integer. The integer should be returned in r0
+;*****************************************************************************
 string2int:
 	PUSH {r4-r12,lr} 	; Store any registers in the range of r4 through r12
 							; that are used in your routine.  Include lr if this
@@ -192,17 +212,64 @@ string2int:
 	POP {r4-r12,lr}   ; Restore registers all registers preserved in the
 							; PUSH at the top of this routine from the stack.
 	mov pc, lr
+;*****************************************************************************
 
 
+:DIV AND MOD - Accepts a dividend in r0 and a divsor in r1and an integer returns the quotient in r0 and the remainder in r1.
+;*****************************************************************************
 div_and_mod:
-PUSH {r4-r12,lr} 	; Store any registers in the range of r4 through r12
-							; that are used in your routine.  Include lr if this
-							; routine calls another routine.
+	PUSH {r4-r12,lr} 	; Store any registers in the range of r4 through r12
+	CMP r0, #0
+	BEQ zero		;check if we're diving by 0 and if so special case - return 0 and 0
+	MOV r3, r0		;check if r0 is negative, if so inverts it
+	CMP r3, #0
+	BGT pos1
+	BL invert
+	MOV r4,r2		;Move flag to r4
+	MOV r0,r3		;move inverted value back to r0
+pos1:
+	MOV r3, r1		; check if r0 is negative, if so inverts
+	CMP r3, #0
+	BGT pos2
+	BL invert
+	MOV r5,r2		;move flag to r5
+	MOV r1,r3		;move inverted value back to r1
+pos2:
+	MOV r2,#0		;Clear r2
 
-		; Your code for your div_and_mod routine is placed here
+div:				;Division Time! LETS GO!!!!!!!
+	CMP r1,r0		;Keeps subractinb while dividor number is bigger than divosor or somthing
+	BGT div_done
+	ADD r2,r2,#1
+	SUB r0,r0,r1
+	B div
 
-	POP {r4-r12,lr}   ; Restore registers all registers preserved in the
-							; PUSH at the top of this routine from the stack.
-	mov pc, lr
+div_done:
+	cmp r4,r5		;Check if one value was neg and if we need to invert answer accoringly
+	BEQ skip
+	MOV r3, r1
+	BL invert
+	MOV r1,r3
+skip:
+	MOV r3, r0		;Move values around to put returned values where they are expected to go
+	MOV r0, r1
+	MOV r1, r3
+	POP {r4-r12,lr}
+	MOV pc, lr		;Exit the divider program
+zero:				; Divde by zero edge case
+	MOV r0, #0
+	MOV r1, #0
+	POP {r4-r12,lr}
+	MOV pc, lr
+invert:				;Pass a value in r3 and returns the complement of that value + returns a flag in marker in r4
+	PUSH {r4-r12,lr}
+	MOV r2,#1
+	MOV r4, #0xFFFF
+	MOVT r4,# 0xFFFF
+	EOR	r3, r3, r4
+	ADD  r3, r3, #1
+	POP {r4-r12,lr}
+	MOV pc, lrr your div_and_mod routine is placed here
+;*****************************************************************************
 
 	.end

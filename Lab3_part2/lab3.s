@@ -174,13 +174,17 @@ WAITFORCHAR:			;loop to keep waiting for flag to be flipped
 ;*****************************************************************************
 output_string:
 	PUSH {r4-r12,lr} 	; Store any registers in the range of r4 through r12
-							; that are used in your routine.  Include lr if this
-							; routine calls another routine.
-
-		; Your code for your output_string routine is placed here
-
+	MOV r4,r0
+	MOV r5, #0
+outputLoop:
+	LDRB r0, [r5, r4]
+	CMP r0, #0x00
+	BEQ exitOutLoop
+	BL output_character
+	ADD r4, #8
+	B outputLoop
+exitOutLoop:
 	POP {r4-r12,lr}   ; Restore registers all registers preserved in the
-							; PUSH at the top of this routine from the stack.
 	mov pc, lr
 ;*****************************************************************************
 
@@ -204,10 +208,11 @@ int2string:
 ;*****************************************************************************
 string2int:
 	PUSH {r4-r12,lr} 	; Store any registers in the range of r4 through r12
-							; that are used in your routine.  Include lr if this
-							; routine calls another routine.
+	MOV r4, #0			;Cursor
 
-		; Your code for your string2int routine is placed here
+	LDRB r5, [r0, r4]
+	SUB r5, #0x30
+	ADD r4, #8
 
 	POP {r4-r12,lr}   ; Restore registers all registers preserved in the
 							; PUSH at the top of this routine from the stack.

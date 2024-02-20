@@ -181,7 +181,7 @@ inputLoop:
 	BL read_character	;output a character ;r0 is now the character
 	STRB r0, [r4]
 	ADD r4, #1	;incrementing 1 byte
-	CMP r0, #0x00
+	CMP r0, #13
 	BNE inputLoop
 exitInLoop:
 
@@ -218,7 +218,7 @@ outputLoop:
 	CMP r0, #0x00
 	BEQ exitOutLoop
 	BL output_character
-	ADD r4,r4 ,#1
+	ADD r4,r4 ,#1		;1 = byte not bits
 	B outputLoop
 exitOutLoop:
 	POP {r4-r12,lr}   ; Restore registers all registers preserved in the

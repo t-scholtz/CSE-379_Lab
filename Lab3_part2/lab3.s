@@ -143,6 +143,18 @@ read_string:
 	PUSH {r4-r12,lr} 	; Store any registers in the range of r4 through r12
 							; that are used in your routine.  Include lr if this
 							; routine calls another routine.
+	MOV r4, r0 ;Address of passed through string
+	MOV r5, #0 ;reset;IS this meant to represent
+
+outputLoop:
+
+	BL read_character	;output a character ;r0 is now the character
+	SDRB r0, [r4]
+	ADD r4, #8	;incrementing 1 byte
+	CMP r0, #0x00
+	BNE outputLoop
+
+exitOutLoop:
 
 		; Your code for your read_string routine is placed here
 
@@ -195,6 +207,30 @@ int2string:
 	PUSH {r4-r12,lr} 	; Store any registers in the range of r4 through r12
 							; that are used in your routine.  Include lr if this
 							; routine calls another routine.
+
+	;r1 int
+	;r0 string address
+	MOV r4, r1	;Storing the original integer
+	MOV r5, r0	;Storing the Strings address
+	;MOVT r5, r0
+
+div_storeLOOP:
+	MOV r0, r4 ;setting divised
+	MOV r1, #10;setting divisor ;it will allow us to get the least sig decimal and change it one by one into strings
+	BL div_and_mod2
+
+	ADD r1, r1, #48;takes remainder and adjusts the value to represent the character
+	MOV r4, r0;this is the division output to continue the cycle
+	STRB r1, [r5];store the string character to string address
+	ADD r5, r5, #8;increment the address by a byte
+	CMP r0, #0
+	BGT div_storeLOOP
+
+	MOV r4, #0x00
+	STRB r4, [r5];stores a NULL at the string address to stop the end of the string
+
+	MOV	r0, r5
+	;MOVT r0, r5
 
 		; Your code for your int2string routine is placed here
 

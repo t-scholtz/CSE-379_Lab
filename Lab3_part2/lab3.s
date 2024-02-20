@@ -46,6 +46,7 @@ USRLOOP:						;Main user loop
 	BL output_string			;echo back user input
 	LDR r0, ptr_to_divisor
 	BL read_string				;Get divisor
+	LDR r0, ptr_to_divisor
 	BL output_string			;echo back user input
 
 	LDR r0, ptr_to_dividend		;Convert divend to a number
@@ -178,12 +179,13 @@ read_string:
 inputLoop:
 	BL read_character	;output a character ;r0 is now the character
 	CMP r0, #13
-	BE exitInLoop
+	BEQ exitInLoop
 	STRB r0, [r4]
 	ADD r4, #1	;incrementing 1 byte
 	B inputLoop
 exitInLoop:
-
+	MOV r0, #0
+	STRB r0, [r4]
 	POP {r4-r12,lr}
 	mov pc, lr
 ;*****************************************************************************
@@ -268,14 +270,24 @@ div_storeLOOP:
 ;*****************************************************************************
 string2int:
 	PUSH {r4-r12,lr} 	; Store any registers in the range of r4 through r12
-	MOV r4, #0			;Cursor
+	MOV r4, r0 ;Address of passed through string
+	MOV r5,#1
+	MOR r6 , #0 	;accumnator
+negFlag:
+	EOR r4 #1		;neg flag
+stringIntLoop:
+	CMP r0, #00		;Check for null terminator
+	BEQ exitInLoop
+	STRB r0, [r4]	;load char
+	CMP r0, #0x2D	;check for neg
+	BEQ negFlag
 
-	LDRB r5, [r0, r4]
-	SUB r5, #0x30
-	ADD r4, #8
-
-	POP {r4-r12,lr}   ; Restore registers all registers preserved in the
-							; PUSH at the top of this routine from the stack.
+	ADD r4, #1	;incrementing 1 byte
+	B ExitstringIntLoop
+ExitstringIntLoop:
+	MOV r0, #0
+	STRB r0, [r4]
+	POP {r4-r12,lr}
 	mov pc, lr
 ;*****************************************************************************
 

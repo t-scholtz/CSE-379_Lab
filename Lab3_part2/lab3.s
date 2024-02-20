@@ -6,7 +6,7 @@
 	.global quotient
 	.global remainder
 
-prompt:		.string "Enter 2 integers", 0
+prompt:		.string "Enter 2 integers, first dividend then divsor", 0
 dividend: 	.string "Place holder string for your dividend", 0
 divisor:  	.string "Place holder string for your divisor", 0
 quotient:	.string "Your quotient is stored here", 0
@@ -20,7 +20,7 @@ U0FR: 	.equ 0x18	; UART0 Flag Register
 
 ptr_to_prompt:			.word prompt
 ptr_to_dividend:		.word dividend
-ptr_to_divisor:		.word divisor
+ptr_to_divisor:			.word divisor
 ptr_to_quotient:		.word quotient
 ptr_to_remainder:		.word remainder
 
@@ -28,20 +28,52 @@ ptr_to_remainder:		.word remainder
 ;LAB 3 - function call
 ;*****************************************************************************
 lab3:
-		PUSH {r4-r12,lr}
+	PUSH {r4-r12,lr}
+	;LDR r4, ptr_to_prompt		;Init memory values
+	;LDR r5, ptr_to_dividend
+	;LDR r6, ptr_to_divisor
+	;LDR r7, ptr_to_quotient
+	;LDR r8, ptr_to_remainder
 
-	ldr r4, ptr_to_prompt
-	ldr r5, ptr_to_dividend
-	ldr r6, ptr_to_divisor
-	ldr r7, ptr_to_quotient
-	ldr r8, ptr_to_remainder
+	BL uart_init				;Init uart connection
 
-		; Your code is placed here.  This is your main routine for
-		; Lab #3.  This should call your other routines such as
-		; uart_init, read_string, output_string, int2string, &
-		; string2int
+USRLOOP:						;Main user loop
+	LDR r0, ptr_to_prompt
+	BL output_string			;Print prompt
+	LDR r0, ptr_to_dividend
+	BL read_string				;Get dividend
+	BL output_string			;echo back user input
+	LDR r0, ptr_to_divisor
+	BL read_string				;Get divisor
+	BL output_string			;echo back user input
+
+	LDR r0, ptr_to_dividend		;Convert divend to a number
+	BL string2int
+	MOV r5, r0					;Store divend in r5
+	LDR r0, ptr_to_divisor		;Convert divsort to a number
+	BL string2int
+	MOV r6, r0					;Store divend in r5
+
+
+	MOV r0,r5					;Div and mod
+	MOV r1,r6
+	BL div_and_mod				;quotient in r0 and the remainder in r1.
+
+	MOV r8,r1
+
+	MOV r1,r0
+	LDR r0, ptr_to_quotient
+	BL int2string
+	BL output_string
+
+	MOV r1,r8
+	LDR r0, ptr_to_remainder
+	BL int2string
+	BL output_string
+
+	B USRLOOP
+
 lab3_end:
-
 	POP {r4-r12,lr}
 	mov pc, lr
 ;*****************************************************************************
@@ -140,26 +172,20 @@ FINISHRC:
 ;READ STRING - reads a string entered in PuTTy and stores it as a NULL-terminated ASCII string in memory, base address passed in ro
 ;*****************************************************************************
 read_string:
-	PUSH {r4-r12,lr} 	; Store any registers in the range of r4 through r12
-							; that are used in your routine.  Include lr if this
-							; routine calls another routine.
+	PUSH {r4-r12,lr} 	;
 	MOV r4, r0 ;Address of passed through string
 	MOV r5, #0 ;reset;IS this meant to represent
 
-outputLoop:
+inputLoop:
 
 	BL read_character	;output a character ;r0 is now the character
-	SDRB r0, [r4]
+	STRB r0, [r4]
 	ADD r4, #8	;incrementing 1 byte
 	CMP r0, #0x00
-	BNE outputLoop
+	BNE inputLoop
+exitInLoop:
 
-exitOutLoop:
-
-		; Your code for your read_string routine is placed here
-
-	POP {r4-r12,lr}   ; Restore registers all registers preserved in the
-							; PUSH at the top of this routine from the stack.
+	POP {r4-r12,lr}
 	mov pc, lr
 ;*****************************************************************************
 
@@ -187,9 +213,8 @@ WAITFORCHAR:			;loop to keep waiting for flag to be flipped
 output_string:
 	PUSH {r4-r12,lr} 	; Store any registers in the range of r4 through r12
 	MOV r4,r0
-	MOV r5, #0
 outputLoop:
-	LDRB r0, [r5, r4]
+	LDRB r0, [r4]
 	CMP r0, #0x00
 	BEQ exitOutLoop
 	BL output_character
@@ -217,7 +242,7 @@ int2string:
 div_storeLOOP:
 	MOV r0, r4 ;setting divised
 	MOV r1, #10;setting divisor ;it will allow us to get the least sig decimal and change it one by one into strings
-	BL div_and_mod2
+	BL div_and_mod
 
 	ADD r1, r1, #48;takes remainder and adjusts the value to represent the character
 	MOV r4, r0;this is the division output to continue the cycle
@@ -256,7 +281,7 @@ string2int:
 ;*****************************************************************************
 
 
-:DIV AND MOD - Accepts a dividend in r0 and a divsor in r1and an integer returns the quotient in r0 and the remainder in r1.
+;DIV AND MOD - Accepts a dividend in r0 and a divsor in r1and an integer returns the quotient in r0 and the remainder in r1.
 ;*****************************************************************************
 div_and_mod:
 	PUSH {r4-r12,lr} 	; Store any registers in the range of r4 through r12
@@ -310,7 +335,7 @@ invert:				;Pass a value in r3 and returns the complement of that value + return
 	EOR	r3, r3, r4
 	ADD  r3, r3, #1
 	POP {r4-r12,lr}
-	MOV pc, lrr your div_and_mod routine is placed here
+	MOV pc, lr ; your div_and_mod routine is placed here
 ;*****************************************************************************
 
 	.end

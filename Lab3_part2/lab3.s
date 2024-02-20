@@ -42,6 +42,7 @@ USRLOOP:						;Main user loop
 	BL output_string			;Print prompt
 	LDR r0, ptr_to_dividend
 	BL read_string				;Get dividend
+	LDR r0, ptr_to_dividend
 	BL output_string			;echo back user input
 	LDR r0, ptr_to_divisor
 	BL read_string				;Get divisor
@@ -174,15 +175,13 @@ FINISHRC:
 read_string:
 	PUSH {r4-r12,lr} 	;
 	MOV r4, r0 ;Address of passed through string
-	MOV r5, #0 ;reset;IS this meant to represent
-
 inputLoop:
-
 	BL read_character	;output a character ;r0 is now the character
+	CMP r0, #13
+	BE exitInLoop
 	STRB r0, [r4]
 	ADD r4, #1	;incrementing 1 byte
-	CMP r0, #13
-	BNE inputLoop
+	B inputLoop
 exitInLoop:
 
 	POP {r4-r12,lr}

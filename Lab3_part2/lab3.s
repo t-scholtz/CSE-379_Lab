@@ -14,6 +14,7 @@ remainder:	.string "Your remainder is stored here", 0
 newLine:	.string "\r\n", 0
 askRunAgain:.string "Would you like to run again Yes(Y) No(N)?", 0
 start:	.string "Lab 3 - Tim and Tom!", 0
+extmsg:	.string "End of program ※\(^o^)/※", 0
 
 
 
@@ -30,6 +31,7 @@ ptr_to_remainder:		.word remainder
 ptr_to_newLine:			.word newLine
 ptr_to_runAgin:			.word askRunAgain
 ptr_to_start:			.word start
+ptr_to_extmsg:			.word extmsg
 
 
 ;LAB 3 - function call
@@ -114,6 +116,9 @@ USRLOOP:
 
 	B USRLOOP
 lab3_end:
+	LDR r0, ptr_to_extmsg
+	BL output_string
+
 	POP {r4-r12,lr}
 	mov pc, lr
 ;*****************************************************************************

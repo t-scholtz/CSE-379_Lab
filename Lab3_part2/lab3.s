@@ -11,6 +11,7 @@ dividend: 	.string "Place holder string for your dividend", 0
 divisor:  	.string "Place holder string for your divisor", 0
 quotient:	.string "Your quotient is stored here", 0
 remainder:	.string "Your remainder is stored here", 0
+newLine:	.string "\r\n", 0
 
 
 	.text
@@ -23,6 +24,7 @@ ptr_to_dividend:		.word dividend
 ptr_to_divisor:			.word divisor
 ptr_to_quotient:		.word quotient
 ptr_to_remainder:		.word remainder
+ptr_to_newLine:			.word newLine
 
 
 ;LAB 3 - function call
@@ -30,30 +32,36 @@ ptr_to_remainder:		.word remainder
 lab3:
 
 	BL uart_init				;Init uart connection
+	LDR r0, ptr_to_newLine
+	MOV r1,#13
+	STRB r1 ,[r0]				;Load new line into memory /r/n
+	ADD r0,r0,#1
+	MOV r1,#10
+	STRB r1,[r0]
+	ADD r0,r0,#1
+	MOV r1,#00
+	STRB r1,[r0]
+	LDR r0, ptr_to_newLine
+	BL output_string			;newLine
 
-USRLOOP:						;Main user loop
-	MOV r0 ,#0xA				;new Line
-	BL output_character
-
+USRLOOP:
 	LDR r0, ptr_to_prompt
 	BL output_string			;Print prompt
-	MOV r0 ,#0xA				;new Line
-	BL output_character
-	MOV r0 ,#013				;new Line
-	BL output_character
+	LDR r0, ptr_to_newLine
+	BL output_string			;newLine
 
 	LDR r0, ptr_to_dividend
 	BL read_string				;Get dividend
 	LDR r0, ptr_to_dividend
 	BL output_string			;echo back user input
-	MOV r0 ,#0xA				;new Line
-	BL output_character
+	LDR r0, ptr_to_newLine
+	BL output_string			;newLine
 	LDR r0, ptr_to_divisor
 	BL read_string				;Get divisor
 	LDR r0, ptr_to_divisor
 	BL output_string			;echo back user input
-	MOV r0 ,#0xA				;new Line
-	BL output_character
+	LDR r0, ptr_to_newLine
+	BL output_string			;newLine
 
 	LDR r0, ptr_to_dividend		;Convert divend to a number
 	BL string2int
@@ -61,7 +69,6 @@ USRLOOP:						;Main user loop
 	LDR r0, ptr_to_divisor		;Convert divsort to a number
 	BL string2int
 	MOV r6, r0					;Store divend in r5
-
 
 	MOV r0,r5					;Div and mod
 	MOV r1,r6
@@ -74,21 +81,18 @@ USRLOOP:						;Main user loop
 	BL int2string
 	LDR r0, ptr_to_quotient
 	BL output_string
-	MOV r0 ,#0xA				;new Line
-	BL output_character
-
-
+	LDR r0, ptr_to_newLine
+	BL output_string			;newLine
 
 	MOV r1,r8
 	LDR r0, ptr_to_remainder
 	BL int2string
 	LDR r0, ptr_to_remainder
 	BL output_string
-	MOV r0 ,#0xA				;new Line
-	BL output_character
+	LDR r0, ptr_to_newLine
+	BL output_string			;newLine
 
 	B USRLOOP
-
 lab3_end:
 	POP {r4-r12,lr}
 	mov pc, lr

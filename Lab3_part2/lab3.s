@@ -331,7 +331,7 @@ string2int:
 	MOV r4, r0 		;Address of passed through string
 	MOV r5,#1
 	MOV r10, #10
-	EOR r6 , #0 	;accumnator
+	MOV r6 , #0 	;accumnator
 negFlag:
 	EOR r5, #1		;neg flag
 stringIntLoop:

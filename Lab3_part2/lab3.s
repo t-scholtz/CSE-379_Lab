@@ -28,42 +28,32 @@ ptr_to_remainder:		.word remainder
 ;LAB 3 - function call
 ;*****************************************************************************
 lab3:
-	PUSH {r4-r12,lr}
-	MOV r0, #12
-	MOv r1, #10
-	BL div_and_mod
-
-	;LDR r4, ptr_to_prompt		;Init memory values
-	;LDR r5, ptr_to_dividend
-	;LDR r6, ptr_to_divisor
-	;LDR r7, ptr_to_quotient
-	;LDR r8, ptr_to_remainder
 
 	BL uart_init				;Init uart connection
 
 USRLOOP:						;Main user loop
-
-	;int2string test
-	LDR r0, ptr_to_dividend
-	MOV r1, #999
-	EOR r1, r1, #0xFFFFFFFF ;flips bits for the divided
-    ADD r1, r1, #1 ;adds 1 for twos comp
-    ;int2String test over
-
-	BL int2string
-	LDR r0, ptr_to_dividend
-	BL output_string
+	MOV r0 ,#0xA				;new Line
+	BL output_character
 
 	LDR r0, ptr_to_prompt
 	BL output_string			;Print prompt
+	MOV r0 ,#0xA				;new Line
+	BL output_character
+	MOV r0 ,#013				;new Line
+	BL output_character
+
 	LDR r0, ptr_to_dividend
 	BL read_string				;Get dividend
 	LDR r0, ptr_to_dividend
 	BL output_string			;echo back user input
+	MOV r0 ,#0xA				;new Line
+	BL output_character
 	LDR r0, ptr_to_divisor
 	BL read_string				;Get divisor
 	LDR r0, ptr_to_divisor
 	BL output_string			;echo back user input
+	MOV r0 ,#0xA				;new Line
+	BL output_character
 
 	LDR r0, ptr_to_dividend		;Convert divend to a number
 	BL string2int
@@ -82,12 +72,20 @@ USRLOOP:						;Main user loop
 	MOV r1,r0
 	LDR r0, ptr_to_quotient
 	BL int2string
+	LDR r0, ptr_to_quotient
 	BL output_string
+	MOV r0 ,#0xA				;new Line
+	BL output_character
+
+
 
 	MOV r1,r8
 	LDR r0, ptr_to_remainder
 	BL int2string
+	LDR r0, ptr_to_remainder
 	BL output_string
+	MOV r0 ,#0xA				;new Line
+	BL output_character
 
 	B USRLOOP
 
@@ -246,10 +244,7 @@ exitOutLoop:
 ;INT 2 STRING - stores the integer passed into the routine in r1 as a NULL terminated ASCII string in memory at the address passed into the routine in r0.
 ;*****************************************************************************
 int2string:
-	PUSH {r4-r12,lr} 	; Store any registers in the range of r4 through r12
-							; that are used in your routine.  Include lr if this
-							; routine calls another routine.
-
+	PUSH {r4-r12,lr} 	;
 	;r1 int
 	;r0 string address
 	MOV r4, r1	;Storing the original integer
@@ -305,27 +300,29 @@ div_store:
 ;STRING 2 INT - converts the NULL terminated ASCII string pointed to by the address passed into the routine in r0 to an integer. The integer should be returned in r0
 ;*****************************************************************************
 string2int:
-	PUSH {r4-r12,lr} 	; Store any registers in the range of r4 through r12
-	MOV r4, r0 ;Address of passed through string
+	PUSH {r4-r12,lr} ; Store any registers in the range of r4 through r12
+	MOV r4, r0 		;Address of passed through string
 	MOV r5,#1
+	MOV r10, #10
 	EOR r6 , #0 	;accumnator
 negFlag:
-	EOR r4, #1		;neg flag
+	EOR r5, #1		;neg flag
 stringIntLoop:
+	LDRB r0, [r4]
 	CMP r0, #00		;Check for null terminator
 	BEQ ExitstringIntLoop
 	STRB r0, [r4]	;load char
 	CMP r0, #0x2D	;check for neg
 	BEQ negFlag
-  	SUB r0, r0, #30
+  	SUB r0, r0, #0x30
   	MUL r6, r6, r10
   	ADD r6,r6, r0
 	ADD r4, #1	;incrementing 1 byte
 	B stringIntLoop
 ExitstringIntLoop:
 	MOV r3,r6
-	CMP r5, #0x00
-	BL invert
+	CMP r5, #0x01
+	BEQ invert
 	MOV r0, r3
 	POP {r4-r12,lr}
 	mov pc, lr
@@ -450,3 +447,4 @@ TRANSFER:
         ; and should be the last line in your subroutine.
         MOV pc, lr
 	.end
+;*****************************************************************************

@@ -304,21 +304,22 @@ string2int:
 	PUSH {r4-r12,lr} 	; Store any registers in the range of r4 through r12
 	MOV r4, r0 ;Address of passed through string
 	MOV r5,#1
-	EOR r6, #0 	;accumnator
+	MOR r6 , #0 	;accumnator
 negFlag:
-	EOR r4, #1		;neg flag
+	EOR r4 #1		;neg flag
 stringIntLoop:
 	CMP r0, #00		;Check for null terminator
-	BEQ exitInLoop
+	BEQ ExitstringIntLoop
 	STRB r0, [r4]	;load char
 	CMP r0, #0x2D	;check for neg
 	BEQ negFlag
-
+  	SUB r0, r0, #30
+  	MUL r6, r6, r10
+  	ADD r6,r6, r0
 	ADD r4, #1	;incrementing 1 byte
-	B ExitstringIntLoop
+	B stringIntLoop
 ExitstringIntLoop:
-	MOV r0, #0
-	STRB r0, [r4]
+	MOV r0, r6
 	POP {r4-r12,lr}
 	mov pc, lr
 ;*****************************************************************************

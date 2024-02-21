@@ -14,7 +14,7 @@ remainder:	.string "Your remainder is stored here", 0
 newLine:	.string "\r\n", 0
 askRunAgain:.string "Would you like to run again Yes(Y) No(N)?", 0
 start:	.string "Lab 3 - Tim and Tom!", 0
-extmsg:	.string "End of program ※\(^o^)/※", 0
+extmsg:	.string "End of program *\(^o^)/*", 0
 
 
 
@@ -331,9 +331,11 @@ string2int:
 	MOV r4, r0 		;Address of passed through string
 	MOV r5,#1
 	MOV r10, #10
-	MOV r6 , #0 	;accumnator
+	MOV r6 , #0 	;accumnator'
+	SUB r4,r4,#1
 negFlag:
 	EOR r5, #1		;neg flag
+	ADD r4,r4,#1
 stringIntLoop:
 	LDRB r0, [r4]
 	CMP r0, #00		;Check for null terminator
@@ -347,10 +349,14 @@ stringIntLoop:
 	ADD r4, #1	;incrementing 1 byte
 	B stringIntLoop
 ExitstringIntLoop:
-	MOV r3,r6
 	CMP r5, #0x01
-	BEQ invert
-	MOV r0, r3
+	BNE stringIntSkip
+	MOV r4, #0xFFFF
+	MOVT r4,# 0xFFFF
+	EOR	r6, r6, r4
+	ADD  r6, r6, #1
+stringIntSkip:
+	MOV r0, r6
 	POP {r4-r12,lr}
 	mov pc, lr
 ;*****************************************************************************

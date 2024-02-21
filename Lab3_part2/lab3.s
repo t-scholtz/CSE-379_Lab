@@ -304,9 +304,9 @@ string2int:
 	PUSH {r4-r12,lr} 	; Store any registers in the range of r4 through r12
 	MOV r4, r0 ;Address of passed through string
 	MOV r5,#1
-	MOR r6 , #0 	;accumnator
+	EOR r6 , #0 	;accumnator
 negFlag:
-	EOR r4 #1		;neg flag
+	EOR r4, #1		;neg flag
 stringIntLoop:
 	CMP r0, #00		;Check for null terminator
 	BEQ ExitstringIntLoop

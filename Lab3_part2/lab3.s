@@ -83,7 +83,7 @@ USRLOOP:
 
 	MOV r0,r5					;Div and mod
 	MOV r1,r6
-	BL div_and_mod				;quotient in r0 and the remainder in r1.
+	BL div_and_mod2				;quotient in r0 and the remainder in r1.
 
 	MOV r8,r1
 

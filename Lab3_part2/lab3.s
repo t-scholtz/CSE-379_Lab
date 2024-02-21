@@ -212,8 +212,6 @@ FINISHRC:
 	POP {r4-r12,lr}
 	mov pc, lr
 ;*****************************************************************************
-
-
 ;READ STRING - reads a string entered in PuTTy and stores it as a NULL-terminated ASCII string in memory, base address passed in ro
 ;*****************************************************************************
 read_string:
@@ -258,7 +256,7 @@ output_string:
 	PUSH {r4-r12,lr} 	; Store any registers in the range of r4 through r12
 	MOV r4,r0
 outputLoop:
-	LDRB r0, [r4]
+y	LDRB r0, [r4]
 	CMP r0, #0x00
 	BEQ exitOutLoop
 	BL output_character
@@ -315,7 +313,7 @@ div_store:
 	MOV r4, #0x00
 	STRB r4, [r5];stores a NULL at the string address to stop the end of the string
 
-	MOV	r0, r5
+	;MOV	r0, r5
 
 
 		; Your code for your int2string routine is placed here

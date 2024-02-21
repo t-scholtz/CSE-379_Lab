@@ -12,6 +12,9 @@ divisor:  	.string "Place holder string for your divisor", 0
 quotient:	.string "Your quotient is stored here", 0
 remainder:	.string "Your remainder is stored here", 0
 newLine:	.string "\r\n", 0
+askRunAgain:.string "Would you like to run again Yes(Y) No(N)?", 0
+start:	.string "Lab 3 - Tim and Tom!", 0
+
 
 
 	.text
@@ -25,6 +28,8 @@ ptr_to_divisor:			.word divisor
 ptr_to_quotient:		.word quotient
 ptr_to_remainder:		.word remainder
 ptr_to_newLine:			.word newLine
+ptr_to_runAgin:			.word askRunAgain
+ptr_to_start:			.word start
 
 
 ;LAB 3 - function call
@@ -41,6 +46,10 @@ lab3:
 	ADD r0,r0,#1
 	MOV r1,#00
 	STRB r1,[r0]
+	LDR r0, ptr_to_newLine
+	BL output_string			;newLine
+	LDR r0, ptr_to_start
+	BL output_string			;Print Start
 	LDR r0, ptr_to_newLine
 	BL output_string			;newLine
 
@@ -91,6 +100,17 @@ USRLOOP:
 	BL output_string
 	LDR r0, ptr_to_newLine
 	BL output_string			;newLine
+
+	LDR r0, ptr_to_runAgin
+	BL output_string			;Print Start
+	LDR r0, ptr_to_newLine
+	BL output_string			;newLine
+
+	BL read_character
+	CMP r0, #0x4E
+	BEQ	lab3_end
+	CMP r0, #0x6E
+	BEQ	lab3_end
 
 	B USRLOOP
 lab3_end:

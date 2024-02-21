@@ -38,6 +38,18 @@ lab3:
 	BL uart_init				;Init uart connection
 
 USRLOOP:						;Main user loop
+
+	;int2string test
+	LDR r0, ptr_to_dividend
+	MOV r1, #999
+	EOR r1, r1, #0xFFFFFFFF ;flips bits for the divided
+    ADD r1, r1, #1 ;adds 1 for twos comp
+    ;int2String test over
+
+	BL int2string
+	LDR r0, ptr_to_dividend
+	BL output_string
+
 	LDR r0, ptr_to_prompt
 	BL output_string			;Print prompt
 	LDR r0, ptr_to_dividend
@@ -238,25 +250,45 @@ int2string:
 	;r0 string address
 	MOV r4, r1	;Storing the original integer
 	MOV r5, r0	;Storing the Strings address
-	;MOVT r5, r0
 
-div_storeLOOP:
+	;take care of negatives for divided
+	CMP r4, #0 ;comparing r4 to zero to see if we need to deal with -
+    BGT div_store
+
+    EOR r4, r4, #0xFFFFFFFF ;flips bits for the string output to make it easy
+    ADD r4, r4, #1 ;adds 1 for twos comp
+    MOV r1, #0x2D;this is a - for negative
+    STRB r1, [r5];store the string character to string address
+	ADD r5, r5, #1;increment the address by a byte
+
+div_store:
+	;divide by 100 to start
+	MOV r0, r4 ;setting divised
+	MOV r1, #100;setting divisor ;it will allow us to get the least sig decimal and change it one by one into strings
+	BL div_and_mod2
+
+	ADD r0, r0, #48;takes divided and adjusts the value to represent the character so we can store this number correctly
+	MOV r4, r1;this is the division output to continue the cycle
+	STRB r0, [r5];store the string character to string address
+	ADD r5, r5, #1;increment the address by a byte
+
+	;Now divide by 10 to get our last 2 digits
 	MOV r0, r4 ;setting divised
 	MOV r1, #10;setting divisor ;it will allow us to get the least sig decimal and change it one by one into strings
-	BL div_and_mod
+	BL div_and_mod2
 
+	ADD r0, r0, #48;takes divided counter and adjusts the value to represent the character
 	ADD r1, r1, #48;takes remainder and adjusts the value to represent the character
-	MOV r4, r0;this is the division output to continue the cycle
+	STRB r0, [r5];store the string character to string address
+	ADD r5, r5, #1;increment the address by a byte
 	STRB r1, [r5];store the string character to string address
-	ADD r5, r5, #8;increment the address by a byte
-	CMP r0, #0
-	BGT div_storeLOOP
+	ADD r5, r5, #1;increment the address by a byte
 
 	MOV r4, #0x00
 	STRB r4, [r5];stores a NULL at the string address to stop the end of the string
 
 	MOV	r0, r5
-	;MOVT r0, r5
+
 
 		; Your code for your int2string routine is placed here
 
@@ -272,9 +304,9 @@ string2int:
 	PUSH {r4-r12,lr} 	; Store any registers in the range of r4 through r12
 	MOV r4, r0 ;Address of passed through string
 	MOV r5,#1
-	MOR r6 , #0 	;accumnator
+	EOR r6, #0 	;accumnator
 negFlag:
-	EOR r4 #1		;neg flag
+	EOR r4, #1		;neg flag
 stringIntLoop:
 	CMP r0, #00		;Check for null terminator
 	BEQ exitInLoop
@@ -292,7 +324,7 @@ ExitstringIntLoop:
 ;*****************************************************************************
 
 
-;DIV AND MOD - Accepts a dividend in r0 and a divsor in r1and an integer returns the quotient in r0 and the remainder in r1.
+;DIV AND MOD TIMS ED. - Accepts a dividend in r0 and a divsor in r1and an integer returns the quotient in r0 and the remainder in r1.
 ;*****************************************************************************
 div_and_mod:
 	PUSH {r4-r12,lr} 	; Store any registers in the range of r4 through r12
@@ -349,4 +381,64 @@ invert:				;Pass a value in r3 and returns the complement of that value + return
 	MOV pc, lr ; your div_and_mod routine is placed here
 ;*****************************************************************************
 
+;DIV AND MOD TOMS ED. - Accepts a dividend in r0 and a divsor in r1and an integer returns the quotient in r0 and the remainder in r1.
+;*****************************************************************************
+div_and_mod2:
+        PUSH {r4-r12,lr};This line stores register, more explination at the top of the file.
+
+        ; Your code for the div_and_mod routine goes here.
+        ;r0 is the divised
+        ;r1 is the divisor
+        ;r2 is the div output until it gets put into r1
+        ;r4 is the temp divisor
+        ;r5 is the temp divided
+        ;r6 negative bit sign
+        MOV r4, r1 ;Sets the temp vals, this is the divisor
+        MOV r5, r0 ;Sets the temp vals, this is the number to divide, the remainder is stored in r1
+        MOV r2, #0 ;resets this the counter returned in r0
+        MOV r6, #0 ;resets
+
+
+divisorNegCheck0:
+        CMP r4, #0 ;comparing it to zero
+        BGT dividedNegCheck1
+
+        EOR r4, r4, #0xFFFFFFFF ;flips bits for the divisor
+        ADD r4, r4, #1 ;adds 1 for twos comp
+        ADD r6, r6, #1 ;For the negative sign
+
+
+dividedNegCheck1:
+        CMP r5, #0
+        BGT LOOP
+
+        EOR r5, r5, #0xFFFFFFFF ;flips bits for the divided
+        ADD r5, r5, #1
+        ADD r6, r6, #1 ;For the negative sign
+
+LOOP:
+        CMP r5, r4
+        BLT FINISH
+        SUB r5, r5, r4
+        ADD r2, r2, #1;counting up everytime something divides
+
+        B LOOP
+
+FINISH:;checks for negative in and flip to get correct output
+        CMP r6, #1
+        BNE TRANSFER
+
+        ;this is the divided answer as well as r4 should be the MOD answer
+        EOR r2, r2, #0xFFFFFFFF ;flips bits for the divisor
+        ADD r2, r2, #1 ;adds 1 for twos comp
+
+TRANSFER:
+        MOV r0, r2
+        MOV r1, r5
+
+        POP {r4-r12,lr};This line loads back our registers, more explination at the top of the file.
+
+        ; The following line is used to return from the subroutine
+        ; and should be the last line in your subroutine.
+        MOV pc, lr
 	.end

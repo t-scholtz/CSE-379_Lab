@@ -185,8 +185,6 @@ FINISHRC:
 	POP {r4-r12,lr}
 	mov pc, lr
 ;*****************************************************************************
-
-
 ;READ STRING - reads a string entered in PuTTy and stores it as a NULL-terminated ASCII string in memory, base address passed in ro
 ;*****************************************************************************
 read_string:

@@ -38,6 +38,8 @@ ptr_to_extmsg:			.word extmsg
 ;*****************************************************************************
 lab3:
 
+	PUSH {r4-r12,lr}
+
 	BL uart_init				;Init uart connection
 	LDR r0, ptr_to_newLine
 	MOV r1,#13
@@ -256,7 +258,7 @@ output_string:
 	PUSH {r4-r12,lr} 	; Store any registers in the range of r4 through r12
 	MOV r4,r0
 outputLoop:
-y	LDRB r0, [r4]
+ 	LDRB r0, [r4]
 	CMP r0, #0x00
 	BEQ exitOutLoop
 	BL output_character
@@ -278,7 +280,10 @@ int2string:
 	MOV r5, r0	;Storing the Strings address
 
 	;take care of negatives for divided
-	CMP r4, #0 ;comparing r4 to zero to see if we need to deal with -
+	MOV r8, #1
+	EOR r8, r8, #0xFFFFFFFF ;flips bits for the string output to make it easy
+    ADD r8, r8, #1 ;adds 1 for twos comp
+	CMP r4, r8 ;comparing r4 to zero to see if we need to deal with -
     BGT div_store
 
     EOR r4, r4, #0xFFFFFFFF ;flips bits for the string output to make it easy

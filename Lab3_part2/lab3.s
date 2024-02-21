@@ -11,6 +11,10 @@ dividend: 	.string "Place holder string for your dividend", 0
 divisor:  	.string "Place holder string for your divisor", 0
 quotient:	.string "Your quotient is stored here", 0
 remainder:	.string "Your remainder is stored here", 0
+newLine:	.string "\r\n", 0
+askRunAgain:.string "Would you like to run again Yes(Y) No(N)?", 0
+start:	.string "Lab 3 - Tim and Tom!", 0
+
 
 
 	.text
@@ -23,47 +27,50 @@ ptr_to_dividend:		.word dividend
 ptr_to_divisor:			.word divisor
 ptr_to_quotient:		.word quotient
 ptr_to_remainder:		.word remainder
+ptr_to_newLine:			.word newLine
+ptr_to_runAgin:			.word askRunAgain
+ptr_to_start:			.word start
 
 
 ;LAB 3 - function call
 ;*****************************************************************************
 lab3:
-	PUSH {r4-r12,lr}
-	MOV r0, #12
-	MOv r1, #10
-	BL div_and_mod
-
-	;LDR r4, ptr_to_prompt		;Init memory values
-	;LDR r5, ptr_to_dividend
-	;LDR r6, ptr_to_divisor
-	;LDR r7, ptr_to_quotient
-	;LDR r8, ptr_to_remainder
 
 	BL uart_init				;Init uart connection
+	LDR r0, ptr_to_newLine
+	MOV r1,#13
+	STRB r1 ,[r0]				;Load new line into memory /r/n
+	ADD r0,r0,#1
+	MOV r1,#10
+	STRB r1,[r0]
+	ADD r0,r0,#1
+	MOV r1,#00
+	STRB r1,[r0]
+	LDR r0, ptr_to_newLine
+	BL output_string			;newLine
+	LDR r0, ptr_to_start
+	BL output_string			;Print Start
+	LDR r0, ptr_to_newLine
+	BL output_string			;newLine
 
-USRLOOP:						;Main user loop
-
-	;int2string test
-	LDR r0, ptr_to_dividend
-	MOV r1, #999
-	EOR r1, r1, #0xFFFFFFFF ;flips bits for the divided
-    ADD r1, r1, #1 ;adds 1 for twos comp
-    ;int2String test over
-
-	BL int2string
-	LDR r0, ptr_to_dividend
-	BL output_string
-
+USRLOOP:
 	LDR r0, ptr_to_prompt
 	BL output_string			;Print prompt
+	LDR r0, ptr_to_newLine
+	BL output_string			;newLine
+
 	LDR r0, ptr_to_dividend
 	BL read_string				;Get dividend
 	LDR r0, ptr_to_dividend
 	BL output_string			;echo back user input
+	LDR r0, ptr_to_newLine
+	BL output_string			;newLine
 	LDR r0, ptr_to_divisor
 	BL read_string				;Get divisor
 	LDR r0, ptr_to_divisor
 	BL output_string			;echo back user input
+	LDR r0, ptr_to_newLine
+	BL output_string			;newLine
 
 	LDR r0, ptr_to_dividend		;Convert divend to a number
 	BL string2int
@@ -71,7 +78,6 @@ USRLOOP:						;Main user loop
 	LDR r0, ptr_to_divisor		;Convert divsort to a number
 	BL string2int
 	MOV r6, r0					;Store divend in r5
-
 
 	MOV r0,r5					;Div and mod
 	MOV r1,r6
@@ -82,15 +88,31 @@ USRLOOP:						;Main user loop
 	MOV r1,r0
 	LDR r0, ptr_to_quotient
 	BL int2string
+	LDR r0, ptr_to_quotient
 	BL output_string
+	LDR r0, ptr_to_newLine
+	BL output_string			;newLine
 
 	MOV r1,r8
 	LDR r0, ptr_to_remainder
 	BL int2string
+	LDR r0, ptr_to_remainder
 	BL output_string
+	LDR r0, ptr_to_newLine
+	BL output_string			;newLine
+
+	LDR r0, ptr_to_runAgin
+	BL output_string			;Print Start
+	LDR r0, ptr_to_newLine
+	BL output_string			;newLine
+
+	BL read_character
+	CMP r0, #0x4E
+	BEQ	lab3_end
+	CMP r0, #0x6E
+	BEQ	lab3_end
 
 	B USRLOOP
-
 lab3_end:
 	POP {r4-r12,lr}
 	mov pc, lr
@@ -244,10 +266,7 @@ exitOutLoop:
 ;INT 2 STRING - stores the integer passed into the routine in r1 as a NULL terminated ASCII string in memory at the address passed into the routine in r0.
 ;*****************************************************************************
 int2string:
-	PUSH {r4-r12,lr} 	; Store any registers in the range of r4 through r12
-							; that are used in your routine.  Include lr if this
-							; routine calls another routine.
-
+	PUSH {r4-r12,lr} 	;
 	;r1 int
 	;r0 string address
 	MOV r4, r1	;Storing the original integer
@@ -303,27 +322,29 @@ div_store:
 ;STRING 2 INT - converts the NULL terminated ASCII string pointed to by the address passed into the routine in r0 to an integer. The integer should be returned in r0
 ;*****************************************************************************
 string2int:
-	PUSH {r4-r12,lr} 	; Store any registers in the range of r4 through r12
-	MOV r4, r0 ;Address of passed through string
+	PUSH {r4-r12,lr} ; Store any registers in the range of r4 through r12
+	MOV r4, r0 		;Address of passed through string
 	MOV r5,#1
+	MOV r10, #10
 	EOR r6 , #0 	;accumnator
 negFlag:
-	EOR r4, #1		;neg flag
+	EOR r5, #1		;neg flag
 stringIntLoop:
+	LDRB r0, [r4]
 	CMP r0, #00		;Check for null terminator
 	BEQ ExitstringIntLoop
 	STRB r0, [r4]	;load char
 	CMP r0, #0x2D	;check for neg
 	BEQ negFlag
-  	SUB r0, r0, #30
+  	SUB r0, r0, #0x30
   	MUL r6, r6, r10
   	ADD r6,r6, r0
 	ADD r4, #1	;incrementing 1 byte
 	B stringIntLoop
 ExitstringIntLoop:
 	MOV r3,r6
-	CMP r5, #0x00
-	BL invert
+	CMP r5, #0x01
+	BEQ invert
 	MOV r0, r3
 	POP {r4-r12,lr}
 	mov pc, lr
@@ -448,3 +469,4 @@ TRANSFER:
         ; and should be the last line in your subroutine.
         MOV pc, lr
 	.end
+;*****************************************************************************

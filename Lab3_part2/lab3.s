@@ -29,6 +29,10 @@ ptr_to_remainder:		.word remainder
 ;*****************************************************************************
 lab3:
 	PUSH {r4-r12,lr}
+	MOV r0, #12
+	MOv r1, #10
+	BL div_and_mod
+
 	;LDR r4, ptr_to_prompt		;Init memory values
 	;LDR r5, ptr_to_dividend
 	;LDR r6, ptr_to_divisor
@@ -292,7 +296,10 @@ stringIntLoop:
 	ADD r4, #1	;incrementing 1 byte
 	B stringIntLoop
 ExitstringIntLoop:
-	MOV r0, r6
+	MOV r3,r6
+	CMP r5, #0x00
+	BL invert
+	MOV r0, r3
 	POP {r4-r12,lr}
 	mov pc, lr
 ;*****************************************************************************
@@ -335,7 +342,7 @@ div_done:
 	MOV r1,r3
 skip:
 	MOV r3, r0		;Move values around to put returned values where they are expected to go
-	MOV r0, r1
+	MOV r0, r2
 	MOV r1, r3
 	POP {r4-r12,lr}
 	MOV pc, lr		;Exit the divider program

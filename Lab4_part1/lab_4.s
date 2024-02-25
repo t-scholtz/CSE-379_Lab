@@ -15,6 +15,9 @@
 lab4:
 	PUSH {r4-r12,lr}
 
+	MOV r1, #0x0x5000	;load address port f
+	MOVT r1, #0x4002
+
 	POP {r4-r12,lr}
 	MOV pc, lr
 

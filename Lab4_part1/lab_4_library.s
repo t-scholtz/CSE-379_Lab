@@ -80,15 +80,46 @@ uart_init:
 ;================================================================
 
 ;----------------------------------------------------------------
-;XXX - ABCDE
+;GPIO Button and LED INI - initliase on board button and led for
+;use
 ;----------------------------------------------------------------
 gpio_btn_and_LED_init:
 	PUSH {r4-r12,lr}
-
-
+	;SET BUTTON - SW1 - Port F Pin 4 - read | SET LED - Port F pin 1,2,3 - write
+	MOV r0, #5			;port f
+	Mov r1, #0x5000		;port f memory address
+	MOVT r1 , #0x4002
+	MOV r2, #0x07		;Pin 4 will be read - set 0 | pin 1,2,3 will be write - set 1
+	MOV r3, #0x0F		;Pin 1,2,3,4 set active
+	BL gpio_setup
 	POP {r4-r12,lr}
 	MOV pc, lr
 ;================================================================
+
+
+;----------------------------------------------------------------
+;GPIO setup - help method to setup gpio communication
+;Input: r0 - port (A-F|0-5)
+;		r1 - port memory address
+;		r2 - set pins as read or write (8bit input)[0-read 1-write]
+;		r3 - set which pins are active (8bit input)[0-off  1-on]
+;----------------------------------------------------------------
+gpio_setup:
+	PUSH {r4-r12,lr}
+	;SET CLOCK
+	MOV r4,#0xE608
+	MOVT r4, #0x400F	;load clck memeory address
+	STRB r0, [r4]		;store new settings
+	;SET DIRECTION FOR EACH PIN
+	MOV r6, #0x400		;offset for data direction
+	SRTB r2, [r1,r6]		;store new settings
+	;SET EACH GPIO PIN AS DIGITAL
+	MOV r6, #0x51c		;offset for data direction
+	SRTB r3, [r1,r6]		;store new settings
+	POP {r4-r12,lr}
+	MOV pc, lr
+;================================================================
+
 
 ;----------------------------------------------------------------
 ;Output Char - Takes an ascii byte in r0 and outputs to terminal

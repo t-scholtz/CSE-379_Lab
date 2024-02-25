@@ -14,7 +14,7 @@ remainder:	.string "Your remainder is stored here", 0
 newLine:	.string "\r\n", 0
 askRunAgain:.string "Would you like to run again Yes(Y) No(N)?", 0
 start:	.string "Lab 3 - Tim and Tom!", 0
-extmsg:	.string "End of program ※\(^o^)/※", 0
+extmsg:	.string "End of program *\(^o^)/*", 0
 
 
 
@@ -37,6 +37,8 @@ ptr_to_extmsg:			.word extmsg
 ;LAB 3 - function call
 ;*****************************************************************************
 lab3:
+
+	PUSH {r4-r12,lr}
 
 	BL uart_init				;Init uart connection
 	LDR r0, ptr_to_newLine
@@ -256,7 +258,7 @@ output_string:
 	PUSH {r4-r12,lr} 	; Store any registers in the range of r4 through r12
 	MOV r4,r0
 outputLoop:
-y	LDRB r0, [r4]
+ 	LDRB r0, [r4]
 	CMP r0, #0x00
 	BEQ exitOutLoop
 	BL output_character
@@ -278,7 +280,10 @@ int2string:
 	MOV r5, r0	;Storing the Strings address
 
 	;take care of negatives for divided
-	CMP r4, #0 ;comparing r4 to zero to see if we need to deal with -
+	MOV r8, #1
+	EOR r8, r8, #0xFFFFFFFF ;flips bits for the string output to make it easy
+    ADD r8, r8, #1 ;adds 1 for twos comp
+	CMP r4, r8 ;comparing r4 to zero to see if we need to deal with -
     BGT div_store
 
     EOR r4, r4, #0xFFFFFFFF ;flips bits for the string output to make it easy
@@ -331,9 +336,11 @@ string2int:
 	MOV r4, r0 		;Address of passed through string
 	MOV r5,#1
 	MOV r10, #10
-	EOR r6 , #0 	;accumnator
+	MOV r6 , #0 	;accumnator'
+	SUB r4,r4,#1
 negFlag:
 	EOR r5, #1		;neg flag
+	ADD r4,r4,#1
 stringIntLoop:
 	LDRB r0, [r4]
 	CMP r0, #00		;Check for null terminator
@@ -347,10 +354,14 @@ stringIntLoop:
 	ADD r4, #1	;incrementing 1 byte
 	B stringIntLoop
 ExitstringIntLoop:
-	MOV r3,r6
 	CMP r5, #0x01
-	BEQ invert
-	MOV r0, r3
+	BNE stringIntSkip
+	MOV r4, #0xFFFF
+	MOVT r4,# 0xFFFF
+	EOR	r6, r6, r4
+	ADD  r6, r6, #1
+stringIntSkip:
+	MOV r0, r6
 	POP {r4-r12,lr}
 	mov pc, lr
 ;*****************************************************************************

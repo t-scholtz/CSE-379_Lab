@@ -11,6 +11,7 @@
 	.global read_tiva_push_button
 	.global div_and_mod
 
+U0FR: 	.equ 0x18	; UART0 Flag Register
 ;----------------------------------------------------------------
 ;Uart init - handles setting up connection to Uart
 ;----------------------------------------------------------------
@@ -112,10 +113,15 @@ gpio_setup:
 	STRB r0, [r4]		;store new settings
 	;SET DIRECTION FOR EACH PIN
 	MOV r6, #0x400		;offset for data direction
-	SRTB r2, [r1,r6]		;store new settings
+	STRB r2, [r1,r6]	;store new settings
 	;SET EACH GPIO PIN AS DIGITAL
-	MOV r6, #0x51c		;offset for data direction
-	SRTB r3, [r1,r6]		;store new settings
+	MOV r6, #0x051C		;offset for data direction
+	STRB r3, [r1,r6]	;store new settings
+	;SET PULL UP RESIGIOR FOR  READ REGISTORS ***May remove this part from this subroutine in future***
+	MOV r6 , #0x510
+	MVN r7,r2			;invert read/write pins
+	AND r3,r3,r7		;isolate just read pins to select for pull up registors
+	STRB r3, [r1,r6]
 	POP {r4-r12,lr}
 	MOV pc, lr
 ;================================================================
@@ -230,10 +236,15 @@ illuminate_RGB_LED:
 ;----------------------------------------------------------------
 ;Read SW1 button - return value in r0 - 1 if button is pressed
 ;----------------------------------------------------------------
-read_tiva_pushbutton:
+read_tiva_push_button:
 	PUSH {r4-r12,lr}
-	MOV r0, #0x5000		;port f memory address
-	MOVT r0 , #0x4002
+	MOV r4, #0x5000		;port f memory address
+	MOVT r4 , #0x4002
+	MOV r5, #0x3FC
+	LDRB r0, [r4,r5]
+	AND r0, #0x4
+	EOR r0,r0, #0xFFFFFFFF
+	LSR r0,r0,#3
 
 	POP {r4-r12,lr}
 	MOV pc, lr
@@ -263,18 +274,18 @@ NEGCHECK:
         EOR r5, r5, r7 ;flips bits for the divided
         ADD r5, r5, #1
         ADD r6, r6, #1 ;For the negative sign
-MOD_DI_VLOOP:
+MOD_DIV_LOOP:
         CMP r5, r4
         BLT MOD_DIV_DONE
         SUB r5, r5, r4
         ADD r2, r2, #1;counting up everytime something divides
-        B LOOP
+        B MOD_DIV_LOOP
 MOD_DIV_DONE:;checks for negative in and flip to get correct output
         CMP r6, #1
         BNE MOD_DIV_NOT_NEG
         EOR r2, r2, r7 ;flips bits for the divisor
         ADD r2, r2, #1 ;adds 1 for twos comp
-BNE MOD_DIV_NOT_NEG:
+MOD_DIV_NOT_NEG:
         MOV r0, r2
         MOV r1, r5
 	POP {r4-r12,lr}

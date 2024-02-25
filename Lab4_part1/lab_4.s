@@ -14,11 +14,11 @@
 
 lab4:
 	PUSH {r4-r12,lr}
-
+	BL uart_init
 	;TESTING LOOP
 	BL gpio_btn_and_LED_init
 LOOP:
-	BL read_tiva_pushbutton
+	BL read_tiva_push_button
 	B LOOP
 	POP {r4-r12,lr}
 	MOV pc, lr

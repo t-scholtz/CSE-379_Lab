@@ -228,11 +228,12 @@ illuminate_RGB_LED:
 ;================================================================
 
 ;----------------------------------------------------------------
-;XXX - ABCDE
+;Read SW1 button - return value in r0 - 1 if button is pressed
 ;----------------------------------------------------------------
 read_tiva_pushbutton:
 	PUSH {r4-r12,lr}
-
+	MOV r0, #0x5000		;port f memory address
+	MOVT r0 , #0x4002
 
 	POP {r4-r12,lr}
 	MOV pc, lr

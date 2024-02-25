@@ -14,7 +14,7 @@ remainder:	.string "Your remainder is stored here", 0
 newLine:	.string "\r\n", 0
 askRunAgain:.string "Would you like to run again Yes(Y) No(N)?", 0
 start:	.string "Lab 3 - Tim and Tom!", 0
-extmsg:	.string "End of program *\(^o^)/*", 0
+extmsg:	.string "End of program ※\(^o^)/※", 0
 
 
 
@@ -85,7 +85,7 @@ USRLOOP:
 
 	MOV r0,r5					;Div and mod
 	MOV r1,r6
-	BL div_and_mod2				;quotient in r0 and the remainder in r1.
+	BL div_and_mod				;quotient in r0 and the remainder in r1.
 
 	MOV r8,r1
 
@@ -245,7 +245,6 @@ WAITFORCHAR:			;loop to keep waiting for flag to be flipped
 	AND r5, #32
 	CMP r5, #0
 	BNE WAITFORCHAR	;if flag is not flipped, keep waiting
-
 	STRB r0, [r4]	;store the byte to ouptut in uart Data registor
 
 	POP {r4-r12,lr}
@@ -296,7 +295,7 @@ div_store:
 	;divide by 100 to start
 	MOV r0, r4 ;setting divised
 	MOV r1, #100;setting divisor ;it will allow us to get the least sig decimal and change it one by one into strings
-	BL div_and_mod2
+	BL div_and_mod
 
 	ADD r0, r0, #48;takes divided and adjusts the value to represent the character so we can store this number correctly
 	MOV r4, r1;this is the division output to continue the cycle
@@ -306,7 +305,7 @@ div_store:
 	;Now divide by 10 to get our last 2 digits
 	MOV r0, r4 ;setting divised
 	MOV r1, #10;setting divisor ;it will allow us to get the least sig decimal and change it one by one into strings
-	BL div_and_mod2
+	BL div_and_mod
 
 	ADD r0, r0, #48;takes divided counter and adjusts the value to represent the character
 	ADD r1, r1, #48;takes remainder and adjusts the value to represent the character
@@ -318,13 +317,7 @@ div_store:
 	MOV r4, #0x00
 	STRB r4, [r5];stores a NULL at the string address to stop the end of the string
 
-	;MOV	r0, r5
-
-
-		; Your code for your int2string routine is placed here
-
-	POP {r4-r12,lr}   ; Restore registers all registers preserved in the
-							; PUSH at the top of this routine from the stack.
+	POP {r4-r12,lr}
 	mov pc, lr
 ;*****************************************************************************
 
@@ -366,67 +359,9 @@ stringIntSkip:
 	mov pc, lr
 ;*****************************************************************************
 
-
-;DIV AND MOD TIMS ED. - Accepts a dividend in r0 and a divsor in r1and an integer returns the quotient in r0 and the remainder in r1.
+;DIV AND MOD - Accepts a dividend in r0 and a divsor in r1and an integer returns the quotient in r0 and the remainder in r1.
 ;*****************************************************************************
 div_and_mod:
-	PUSH {r4-r12,lr} 	; Store any registers in the range of r4 through r12
-	CMP r0, #0
-	BEQ zero		;check if we're diving by 0 and if so special case - return 0 and 0
-	MOV r3, r0		;check if r0 is negative, if so inverts it
-	CMP r3, #0
-	BGT pos1
-	BL invert
-	MOV r4,r2		;Move flag to r4
-	MOV r0,r3		;move inverted value back to r0
-pos1:
-	MOV r3, r1		; check if r0 is negative, if so inverts
-	CMP r3, #0
-	BGT pos2
-	BL invert
-	MOV r5,r2		;move flag to r5
-	MOV r1,r3		;move inverted value back to r1
-pos2:
-	MOV r2,#0		;Clear r2
-
-div:				;Division Time! LETS GO!!!!!!!
-	CMP r1,r0		;Keeps subractinb while dividor number is bigger than divosor or somthing
-	BGT div_done
-	ADD r2,r2,#1
-	SUB r0,r0,r1
-	B div
-
-div_done:
-	cmp r4,r5		;Check if one value was neg and if we need to invert answer accoringly
-	BEQ skip
-	MOV r3, r1
-	BL invert
-	MOV r1,r3
-skip:
-	MOV r3, r0		;Move values around to put returned values where they are expected to go
-	MOV r0, r2
-	MOV r1, r3
-	POP {r4-r12,lr}
-	MOV pc, lr		;Exit the divider program
-zero:				; Divde by zero edge case
-	MOV r0, #0
-	MOV r1, #0
-	POP {r4-r12,lr}
-	MOV pc, lr
-invert:				;Pass a value in r3 and returns the complement of that value + returns a flag in marker in r4
-	PUSH {r4-r12,lr}
-	MOV r2,#1
-	MOV r4, #0xFFFF
-	MOVT r4,# 0xFFFF
-	EOR	r3, r3, r4
-	ADD  r3, r3, #1
-	POP {r4-r12,lr}
-	MOV pc, lr ; your div_and_mod routine is placed here
-;*****************************************************************************
-
-;DIV AND MOD TOMS ED. - Accepts a dividend in r0 and a divsor in r1and an integer returns the quotient in r0 and the remainder in r1.
-;*****************************************************************************
-div_and_mod2:
         PUSH {r4-r12,lr};This line stores register, more explination at the top of the file.
 
         ; Your code for the div_and_mod routine goes here.
@@ -450,7 +385,6 @@ divisorNegCheck0:
         ADD r4, r4, #1 ;adds 1 for twos comp
         ADD r6, r6, #1 ;For the negative sign
 
-
 dividedNegCheck1:
         CMP r5, #0
         BGT LOOP
@@ -458,13 +392,11 @@ dividedNegCheck1:
         EOR r5, r5, #0xFFFFFFFF ;flips bits for the divided
         ADD r5, r5, #1
         ADD r6, r6, #1 ;For the negative sign
-
 LOOP:
         CMP r5, r4
         BLT FINISH
         SUB r5, r5, r4
         ADD r2, r2, #1;counting up everytime something divides
-
         B LOOP
 
 FINISH:;checks for negative in and flip to get correct output
@@ -479,10 +411,8 @@ TRANSFER:
         MOV r0, r2
         MOV r1, r5
 
-        POP {r4-r12,lr};This line loads back our registers, more explination at the top of the file.
-
-        ; The following line is used to return from the subroutine
-        ; and should be the last line in your subroutine.
+        POP {r4-r12,lr}
         MOV pc, lr
 	.end
 ;*****************************************************************************
+

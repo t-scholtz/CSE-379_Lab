@@ -103,7 +103,6 @@ gpio_btn_and_LED_init:
 	MOV pc, lr
 ;================================================================
 
-
 ;----------------------------------------------------------------
 ;GPIO setup - help method to setup gpio communication
 ;Input: r0 - port (A-F|0-5)
@@ -131,7 +130,6 @@ gpio_setup:
 	POP {r4-r12,lr}
 	MOV pc, lr
 ;================================================================
-
 
 ;----------------------------------------------------------------
 ;Output Char - Takes an ascii byte in r0 and outputs to terminal
@@ -177,8 +175,7 @@ READLOOP:
 	BL read_character
 	CMP r0, #13
 	BEQ EXITREAD
-	STRB r0, [r4]
-	ADD r4, #1	;incrementing 1 byte
+	STRB r0, [r4], #1
 	B READLOOP
 EXITREAD:
 	MOV r0, #0
@@ -195,11 +192,10 @@ output_string:
 	PUSH {r4-r12,lr}
 	MOV r4,r0
 PRINTLOOP:
- 	LDRB r0, [r4]
+ 	LDRB r0, [r4], #1
 	CMP r0, #0x00
 	BEQ PRINTEXIT
 	BL output_character
-	ADD r4,r4 ,#1		;1 = byte not bits
 	B PRINTLOOP
 PRINTEXIT:
 	POP {r4-r12,lr}
@@ -319,7 +315,6 @@ read_tiva_push_button:
 	AND r0, #0x4
 	EOR r0,r0, #0xFFFFFFFF
 	LSR r0,r0,#3
-
 	POP {r4-r12,lr}
 	MOV pc, lr
 ;================================================================
@@ -331,37 +326,35 @@ read_tiva_push_button:
 ;----------------------------------------------------------------
 div_and_mod:
 	PUSH {r4-r12,lr}
-        MOV r4, r1 ;Sets the temp vals, this is the divisor
-        MOV r5, r0 ;Sets the temp vals, this is the number to divide, the remainder is stored in r1
-        MOV r2, #0 ;resets this the counter returned in r0
-        MOV r6, #0 ;resets
-        MOV r7, #0xFFFF	;all ones
-        MOVT r7, #0xFFFF	;all ones
-        CMP r4, #0 ;comparing it to zero
-        BGT NEGCHECK
-        EOR r4, r4, r7 ;flips bits for the divisor
-        ADD r4, r4, #1 ;adds 1 for twos comp
-        ADD r6, r6, #1 ;For the negative sign
+    MOV r4, r1 ;Sets the temp vals, this is the divisor
+    MOV r5, r0 ;Sets the temp vals, this is the number to divide, the remainder is stored in r1
+    MOV r2, #0 ;resets this the counter returned in r0
+    MOV r6, #0 ;resets
+    CMP r4, #0 ;comparing it to zero
+    BGT NEGCHECK
+    EOR r4, r4, #0xFFFFFFFF ;flips bits for the divisor
+    ADD r4, r4, #1 ;adds 1 for twos comp
+    ADD r6, r6, #1 ;For the negative sign
 NEGCHECK:
-        CMP r5, #0
-        BGT MOD_DIV_LOOP
-        EOR r5, r5, r7 ;flips bits for the divided
-        ADD r5, r5, #1
-        ADD r6, r6, #1 ;For the negative sign
+    CMP r5, #0
+    BGT MOD_DIV_LOOP
+    EOR r5, r5, r7 ;flips bits for the divided
+    ADD r5, r5, #1
+    ADD r6, r6, #1 ;For the negative sign
 MOD_DIV_LOOP:
-        CMP r5, r4
-        BLT MOD_DIV_DONE
-        SUB r5, r5, r4
-        ADD r2, r2, #1;counting up everytime something divides
-        B MOD_DIV_LOOP
+    CMP r5, r4
+    BLT MOD_DIV_DONE
+    SUB r5, r5, r4
+    ADD r2, r2, #1;counting up everytime something divides
+    B MOD_DIV_LOOP
 MOD_DIV_DONE:;checks for negative in and flip to get correct output
-        CMP r6, #1
-        BNE MOD_DIV_NOT_NEG
-        EOR r2, r2, r7 ;flips bits for the divisor
-        ADD r2, r2, #1 ;adds 1 for twos comp
+    CMP r6, #1
+    BNE MOD_DIV_NOT_NEG
+    EOR r2, r2, r7 ;flips bits for the divisor
+    ADD r2, r2, #1 ;adds 1 for twos comp
 MOD_DIV_NOT_NEG:
-        MOV r0, r2
-        MOV r1, r5
+    MOV r0, r2
+    MOV r1, r5
 	POP {r4-r12,lr}
 	MOV pc, lr
 ;================================================================
@@ -433,9 +426,7 @@ stringIntLoop:
 ExitstringIntLoop:
 	CMP r5, #0x01
 	BNE stringIntSkip
-	MOV r4, #0xFFFF
-	MOVT r4,# 0xFFFF
-	EOR	r6, r6, r4
+	EOR	r6, r6, #0xFFFFFFFF
 	ADD  r6, r6, #1
 stringIntSkip:
 	MOV r0, r6

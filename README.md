@@ -8,7 +8,7 @@ Tim and Thomas's 379 Lab Project
 1. [TODO](#todo)
 2. [Lab 3](#lab-3)
 3. [Lab 4](#lab-4)
-    - [Gpio Setup](#gpio_setup)
+    - [Gpio Setup](#gpio-setup)
 4. [Libary](#libary)
 
 ## TODO

@@ -11,7 +11,13 @@
 	.global read_tiva_push_button
 	.global div_and_mod
 
+colorPrompt:	.string "Enter number for color:\r\nWhite: 1\r\nRed: 2\r\nGreen: 3\r\nBlue: 4\r\nPurple: 5\r\nYellow: 6\r\n", 0
+errorPrompt:	.string "Error with subroutine", 0 ;Question to see if we can do this in this file
+
 U0FR: 	.equ 0x18	; UART0 Flag Register
+GPIODATA:	.equ 0x3FC ;data location
+GPIODIG:	.equ 0x51C ;Pin activation location
+GPIODIR:	.equ 0x400 ;Pin Direction location
 ;----------------------------------------------------------------
 ;Uart init - handles setting up connection to Uart
 ;----------------------------------------------------------------
@@ -218,15 +224,80 @@ illuminate_LEDs:
 	PUSH {r4-r12,lr}
 
 
+
 	POP {r4-r12,lr}
 	MOV pc, lr
 ;================================================================
 
 ;----------------------------------------------------------------
-;XXX - ABCDE
+;illuminate_RGB_LED: - R0 will be the address of the colors number passed through. This will return nothing but it will light up the on board LED
 ;----------------------------------------------------------------
 illuminate_RGB_LED:
-	PUSH {r4-r12,lr}
+	//Would it be smart to add in gpio Port initialization for each differnt subroutine?
+	PUSH {r4-r12,lr};The color from the colorPrompt is passed into r0 ;WE will need a color prompt sub routine too
+	BL string2int; return the number in R0
+
+
+	CMP r0, #0;checks error ;Decide with tim if we should loop in here or only print out the message and continue
+	BELT ErrorMessage;This should be an end of the road subroutine so it will stop us if there is an issue
+
+	mov r0, #0x5000 ; Getting port F loaded up
+	movt r0, #0x4002
+
+	;If white
+	CMP r0, #1
+	BEQ whiteOUT
+	;If red
+	CMP r0, #1
+	BEQ redOUT
+	;If green
+	CMP r0, #1
+	BEQ greenOUT
+	;If blue
+	CMP r0, #1
+	BEQ blueOUT
+	;If purple
+	CMP r0, #1
+	BEQ purpleOUT
+	;If yellow
+	CMP r0, #1
+	BEQ yellowOUT
+
+
+whiteOUT:
+	MOV r1, #0x7 ;should be 0111
+	STRB r1, [r0, #GPIODIR]
+	B FINALOUT
+
+redOUT:
+	MOV r1, #0x1 ;should be 0001
+	STRB r1, [r0, #GPIODIR]
+	B FINALOUT
+
+greenOUT:
+	MOV r1, #0x8 ;should be 0100
+	STRB r1, [r0, #GPIODIR]
+	B FINALOUT
+
+blueOUT:
+	MOV r1, #0x2 ;should be 0010
+	STRB r1, [r0, #GPIODIR]
+	B FINALOUT
+
+purpleOUT:
+	MOV r1, #0x7 ;should be 0011
+	STRB r1, [r0, #GPIODIR]
+	B FINALOUT
+
+yellowOUT:
+	MOV r1, #0x7 ;should be 0110 ;i have NO CLUE IF I AM ACCESSING THE PINS CORRECTLY
+	STRB r1, [r0, #GPIODIR]
+	B FINALOUT
+
+
+FINALOUT:
+
+
 
 
 	POP {r4-r12,lr}
@@ -291,5 +362,93 @@ MOD_DIV_NOT_NEG:
 	POP {r4-r12,lr}
 	MOV pc, lr
 ;================================================================
+;INT 2 STRING - stores the integer passed into the routine in r1 as a NULL terminated ASCII string in memory at the address passed into the routine in r0.
+;*****************************************************************************
+int2string:
+	PUSH {r4-r12,lr} 	;
+	;r1 int
+	;r0 string address
+	MOV r4, r1	;Storing the original integer
+	MOV r5, r0	;Storing the Strings address
+
+	;take care of negatives for divided
+	MOV r8, #1
+	EOR r8, r8, #0xFFFFFFFF ;flips bits for the string output to make it easy
+    ADD r8, r8, #1 ;adds 1 for twos comp
+	CMP r4, r8 ;comparing r4 to zero to see if we need to deal with -
+    BGT div_store
+
+    EOR r4, r4, #0xFFFFFFFF ;flips bits for the string output to make it easy
+    ADD r4, r4, #1 ;adds 1 for twos comp
+    MOV r1, #0x2D;this is a - for negative
+    STRB r1, [r5];store the string character to string address
+	ADD r5, r5, #1;increment the address by a byte
+
+div_store:
+	;divide by 100 to start
+	MOV r0, r4 ;setting divised
+	MOV r1, #100;setting divisor ;it will allow us to get the least sig decimal and change it one by one into strings
+	BL div_and_mod
+
+	ADD r0, r0, #48;takes divided and adjusts the value to represent the character so we can store this number correctly
+	MOV r4, r1;this is the division output to continue the cycle
+	STRB r0, [r5];store the string character to string address
+	ADD r5, r5, #1;increment the address by a byte
+
+	;Now divide by 10 to get our last 2 digits
+	MOV r0, r4 ;setting divised
+	MOV r1, #10;setting divisor ;it will allow us to get the least sig decimal and change it one by one into strings
+	BL div_and_mod
+
+	ADD r0, r0, #48;takes divided counter and adjusts the value to represent the character
+	ADD r1, r1, #48;takes remainder and adjusts the value to represent the character
+	STRB r0, [r5];store the string character to string address
+	ADD r5, r5, #1;increment the address by a byte
+	STRB r1, [r5];store the string character to string address
+	ADD r5, r5, #1;increment the address by a byte
+
+	MOV r4, #0x00
+	STRB r4, [r5];stores a NULL at the string address to stop the end of the string
+
+	POP {r4-r12,lr}
+	mov pc, lr
+;*****************************************************************************
+;STRING 2 INT - converts the NULL terminated ASCII string pointed to by the address passed into the routine in r0 to an integer. The integer should be returned in r0
+;*****************************************************************************
+string2int:
+	PUSH {r4-r12,lr} ; Store any registers in the range of r4 through r12
+	MOV r4, r0 		;Address of passed through string
+	MOV r5,#1
+	MOV r10, #10
+	MOV r6 , #0 	;accumnator'
+	SUB r4,r4,#1
+negFlag:
+	EOR r5, #1		;neg flag
+	ADD r4,r4,#1
+stringIntLoop:
+	LDRB r0, [r4]
+	CMP r0, #00		;Check for null terminator
+	BEQ ExitstringIntLoop
+	STRB r0, [r4]	;load char
+	CMP r0, #0x2D	;check for neg
+	BEQ negFlag
+  	SUB r0, r0, #0x30
+  	MUL r6, r6, r10
+  	ADD r6,r6, r0
+	ADD r4, #1	;incrementing 1 byte
+	B stringIntLoop
+ExitstringIntLoop:
+	CMP r5, #0x01
+	BNE stringIntSkip
+	MOV r4, #0xFFFF
+	MOVT r4,# 0xFFFF
+	EOR	r6, r6, r4
+	ADD  r6, r6, #1
+stringIntSkip:
+	MOV r0, r6
+	POP {r4-r12,lr}
+	mov pc, lr
+;*****************************************************************************
+
 
 	.end

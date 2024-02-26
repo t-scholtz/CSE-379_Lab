@@ -26,14 +26,13 @@ The sub-routine will return the string address in r1
 ## Lab 4
 
 ### Gpio Setup
-gpio_setup - Allows you top setup a connection to ports
+gpio_setup - Allows you top setup a connection to ports.
+
 Input:  
 * r0 - port (A-F|0-5)
 * r1 - port memory address
 * r2 - set pins as read or write (8bit input)[0-read 1-write]
 * r3 - set which pins are active (8bit input)[0-off  1-on]
-
-
 
 ## Libary
 

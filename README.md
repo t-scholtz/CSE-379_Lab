@@ -10,6 +10,11 @@ Tim and Thomas's 379 Lab Project
 3. [Lab 4](#lab-4)
     - [Gpio Setup](#gpio-setup)
 4. [Libary](#libary)
+    - [Div and Mod](#div-and-mod)
+    - [Read String](#read-string
+    - [Output_String](#output-string)
+    - [Int 2 String](#int2string)
+    - [String 2 Int](#string-2-int)
 
 ## TODO
 ### PortINIT
@@ -36,4 +41,27 @@ Input:
 
 ## Libary
 
+### Div and Mod
+div_and_mod which accepts two signed integers: a
+dividend in r0 and a divsor in r1and an integer returns the quotient in r0 and the remainder in r1. For
+example, if 37,192 is passed in r0 and 26 in r1, the subroutine should return 1,430 in r0 and 12 in r1. The
+remainder you return should always be positive, but the quotient should be signed. For example, if
+292,382,173 is passed in r0 and -1,894 in r1, -154,372 is returned in r0 and 1,605 is returned in r1. You
+may assume that all integers passed into the routine in r1 will be nonzero integers. 
 
+### Read String
+Reads a string entered in PuTTy and stores it as a null-terminated string in memory.
+The user terminates the string by hitting Enter. The base address of the string should be passed
+into the routine in r0. The carriage return should NOT be stored in the string
+
+### Output String
+Displays a null-terminated string in PuTTy. The base address of the string should be
+passed into the routine in r0
+
+### Int 2 String
+Stores the integer passed into the routine in r1 as a NULL terminated ASCII string in memory
+at the address passed into the routine in r0.
+
+### String 2 Int
+Converts the NULL terminated ASCII string pointed to by the address passed into the routine in
+r0 to an integer. The integer should be returned in r0. The string should not be modified by the routine.

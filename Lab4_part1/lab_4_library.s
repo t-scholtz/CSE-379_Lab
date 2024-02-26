@@ -14,10 +14,10 @@
 colorPrompt:	.string "Enter number for color:\r\nWhite: 1\r\nRed: 2\r\nGreen: 3\r\nBlue: 4\r\nPurple: 5\r\nYellow: 6\r\n", 0
 errorPrompt:	.string "Error with subroutine", 0 ;Question to see if we can do this in this file
 
-U0FR: 	.equ 0x18	; UART0 Flag Register
+U0FR: 		.equ 0x18	; UART0 Flag Register
 GPIODATA:	.equ 0x3FC ;data location
 GPIODIG:	.equ 0x51C ;Pin activation location
-GPIODIR:	.equ 0x400 ;Pin Direction location
+GPIODIR:	.equ 0x400  ;Pin Direction location
 ;----------------------------------------------------------------
 ;Uart init - handles setting up connection to Uart
 ;----------------------------------------------------------------
@@ -230,7 +230,8 @@ illuminate_LEDs:
 ;================================================================
 
 ;----------------------------------------------------------------
-;illuminate_RGB_LED: - R0 will be the address of the colors number passed through. This will return nothing but it will light up the on board LED
+;illuminate_RGB_LED: - illuminates the RBG LED
+;	input - R0 will be the address of the colors number passed through. This will return nothing but it will light up the on board LED
 ;----------------------------------------------------------------
 illuminate_RGB_LED:
 	;Would it be smart to add in gpio Port initialization for each differnt subroutine?
@@ -313,7 +314,7 @@ read_tiva_push_button:
 	PUSH {r4-r12,lr}
 	MOV r4, #0x5000		;port f memory address
 	MOVT r4 , #0x4002
-	MOV r5, #0x3FC
+	MOV r5, #GPIODATA
 	LDRB r0, [r4,r5]
 	AND r0, #0x4
 	EOR r0,r0, #0xFFFFFFFF
@@ -364,59 +365,49 @@ MOD_DIV_NOT_NEG:
 	POP {r4-r12,lr}
 	MOV pc, lr
 ;================================================================
-;INT 2 STRING - stores the integer passed into the routine in r1 as a NULL terminated ASCII string in memory at the address passed into the routine in r0.
-;*****************************************************************************
+
+;----------------------------------------------------------------
+;INT 2 STRING - converts an int to a string
+;	input - r1 - int to convert
+;		  - r0 - address to strore string as null terminalted
+;----------------------------------------------------------------
 int2string:
-	PUSH {r4-r12,lr} 	;
-	;r1 int
-	;r0 string address
+	PUSH {r4-r12,lr}
 	MOV r4, r1	;Storing the original integer
 	MOV r5, r0	;Storing the Strings address
-
-	;take care of negatives for divided
-	MOV r8, #1
-	EOR r8, r8, #0xFFFFFFFF ;flips bits for the string output to make it easy
-    ADD r8, r8, #1 ;adds 1 for twos comp
-	CMP r4, r8 ;comparing r4 to zero to see if we need to deal with -
-    BGT div_store
-
+	CMP r4, #0 ;comparing r4 to zero to see if we need to deal with -
+    BGE INT2STRING_NEG_SKIP
     EOR r4, r4, #0xFFFFFFFF ;flips bits for the string output to make it easy
     ADD r4, r4, #1 ;adds 1 for twos comp
     MOV r1, #0x2D;this is a - for negative
-    STRB r1, [r5];store the string character to string address
-	ADD r5, r5, #1;increment the address by a byte
-
-div_store:
+    STRB r1, [r5], #1 ;store the string character to string address
+INT2STRING_NEG_SKIP:
 	;divide by 100 to start
 	MOV r0, r4 ;setting divised
 	MOV r1, #100;setting divisor ;it will allow us to get the least sig decimal and change it one by one into strings
 	BL div_and_mod
-
 	ADD r0, r0, #48;takes divided and adjusts the value to represent the character so we can store this number correctly
 	MOV r4, r1;this is the division output to continue the cycle
-	STRB r0, [r5];store the string character to string address
-	ADD r5, r5, #1;increment the address by a byte
-
+	STRB r0, [r5], #1;store the string character to string address
 	;Now divide by 10 to get our last 2 digits
 	MOV r0, r4 ;setting divised
 	MOV r1, #10;setting divisor ;it will allow us to get the least sig decimal and change it one by one into strings
 	BL div_and_mod
-
 	ADD r0, r0, #48;takes divided counter and adjusts the value to represent the character
 	ADD r1, r1, #48;takes remainder and adjusts the value to represent the character
-	STRB r0, [r5];store the string character to string address
-	ADD r5, r5, #1;increment the address by a byte
-	STRB r1, [r5];store the string character to string address
-	ADD r5, r5, #1;increment the address by a byte
-
+	STRB r0, [r5], #1;store the string character to string address
+	STRB r1, [r5], #1;store the string character to string address
 	MOV r4, #0x00
 	STRB r4, [r5];stores a NULL at the string address to stop the end of the string
-
 	POP {r4-r12,lr}
-	mov pc, lr
-;*****************************************************************************
-;STRING 2 INT - converts the NULL terminated ASCII string pointed to by the address passed into the routine in r0 to an integer. The integer should be returned in r0
-;*****************************************************************************
+	MOV pc, lr
+;================================================================
+
+;----------------------------------------------------------------
+;STRING 2 INT - converts the NULL terminated ASCII string pointed
+;to by the address passed into the routine in r0 to an integer.
+;The integer should be returned in r0
+;----------------------------------------------------------------
 string2int:
 	PUSH {r4-r12,lr} ; Store any registers in the range of r4 through r12
 	MOV r4, r0 		;Address of passed through string
@@ -450,7 +441,7 @@ stringIntSkip:
 	MOV r0, r6
 	POP {r4-r12,lr}
 	mov pc, lr
-;*****************************************************************************
-
+	MOV pc, lr
+;================================================================
 
 	.end

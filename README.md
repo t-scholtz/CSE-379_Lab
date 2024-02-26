@@ -1,7 +1,7 @@
 # CSE 379 Lab Projects
 
 ## Description
-Tim and Thomas's 379 Lab Project
+Tim and Thomas's 379 collection of lab projects plus ongoing libary of functions
 
 ## Table of Contents
 
@@ -11,7 +11,7 @@ Tim and Thomas's 379 Lab Project
     - [Gpio Setup](#gpio-setup)
 4. [Libary](#libary)
     - [Div and Mod](#div-and-mod)
-    - [Read String](#read-string
+    - [Read String](#read-string)
     - [Output_String](#output-string)
     - [Int 2 String](#int2string)
     - [String 2 Int](#string-2-int)

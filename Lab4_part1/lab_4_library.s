@@ -116,13 +116,12 @@ gpio_btn_and_LED_init:
 	MOV r0, #32			;port f
 	Mov r1, #0x5000		;port f memory address
 	MOVT r1 , #0x4002
-	MOV r2, #0x07		;Pin 4 will be read - set 0 | pin 1,2,3 will be write - set 1
-	MOV r3, #0x0F		;Pin 1,2,3,4 set active
+	MOV r2, #0x0E		;Pin 4 will be read - set 0 | pin 1,2,3 will be write - set 1
+	MOV r3, #0x1E		;Pin 1,2,3,4 set active
 	BL gpio_setup
 	POP {r4-r12,lr}
 	MOV pc, lr
 ;================================================================
-
 
 ;----------------------------------------------------------------
 ;GPIO setup - help method to setup gpio communication
@@ -138,20 +137,19 @@ gpio_setup:
 	MOVT r4, #0x400F	;load clck memeory address
 	STRB r0, [r4]		;store new settings
 	;SET DIRECTION FOR EACH PIN
-	MOV r6, #0x400		;offset for data direction
+	MOV r6, #GPIODIR		;offset for data direction
 	STRB r2, [r1,r6]	;store new settings
 	;SET EACH GPIO PIN AS DIGITAL
-	MOV r6, #0x051C		;offset for data direction
+	MOV r6, #GPIODIG	;offset for data direction
 	STRB r3, [r1,r6]	;store new settings
 	;SET PULL UP RESIGIOR FOR  READ REGISTORS ***May remove this part from this subroutine in future***
-	MOV r6 , #0x510
+	MOV r6 ,#GPIOPUR
 	MVN r7,r2			;invert read/write pins
 	AND r3,r3,r7		;isolate just read pins to select for pull up registors
 	STRB r3, [r1,r6]
 	POP {r4-r12,lr}
 	MOV pc, lr
 ;================================================================
-
 
 ;----------------------------------------------------------------
 ;Output Char - Takes an ascii byte in r0 and outputs to terminal
@@ -331,10 +329,9 @@ read_tiva_push_button:
 	MOVT r4 , #0x4002
 	MOV r5, #GPIODATA
 	LDRB r0, [r4,r5]
-	AND r0, #0x4
-	EOR r0,r0, #0xFFFFFFFF
-	LSR r0,r0,#3
-
+	AND r0, #0x10 		;convert it so 1 is off and 0 is on
+	EOR r0,r0, #0x10
+	LSR r0,r0,#4
 	POP {r4-r12,lr}
 	MOV pc, lr
 ;================================================================

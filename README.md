@@ -25,6 +25,10 @@ The function returns the address of the PORT we want in r1
 prints the prompt and reads the string until it gets input from the user
 The sub-routine will return the string address in r1
 
+### ERRORFOUND
+simple subroutine that will let us know when there is an error found in our code by using an infinite loop
+//think about outputting X to the terminal repeatedly so we know as well.
+
 
 ## Lab 3
 

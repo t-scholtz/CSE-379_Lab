@@ -245,19 +245,19 @@ illuminate_RGB_LED:
 	CMP r0, #1
 	BEQ whiteOUT
 	;If red
-	CMP r0, #1
+	CMP r0, #2
 	BEQ redOUT
 	;If green
-	CMP r0, #1
+	CMP r0, #3
 	BEQ greenOUT
 	;If blue
-	CMP r0, #1
+	CMP r0, #4
 	BEQ blueOUT
 	;If purple
-	CMP r0, #1
+	CMP r0, #5
 	BEQ purpleOUT
 	;If yellow
-	CMP r0, #1
+	CMP r0, #6
 	BEQ yellowOUT
 
 

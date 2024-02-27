@@ -526,9 +526,9 @@ FINALportINIT:;comes here once we are all done and we use r1 as the port address
 ;colorPrompt - Prints the colorPrompt and reads a string from the user
 ;outputs a color number for the RGB lights to use
 ;----------------------------------------------------------------
-colorPrompt:
+colorPromptOUT:
 	PUSH {r4-r12,lr} ; Store any registers in the range of r4 through r12
-	MOV r0, ptr_to_colorPrompt
+	LDR r0, ptr_to_colorPrompt
 	BL output_string;the prompt being printed is in r0
 
 	BL read_string;the number we want is in r0
@@ -544,7 +544,7 @@ colorPrompt:
 ;----------------------------------------------------------------
 
 ERRORFOUND:
-	MOV r0, ptr_to_errorPrompt
+	LDR r0, ptr_to_errorPrompt
 	BL output_string;the prompt being printed is in r0
 
 ERRORLOOP_RUT_ROE_RAGGY

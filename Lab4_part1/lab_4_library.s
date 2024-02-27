@@ -251,7 +251,7 @@ illuminate_LEDs:
 
 ;----------------------------------------------------------------
 ;illuminate_RGB_LED: - illuminates the RBG LED
-;	input - R0 will be the address of the colors number passed through.
+;	input - R0 will be the address of the colors number passed through.//NEEDS TO BE F FOR THIS ONE
 ;			R1 will be the number of the color
 ;----------------------------------------------------------------
 illuminate_RGB_LED:
@@ -283,32 +283,32 @@ illuminate_RGB_LED:
 
 whiteOUT:
 	MOV r1, #0x7 ;should be 0111
-	STRB r1, [r0, #GPIODIR]
+	STRB r1, [r0, #GPIODATA]
 	B FINALilluminate_RGB_LED
 
 redOUT:
 	MOV r1, #0x1 ;should be 0001
-	STRB r1, [r0, #GPIODIR]
+	STRB r1, [r0, #GPIODATA]
 	B FINALilluminate_RGB_LED
 
 greenOUT:
 	MOV r1, #0x8 ;should be 0100
-	STRB r1, [r0, #GPIODIR]
+	STRB r1, [r0, #GPIODATA]
 	B FINALilluminate_RGB_LED
 
 blueOUT:
 	MOV r1, #0x2 ;should be 0010
-	STRB r1, [r0, #GPIODIR]
+	STRB r1, [r0, #GPIODATA]
 	B FINALilluminate_RGB_LED
 
 purpleOUT:
 	MOV r1, #0x7 ;should be 0011
-	STRB r1, [r0, #GPIODIR]
+	STRB r1, [r0, #GPIODATA]
 	B FINALilluminate_RGB_LED
 
 yellowOUT:
 	MOV r1, #0x7 ;should be 0110 ;i have NO CLUE IF I AM ACCESSING THE PINS CORRECTLY
-	STRB r1, [r0, #GPIODIR]
+	STRB r1, [r0, #GPIODATA]
 	B FINALilluminate_RGB_LED
 
 
@@ -320,6 +320,7 @@ FINALilluminate_RGB_LED:
 	POP {r4-r12,lr}
 	MOV pc, lr
 ;================================================================
+
 
 ;----------------------------------------------------------------
 ;Read SW1 button - return value in r0 - 1 if button is pressed

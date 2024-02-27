@@ -251,38 +251,34 @@ illuminate_LEDs:
 
 ;----------------------------------------------------------------
 ;illuminate_RGB_LED: - illuminates the RBG LED
-;	input - R0 will be the address of the colors number passed through. This will return nothing but it will light up the on board LED
+;	input - R0 will be the address of the colors number passed through.
+;			R1 will be the number of the color
 ;----------------------------------------------------------------
 illuminate_RGB_LED:
-	;Would it be smart to add in gpio Port initialization for each differnt subroutine?
 	PUSH {r4-r12,lr};The color from the colorPrompt is passed into r0 ;WE will need a color prompt sub routine too
-	BL string2int; return the number in R0
-
 
 	CMP r0, #0;checks error ;Decide with tim if we should loop in here or only print out the message and continue
-	BLS ErrorMessage;This should be an end of the road subroutine so it will stop us if there is an issue
-
-	mov r0, #0x5000 ; Getting port F loaded up
-	movt r0, #0x4002
+	BLS ERRORFOUND;This should be an end of the road subroutine so it will stop us if there is an issue
 
 	;If white
-	CMP r0, #1
+	CMP r1, #1
 	BEQ whiteOUT
 	;If red
-	CMP r0, #2
+	CMP r1, #2
 	BEQ redOUT
 	;If green
-	CMP r0, #3
+	CMP r1, #3
 	BEQ greenOUT
 	;If blue
-	CMP r0, #4
+	CMP r1, #4
 	BEQ blueOUT
 	;If purple
-	CMP r0, #5
+	CMP r1, #5
 	BEQ purpleOUT
 	;If yellow
-	CMP r0, #6
+	CMP r1, #6
 	BEQ yellowOUT
+	B ERRORFOUND;this is if no options were found; Mabye create a user error sub???
 
 
 whiteOUT:
@@ -317,8 +313,6 @@ yellowOUT:
 
 
 FINALilluminate_RGB_LED:
-
-ErrorMessage:
 
 
 
@@ -532,8 +526,13 @@ FINALportINIT:;comes here once we are all done and we use r1 as the port address
 ;colorPrompt - Prints the colorPrompt and reads a string from the user
 ;outputs a color number for the RGB lights to use
 ;----------------------------------------------------------------
+colorPrompt:
 	PUSH {r4-r12,lr} ; Store any registers in the range of r4 through r12
+	MOV r0, ptr_to_colorPrompt
+	BL output_string;the prompt being printed is in r0
 
+	BL read_string;the number we want is in r0
+	BL string2int; the integer will be in r0
 
 	POP {r4-r12,lr}
 	mov pc, lr
@@ -545,8 +544,12 @@ FINALportINIT:;comes here once we are all done and we use r1 as the port address
 ;----------------------------------------------------------------
 
 ERRORFOUND:
+	MOV r0, ptr_to_errorPrompt
+	BL output_string;the prompt being printed is in r0
+
+ERRORLOOP_RUT_ROE_RAGGY
 	ADD r1, r1, #1
-	B ERRORFOUND
+	B ERRORLOOP_RUT_ROE_RAGGY
 
 ;================================================================
 

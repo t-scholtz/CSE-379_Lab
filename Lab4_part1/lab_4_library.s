@@ -280,32 +280,33 @@ illuminate_RGB_LED:
 
 
 whiteOUT:
-	MOV r1, #0x7 ;should be 0111
+	MOV r1, #0xE ;should be 1110
 	STRB r1, [r0, #GPIODATA]
 	B FINALilluminate_RGB_LED
 
 redOUT:
-	MOV r1, #0x1 ;should be 0001
-	STRB r1, [r0, #GPIODATA]
-	B FINALilluminate_RGB_LED
-
-greenOUT:
-	MOV r1, #0x8 ;should be 0100
-	STRB r1, [r0, #GPIODATA]
-	B FINALilluminate_RGB_LED
-
-blueOUT:
 	MOV r1, #0x2 ;should be 0010
 	STRB r1, [r0, #GPIODATA]
 	B FINALilluminate_RGB_LED
 
+greenOUT:
+	MOV r1, #0x8 ;should be 1000
+	STRB r1, [r0, #GPIODATA]
+	B FINALilluminate_RGB_LED
+
+blueOUT:
+	MOV r1, #0x4 ;should be 0100
+	LDRB r2, [r0, #GPIODATA]
+	STRB r1, [r0, #GPIODATA]
+	B FINALilluminate_RGB_LED
+
 purpleOUT:
-	MOV r1, #0x7 ;should be 0011
+	MOV r1, #0x6 ;should be 0110
 	STRB r1, [r0, #GPIODATA]
 	B FINALilluminate_RGB_LED
 
 yellowOUT:
-	MOV r1, #0x7 ;should be 0110 ;i have NO CLUE IF I AM ACCESSING THE PINS CORRECTLY
+	MOV r1, #0xC ;should be 1100 ;i have NO CLUE IF I AM ACCESSING THE PINS CORRECTLY
 	STRB r1, [r0, #GPIODATA]
 	B FINALilluminate_RGB_LED
 
@@ -318,7 +319,6 @@ FINALilluminate_RGB_LED:
 	POP {r4-r12,lr}
 	MOV pc, lr
 ;================================================================
-
 
 ;----------------------------------------------------------------
 ;Read SW1 button - return value in r0 - 1 if button is pressed

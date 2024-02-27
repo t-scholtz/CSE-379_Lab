@@ -113,7 +113,7 @@ uart_init:
 gpio_btn_and_LED_init:
 	PUSH {r4-r12,lr}
 	;SET BUTTON - SW1 - Port F Pin 4 - read | SET LED - Port F pin 1,2,3 - write
-	MOV r0, #5			;port f
+	MOV r0, #32			;port f
 	Mov r1, #0x5000		;port f memory address
 	MOVT r1 , #0x4002
 	MOV r2, #0x07		;Pin 4 will be read - set 0 | pin 1,2,3 will be write - set 1

@@ -1,4 +1,5 @@
-	.text
+	.data
+
 	.global uart_init
 	.global gpio_btn_and_LED_init
 	.global output_character
@@ -13,11 +14,30 @@
 
 colorPrompt:	.string "Enter number for color:\r\nWhite: 1\r\nRed: 2\r\nGreen: 3\r\nBlue: 4\r\nPurple: 5\r\nYellow: 6\r\n", 0
 errorPrompt:	.string "Error with subroutine", 0 ;Question to see if we can do this in this file
+dividend: 		.string "Place holder string for your dividend", 0
+divisor:  		.string "Place holder string for your divisor", 0
+quotient:		.string "Your quotient is stored here", 0
+remainder:		.string "Your remainder is stored here", 0
+newLine:		.string "\r\n", 0
+askRunAgain:	.string "Would you like to run again Yes(Y) No(N)?", 0
+extmsg:			.string "End of program ※\(^o^)/※", 0
+
+	.text
 
 U0FR: 		.equ 0x18	; UART0 Flag Register
 GPIODATA:	.equ 0x3FC ;data location
 GPIODIG:	.equ 0x51C ;Pin activation location
 GPIODIR:	.equ 0x400  ;Pin Direction location
+
+ptr_to_colorPrompt:		.word colorPrompt
+ptr_to_errorPrompt:		.word errorPrompt
+ptr_to_dividend:		.word dividend
+ptr_to_divisor:			.word divisor
+ptr_to_quotient:		.word quotient
+ptr_to_remainder:		.word remainder
+ptr_to_newLine:			.word newLine
+ptr_to_runAgin:			.word askRunAgain
+ptr_to_extmsg:			.word extmsg
 ;----------------------------------------------------------------
 ;Uart init - handles setting up connection to Uart
 ;----------------------------------------------------------------
@@ -103,6 +123,7 @@ gpio_btn_and_LED_init:
 	MOV pc, lr
 ;================================================================
 
+
 ;----------------------------------------------------------------
 ;GPIO setup - help method to setup gpio communication
 ;Input: r0 - port (A-F|0-5)
@@ -130,6 +151,7 @@ gpio_setup:
 	POP {r4-r12,lr}
 	MOV pc, lr
 ;================================================================
+
 
 ;----------------------------------------------------------------
 ;Output Char - Takes an ascii byte in r0 and outputs to terminal
@@ -175,7 +197,8 @@ READLOOP:
 	BL read_character
 	CMP r0, #13
 	BEQ EXITREAD
-	STRB r0, [r4], #1
+	STRB r0, [r4]
+	ADD r4, #1	;incrementing 1 byte
 	B READLOOP
 EXITREAD:
 	MOV r0, #0
@@ -192,10 +215,11 @@ output_string:
 	PUSH {r4-r12,lr}
 	MOV r4,r0
 PRINTLOOP:
- 	LDRB r0, [r4], #1
+ 	LDRB r0, [r4]
 	CMP r0, #0x00
 	BEQ PRINTEXIT
 	BL output_character
+	ADD r4,r4 ,#1		;1 = byte not bits
 	B PRINTLOOP
 PRINTEXIT:
 	POP {r4-r12,lr}
@@ -315,6 +339,7 @@ read_tiva_push_button:
 	AND r0, #0x4
 	EOR r0,r0, #0xFFFFFFFF
 	LSR r0,r0,#3
+
 	POP {r4-r12,lr}
 	MOV pc, lr
 ;================================================================
@@ -326,35 +351,37 @@ read_tiva_push_button:
 ;----------------------------------------------------------------
 div_and_mod:
 	PUSH {r4-r12,lr}
-    MOV r4, r1 ;Sets the temp vals, this is the divisor
-    MOV r5, r0 ;Sets the temp vals, this is the number to divide, the remainder is stored in r1
-    MOV r2, #0 ;resets this the counter returned in r0
-    MOV r6, #0 ;resets
-    CMP r4, #0 ;comparing it to zero
-    BGT NEGCHECK
-    EOR r4, r4, #0xFFFFFFFF ;flips bits for the divisor
-    ADD r4, r4, #1 ;adds 1 for twos comp
-    ADD r6, r6, #1 ;For the negative sign
+        MOV r4, r1 ;Sets the temp vals, this is the divisor
+        MOV r5, r0 ;Sets the temp vals, this is the number to divide, the remainder is stored in r1
+        MOV r2, #0 ;resets this the counter returned in r0
+        MOV r6, #0 ;resets
+        MOV r7, #0xFFFF	;all ones
+        MOVT r7, #0xFFFF	;all ones
+        CMP r4, #0 ;comparing it to zero
+        BGT NEGCHECK
+        EOR r4, r4, r7 ;flips bits for the divisor
+        ADD r4, r4, #1 ;adds 1 for twos comp
+        ADD r6, r6, #1 ;For the negative sign
 NEGCHECK:
-    CMP r5, #0
-    BGT MOD_DIV_LOOP
-    EOR r5, r5, r7 ;flips bits for the divided
-    ADD r5, r5, #1
-    ADD r6, r6, #1 ;For the negative sign
+        CMP r5, #0
+        BGT MOD_DIV_LOOP
+        EOR r5, r5, r7 ;flips bits for the divided
+        ADD r5, r5, #1
+        ADD r6, r6, #1 ;For the negative sign
 MOD_DIV_LOOP:
-    CMP r5, r4
-    BLT MOD_DIV_DONE
-    SUB r5, r5, r4
-    ADD r2, r2, #1;counting up everytime something divides
-    B MOD_DIV_LOOP
+        CMP r5, r4
+        BLT MOD_DIV_DONE
+        SUB r5, r5, r4
+        ADD r2, r2, #1;counting up everytime something divides
+        B MOD_DIV_LOOP
 MOD_DIV_DONE:;checks for negative in and flip to get correct output
-    CMP r6, #1
-    BNE MOD_DIV_NOT_NEG
-    EOR r2, r2, r7 ;flips bits for the divisor
-    ADD r2, r2, #1 ;adds 1 for twos comp
+        CMP r6, #1
+        BNE MOD_DIV_NOT_NEG
+        EOR r2, r2, r7 ;flips bits for the divisor
+        ADD r2, r2, #1 ;adds 1 for twos comp
 MOD_DIV_NOT_NEG:
-    MOV r0, r2
-    MOV r1, r5
+        MOV r0, r2
+        MOV r1, r5
 	POP {r4-r12,lr}
 	MOV pc, lr
 ;================================================================
@@ -426,13 +453,101 @@ stringIntLoop:
 ExitstringIntLoop:
 	CMP r5, #0x01
 	BNE stringIntSkip
-	EOR	r6, r6, #0xFFFFFFFF
+	MOV r4, #0xFFFF
+	MOVT r4,# 0xFFFF
+	EOR	r6, r6, r4
 	ADD  r6, r6, #1
 stringIntSkip:
 	MOV r0, r6
 	POP {r4-r12,lr}
 	mov pc, lr
 	MOV pc, lr
+;================================================================
+
+;----------------------------------------------------------------
+;portINIT - SUBroutine given 1-6(A->F) to represent ports
+; The function returns the address of the port in R1
+;----------------------------------------------------------------
+portINIT:
+	PUSH {r4-r12,lr} ; Store any registers in the range of r4 through r12
+	;If A
+	CMP r0, #1
+	BEQ AOUT
+	;If B
+	CMP r0, #2
+	BEQ BOUT
+	;If C
+	CMP r0, #3
+	BEQ COUT
+	;If D
+	CMP r0, #4
+	BEQ DOUT
+	;If E
+	CMP r0, #5
+	BEQ EOUT
+	;If F
+	CMP r0, #6
+	BEQ FOUT
+	BL ERRORFOUND;in the case that we passed in a bad choice
+
+AOUT:
+	MOV r1, #0x4000 ; Getting port A loaded up
+	MOVT r1, #0x4000
+	B FINALportINIT
+
+BOUT:
+	MOV r1, #0x5000 ; Getting port B loaded up
+	MOVT r1, #0x4000
+	B FINALportINIT
+
+COUT:
+	MOV r1, #0x6000 ; Getting port C loaded up
+	MOVT r1, #0x4000
+	B FINALportINIT
+
+DOUT:
+	MOV r1, #0x7000 ; Getting port D loaded up
+	MOVT r1, #0x4000
+	B FINALportINIT
+
+EOUT:
+	MOV r1, #0x4000 ; Getting port E loaded up
+	MOVT r1, #0x4002
+	B FINALportINIT
+
+FOUT:
+	MOV r1, #0x5000 ; Getting port F loaded up
+	MOVT r1, #0x4002
+	B FINALportINIT
+
+
+FINALportINIT:;comes here once we are all done and we use r1 as the port address
+
+	POP {r4-r12,lr}
+	mov pc, lr
+	MOV pc, lr
+;================================================================
+
+;----------------------------------------------------------------
+;colorPrompt - Prints the colorPrompt and reads a string from the user
+;outputs a color number for the RGB lights to use
+;----------------------------------------------------------------
+	PUSH {r4-r12,lr} ; Store any registers in the range of r4 through r12
+
+
+	POP {r4-r12,lr}
+	mov pc, lr
+	MOV pc, lr
+;================================================================
+
+;----------------------------------------------------------------
+;ERRORFOUND - creates an infinite loop that will never finish
+;----------------------------------------------------------------
+
+ERRORFOUND:
+	ADD r1, r1, #1
+	B ERRORFOUND
+
 ;================================================================
 
 	.end

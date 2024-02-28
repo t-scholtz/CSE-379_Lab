@@ -9,6 +9,7 @@ Tim and Thomas's 379 collection of lab projects plus ongoing libary of functions
 2. [Lab 3](#lab-3)
 3. [Lab 4](#lab-4)
     - [Gpio Setup](#gpio-setup)
+    - [PortINIT](#portINIT)
 4. [Libary](#libary)
     - [Div and Mod](#div-and-mod)
     - [Read String](#read-string)
@@ -23,8 +24,12 @@ Tim and Thomas's 379 collection of lab projects plus ongoing libary of functions
 
 ## Lab 4
 ### PortINIT
-A function is given a number 1-5(A->F) in r0
-The function returns the address of the PORT we want in r1
+Subroutines takes in desired port and returns base memory address of that port
+Input:
+* r0 - port (A-F|0-5)
+
+Output:
+* r0 - memory address of port
 
 ### ColorPrompt
 prints the prompt and reads the string until it gets input from the user

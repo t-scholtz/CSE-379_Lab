@@ -11,9 +11,16 @@
 	.global illuminate_RGB_LED
 	.global read_tiva_push_button
 	.global div_and_mod
+	.global portINIT
+	.global colorPromptOUT
+	.global newLinePromptOUT
+	.global askRunAgainPromptOUT
+	.global extmsgPromptOut
+	.global startPromptOUT
+	.global startOUT
 
-colorPrompt:	.string "Enter number for color:\r\nWhite: 1\r\nRed: 2\r\nGreen: 3\r\nBlue: 4\r\nPurple: 5\r\nYellow: 6\r\n", 0
-errorPrompt:	.string "Error with subroutine", 0 ;Question to see if we can do this in this file
+colorPrompt:	.string "Enter number for color:\r\nWhite: 1\r\nRed: 2\r\nGreen: 3\r\nBlue: 4\r\nPurple: 5\r\nYellow: 6\r\nEXIT: 7\r\n", 0;WE NEED TO MAKE AN EDIT TO THE COLOR FUNCTION IN CASE they want ot exit
+errorPrompt:	.string "Error with subroutine", 0
 dividend: 		.string "Place holder string for your dividend", 0
 divisor:  		.string "Place holder string for your divisor", 0
 quotient:		.string "Your quotient is stored here", 0
@@ -21,6 +28,9 @@ remainder:		.string "Your remainder is stored here", 0
 newLine:		.string "\r\n", 0
 askRunAgain:	.string "Would you like to run again Yes(Y) No(N)?", 0
 extmsg:			.string "End of program ※\(^o^)/※", 0
+startPrompt:	.string "Choose color and hit enter before choosing which LED to turn on", 0
+start:			.string "Lab 4 - Tim and Tom!", 0
+
 
 	.text
 
@@ -36,8 +46,10 @@ ptr_to_divisor:			.word divisor
 ptr_to_quotient:		.word quotient
 ptr_to_remainder:		.word remainder
 ptr_to_newLine:			.word newLine
-ptr_to_runAgin:			.word askRunAgain
+ptr_to_askRunAgain:		.word askRunAgain
 ptr_to_extmsg:			.word extmsg
+ptr_to_startPrompt:		.word startPrompt
+ptr_to_start:			.word start
 ;----------------------------------------------------------------
 ;Uart init - handles setting up connection to Uart
 ;----------------------------------------------------------------
@@ -113,15 +125,16 @@ uart_init:
 gpio_btn_and_LED_init:
 	PUSH {r4-r12,lr}
 	;SET BUTTON - SW1 - Port F Pin 4 - read | SET LED - Port F pin 1,2,3 - write
-	MOV r0, #32			;port f
+	MOV r0, #32		;port f
 	Mov r1, #0x5000		;port f memory address
 	MOVT r1 , #0x4002
-	MOV r2, #0x0E		;Pin 4 will be read - set 0 | pin 1,2,3 will be write - set 1
-	MOV r3, #0x1E		;Pin 1,2,3,4 set active
+	MOV r2, #0x07		;Pin 4 will be read - set 0 | pin 1,2,3 will be write - set 1
+	MOV r3, #0x0F		;Pin 1,2,3,4 set active
 	BL gpio_setup
 	POP {r4-r12,lr}
 	MOV pc, lr
 ;================================================================
+
 
 ;----------------------------------------------------------------
 ;GPIO setup - help method to setup gpio communication
@@ -137,19 +150,20 @@ gpio_setup:
 	MOVT r4, #0x400F	;load clck memeory address
 	STRB r0, [r4]		;store new settings
 	;SET DIRECTION FOR EACH PIN
-	MOV r6, #GPIODIR		;offset for data direction
+	MOV r6, #0x400		;offset for data direction
 	STRB r2, [r1,r6]	;store new settings
 	;SET EACH GPIO PIN AS DIGITAL
-	MOV r6, #GPIODIG	;offset for data direction
+	MOV r6, #0x051C		;offset for data direction
 	STRB r3, [r1,r6]	;store new settings
 	;SET PULL UP RESIGIOR FOR  READ REGISTORS ***May remove this part from this subroutine in future***
-	MOV r6 ,#GPIOPUR
+	MOV r6 , #0x510
 	MVN r7,r2			;invert read/write pins
 	AND r3,r3,r7		;isolate just read pins to select for pull up registors
 	STRB r3, [r1,r6]
 	POP {r4-r12,lr}
 	MOV pc, lr
 ;================================================================
+
 
 ;----------------------------------------------------------------
 ;Output Char - Takes an ascii byte in r0 and outputs to terminal
@@ -329,9 +343,10 @@ read_tiva_push_button:
 	MOVT r4 , #0x4002
 	MOV r5, #GPIODATA
 	LDRB r0, [r4,r5]
-	AND r0, #0x10 		;convert it so 1 is off and 0 is on
-	EOR r0,r0, #0x10
-	LSR r0,r0,#4
+	AND r0, #0x4
+	EOR r0,r0, #0xFFFFFFFF
+	LSR r0,r0,#3
+
 	POP {r4-r12,lr}
 	MOV pc, lr
 ;================================================================
@@ -457,7 +472,7 @@ stringIntSkip:
 ;================================================================
 
 ;----------------------------------------------------------------
-;portINIT - SUBroutine given 1-6(A->F) to represent ports
+;portINIT - SUBroutine given 1-6(A->F) in r0 to represent ports
 ; The function returns the address of the port in R1
 ;----------------------------------------------------------------
 portINIT:
@@ -522,7 +537,7 @@ FINALportINIT:;comes here once we are all done and we use r1 as the port address
 
 ;----------------------------------------------------------------
 ;colorPrompt - Prints the colorPrompt and reads a string from the user
-;outputs a color number for the RGB lights to use
+;outputs a color number for the RGB lights to use in R1
 ;----------------------------------------------------------------
 colorPromptOUT:
 	PUSH {r4-r12,lr} ; Store any registers in the range of r4 through r12
@@ -531,6 +546,73 @@ colorPromptOUT:
 
 	BL read_string;the number we want is in r0
 	BL string2int; the integer will be in r0
+	MOV r1, r0;MOVES COLOR TO R1 where it can be used by COLORout
+
+
+	POP {r4-r12,lr}
+	mov pc, lr
+	MOV pc, lr
+;================================================================
+
+;----------------------------------------------------------------
+;newLineProptOUT - Prints the newline
+;----------------------------------------------------------------
+newLinePromptOUT:
+	PUSH {r4-r12,lr} ; Store any registers in the range of r4 through r12
+	LDR r0,  ptr_to_newLine
+	BL output_string;the prompt being printed is in r0
+
+	POP {r4-r12,lr}
+	mov pc, lr
+	MOV pc, lr
+;================================================================
+
+;----------------------------------------------------------------
+;extmsgPromptOUT - Prints the extmsg
+;----------------------------------------------------------------
+extmsgPromptOUT:
+	PUSH {r4-r12,lr} ; Store any registers in the range of r4 through r12
+	LDR r0,  ptr_to_extmsg
+	BL output_string;the prompt being printed is in r0
+
+	POP {r4-r12,lr}
+	mov pc, lr
+	MOV pc, lr
+;================================================================
+
+;----------------------------------------------------------------
+;askRunAgainPromptOUT - Prints the askRunAgain
+;----------------------------------------------------------------
+askRunAgainPromptOUT:
+	PUSH {r4-r12,lr} ; Store any registers in the range of r4 through r12
+	LDR r0, ptr_to_askRunAgain
+	BL output_string;the prompt being printed is in r0
+
+	POP {r4-r12,lr}
+	mov pc, lr
+	MOV pc, lr
+;================================================================
+
+;----------------------------------------------------------------
+;startPromptOUT - Prints the startPrompt
+;----------------------------------------------------------------
+startPromptOUT:
+	PUSH {r4-r12,lr} ; Store any registers in the range of r4 through r12
+	LDR r0,  ptr_to_startPrompt
+	BL output_string;the prompt being printed is in r0
+
+	POP {r4-r12,lr}
+	mov pc, lr
+	MOV pc, lr
+;================================================================
+
+;----------------------------------------------------------------
+;startOUT - Prints the start
+;----------------------------------------------------------------
+startOUT:
+	PUSH {r4-r12,lr} ; Store any registers in the range of r4 through r12
+	LDR r0, ptr_to_start
+	BL output_string;the prompt being printed is in r0
 
 	POP {r4-r12,lr}
 	mov pc, lr

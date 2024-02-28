@@ -17,6 +17,11 @@ Tim and Thomas's 379 collection of lab projects plus ongoing libary of functions
     - [String 2 Int](#string-2-int)
 
 ## TODO
+
+
+## Lab 3
+
+## Lab 4
 ### PortINIT
 A function is given a number 1-5(A->F) in r0
 The function returns the address of the PORT we want in r1
@@ -28,11 +33,6 @@ The sub-routine will return the string address in r1
 ### ERRORFOUND
 simple subroutine that will let us know when there is an error found in our code by using an infinite loop
 //think about outputting X to the terminal repeatedly so we know as well.
-
-
-## Lab 3
-
-## Lab 4
 
 ### Gpio Setup
 gpio_setup - Allows you top setup a connection to ports.

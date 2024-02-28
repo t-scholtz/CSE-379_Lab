@@ -310,7 +310,6 @@ ExitstringIntLoop:
 stringIntSkip:
 	MOV r0, r6
 	POP {r4-r12,lr}
-	mov pc, lr
 	MOV pc, lr
 ;================================================================
 
@@ -338,9 +337,7 @@ E2F:
 	MOVT r1, #0x4002
 	B FINALportINIT
 FINALportINIT:;comes here once we are all done and we use r1 as the port address
-
 	POP {r4-r12,lr}
-	mov pc, lr
 	MOV pc, lr
 ;================================================================
 
@@ -352,12 +349,9 @@ colorPromptOUT:
 	PUSH {r4-r12,lr} ; Store any registers in the range of r4 through r12
 	LDR r0, ptr_to_colorPrompt
 	BL output_string;the prompt being printed is in r0
-
 	BL read_string;the number we want is in r0
 	BL string2int; the integer will be in r0
-
 	POP {r4-r12,lr}
-	mov pc, lr
 	MOV pc, lr
 ;================================================================
 

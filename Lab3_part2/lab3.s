@@ -11,7 +11,7 @@ dividend: 	.string "Place holder string for your dividend", 0
 divisor:  	.string "Place holder string for your divisor", 0
 quotient:	.string "Your quotient is stored here", 0
 remainder:	.string "Your remainder is stored here", 0
-newLine:	.string "\r\n", 0
+newLine:	.byte "\r\n", 0
 askRunAgain:.string "Would you like to run again Yes(Y) No(N)?", 0
 start:	.string "Lab 3 - Tim and Tom!", 0
 extmsg:	.string "End of program ※\(^o^)/※", 0

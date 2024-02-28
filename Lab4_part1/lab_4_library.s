@@ -100,13 +100,21 @@ gpio_setup:
 ;================================================================
 
 ;----------------------------------------------------------------
-;XXX - ABCDE
+;read_from_push_btns - reads the momentary push buttons
+;Output: r0 - 4bit value with MSB -> button 2, LSB -> button 5
 ;----------------------------------------------------------------
 read_from_push_btns:
 	PUSH {r4-r12,lr}
-
-
+	MOV r0,#3
+	BL portINIT
+	MOV r5, #GPIODATA
+	LDRB r0, [r4,r5]
+	AND r0, #0x3C 		;convert it so 1 is off and 0 is on
+	EOR r0,r0, #0x3C
+	LSR r0,r0,#2
+	;TODO flip bits around right now 5,4,3,2  - need 2,3,4,5
 	POP {r4-r12,lr}
+	MOV pc, lr
 	MOV pc, lr
 ;================================================================
 

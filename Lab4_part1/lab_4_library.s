@@ -238,8 +238,8 @@ MOD_DIV_DONE:;checks for negative in and flip to get correct output
         EOR r2, r2, #0xFFFFFFFF ;flips bits for the divisor
         ADD r2, r2, #1 ;adds 1 for twos comp
 MOD_DIV_NOT_NEG:
-        MOV r0, r2
-        MOV r1, r5
+	MOV r0, r2
+	MOV r1, r5
 	POP {r4-r12,lr}
 	MOV pc, lr
 ;================================================================
@@ -254,11 +254,11 @@ int2string:
 	MOV r4, r1	;Storing the original integer
 	MOV r5, r0	;Storing the Strings address
 	CMP r4, #0 ;comparing r4 to zero to see if we need to deal with -
-    BGE INT2STRING_NEG_SKIP
-    EOR r4, r4, #0xFFFFFFFF ;flips bits for the string output to make it easy
-    ADD r4, r4, #1 ;adds 1 for twos comp
-    MOV r1, #0x2D;this is a - for negative
-    STRB r1, [r5], #1 ;store the string character to string address
+	BGE INT2STRING_NEG_SKIP
+	EOR r4, r4, #0xFFFFFFFF ;flips bits for the string output to make it easy
+	ADD r4, r4, #1 ;adds 1 for twos comp
+	MOV r1, #0x2D;this is a - for negative
+	STRB r1, [r5], #1 ;store the string character to string address
 INT2STRING_NEG_SKIP:
 	;divide by 100 to start
 	MOV r0, r4 ;setting divised

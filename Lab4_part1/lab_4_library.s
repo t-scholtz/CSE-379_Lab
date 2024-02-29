@@ -321,7 +321,7 @@ portINIT:
 	CMP r0, #6
 	BEQ E2F
 	BL ERRORFOUND;in the case that we passed in a bad choice
-A2D;
+A2D:
 	MOV r1, #0x4000 ; Getting port D loaded up
 	ADD r1,r1 ,r0, LSL #3
 	MOVT r1, #0x4000

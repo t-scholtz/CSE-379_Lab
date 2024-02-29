@@ -24,7 +24,7 @@ U0FR: 		.equ 0x18	; UART0 Flag Register
 GPIODATA:	.equ 0x3FC ;data location
 GPIODIG:	.equ 0x51C ;Pin activation location
 GPIODIR:	.equ 0x400  ;Pin Direction location
-GPIOPUR 	.equ 0x510	;Pull-Up Resistor
+GPIOPUR: 	.equ 0x510	;Pull-Up Resistor
 
 
 ;----------------------------------------------------------------

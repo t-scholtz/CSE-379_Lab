@@ -106,11 +106,21 @@ read_from_push_btns:
 ;================================================================
 
 ;----------------------------------------------------------------
-;XXX - ABCDE
+;illuminate_LEDs:	-illuminates the sister board LEDs
+;			input   -half a byte in r0 describing what LEDs to light up
+;			output	-LED light
 ;----------------------------------------------------------------
 illuminate_LEDs:
 	PUSH {r4-r12,lr}
 
+	MOV r4, r0			;keep safe this is the half byte
+	MOV r0, #2			;port B
+	BL portINIT			;B address in reg R1
+
+	;Store LED data
+	LDR r2, [r1, GPIODATA] ;grabs data
+	EOR r2, r2, r4			   ;this will give us new pins to be lit up or not
+	STR r2, [r1, GPIODATA] ;stores the data to the same place
 
 
 	POP {r4-r12,lr}

@@ -211,32 +211,32 @@ read_tiva_push_button:
 ;----------------------------------------------------------------
 div_and_mod:
 	PUSH {r4-r12,lr}
-        MOV r4, r1 ;Sets the temp vals, this is the divisor
-        MOV r5, r0 ;Sets the temp vals, this is the number to divide, the remainder is stored in r1
-        MOV r2, #0 ;resets this the counter returned in r0
-        MOV r6, #0 ;resets
-        CMP r4, #0 ;comparing it to zero
-        BGT NEGCHECK
-        EOR r4, r4, #0xFFFFFFFF ;flips bits for the divisor
-        ADD r4, r4, #1 ;adds 1 for twos comp
-        ADD r6, r6, #1 ;For the negative sign
+	MOV r4, r1 ;Sets the temp vals, this is the divisor
+	MOV r5, r0 ;Sets the temp vals, this is the number to divide, the remainder is stored in r1
+	MOV r2, #0 ;resets this the counter returned in r0
+	MOV r6, #0 ;resets
+	CMP r4, #0 ;comparing it to zero
+	BGT NEGCHECK
+	EOR r4, r4, #0xFFFFFFFF ;flips bits for the divisor
+	ADD r4, r4, #1 ;adds 1 for twos comp
+	ADD r6, r6, #1 ;For the negative sign
 NEGCHECK:
-        CMP r5, #0
-        BGT MOD_DIV_LOOP
-        EOR r5, r5, #0xFFFFFFFF ;flips bits for the divided
-        ADD r5, r5, #1
-        ADD r6, r6, #1 ;For the negative sign
+	CMP r5, #0
+	BGT MOD_DIV_LOOP
+	EOR r5, r5, #0xFFFFFFFF ;flips bits for the divided
+	ADD r5, r5, #1
+	ADD r6, r6, #1 ;For the negative sign
 MOD_DIV_LOOP:
-        CMP r5, r4
-        BLT MOD_DIV_DONE
-        SUB r5, r5, r4
-        ADD r2, r2, #1;counting up everytime something divides
-        B MOD_DIV_LOOP
+	CMP r5, r4
+	BLT MOD_DIV_DONE
+	SUB r5, r5, r4
+	ADD r2, r2, #1;counting up everytime something divides
+	B MOD_DIV_LOOP
 MOD_DIV_DONE:;checks for negative in and flip to get correct output
-        CMP r6, #1
-        BNE MOD_DIV_NOT_NEG
-        EOR r2, r2, #0xFFFFFFFF ;flips bits for the divisor
-        ADD r2, r2, #1 ;adds 1 for twos comp
+	CMP r6, #1
+	BNE MOD_DIV_NOT_NEG
+	EOR r2, r2, #0xFFFFFFFF ;flips bits for the divisor
+	ADD r2, r2, #1 ;adds 1 for twos comp
 MOD_DIV_NOT_NEG:
 	MOV r0, r2
 	MOV r1, r5

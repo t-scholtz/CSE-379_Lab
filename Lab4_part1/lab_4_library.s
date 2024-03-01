@@ -11,6 +11,8 @@
 	.global illuminate_RGB_LED
 	.global read_tiva_push_button
 	.global div_and_mod
+	.global int2string
+	.global string2int
 
 errorPrompt:	.string "Error with subroutine", 0 ;Question to see if we can do this in this file
 newLine:		.byte 0x0D, 0x0A , 0x00,  0x00
@@ -33,6 +35,11 @@ GPIOPUR: 	.equ 0x510	;Pull-Up Resistor
 ;----------------------------------------------------------------
 gpio_btn_and_LED_init:
 	PUSH {r4-r12,lr}
+	;SET CLCK TO 000
+	MOV r4,#0xE608
+	MOVT r4, #0x400F	;load clck memeory address
+	MOV r0, #0x0000
+	STRB r0, [r4]
 	;SET BUTTON - SW1 - Port F Pin 4 - read | SET LED - Port F pin 1,2,3 - write
 	MOV r0, #32			;port f
 	MOV r1, #0x5000		;port f memory address
@@ -40,12 +47,14 @@ gpio_btn_and_LED_init:
 	MOV r2, #0x0E		;Pin 4 will be read - set 0 | pin 1,2,3 will be write - set 1
 	MOV r3, #0x1E		;Pin 1,2,3,4 set active
 	BL gpio_setup
+	MOV r0, #0x10		;pull up registors
+	STRB r3, [r1,#GPIOPUR]
 	;SET BUTTONS ON ALICE Swithes 2-5 - port D Pins 0-3
 	MOV r0, #8			;port d
 	MOV r1, #0x7000		;port d memory address
 	MOVT r1 , #0x4000
 	MOV r2, #0x00		;Pin 2-5 will be read - set 0
-	MOV r3, #0x3C		;Pin 2-5 set active
+	MOV r3, #0x0		;Pin 2-5 set active
 	BL gpio_setup
 	;SET LEDS ON ALICE - port B Pins 0-3
 	MOV r0, #2			;port b
@@ -70,18 +79,16 @@ gpio_setup:
 	;SET CLOCK
 	MOV r4,#0xE608
 	MOVT r4, #0x400F	;load clck memeory address
+	LDRB r9, [r4]
+	ORR r0,r0,r9
+	NOP
 	STRB r0, [r4]		;store new settings
-	;SET DIRECTION FOR EACH PIN
-	MOV r6, #GPIODIR		;offset for data direction
-	STRB r2, [r1,r6]	;store new settings
+	NOP
+	NOP
+	;SET DIRECTION FOR EACH PIN		;offset for data direction
+	STRB r2, [r1, #GPIODIR]	;store new settings
 	;SET EACH GPIO PIN AS DIGITAL
-	MOV r6, #GPIODIG	;offset for data direction
-	STRB r3, [r1,r6]	;store new settings
-	;SET PULL UP RESIGIOR FOR  READ REGISTORS ***May remove this part from this subroutine in future***
-	MOV r6 ,#GPIOPUR
-	MVN r7,r2			;invert read/write pins
-	AND r3,r3,r7		;isolate just read pins to select for pull up registors
-	STRB r3, [r1,r6]
+	STRB r3, [r1,#GPIODIG]	;store new settings
 	POP {r4-r12,lr}
 	MOV pc, lr
 ;================================================================
@@ -94,14 +101,12 @@ read_from_push_btns:
 	PUSH {r4-r12,lr}
 	MOV r0,#3
 	BL portINIT
-	MOV r5, #GPIODATA
-	LDRB r0, [r4,r5]
+	LDRB r0, [r4,#GPIODATA]
 	AND r0, #0x3C 		;convert it so 1 is off and 0 is on
 	EOR r0,r0, #0x3C
 	LSR r0,r0,#2
 	;TODO flip bits around right now 5,4,3,2  - need 2,3,4,5
 	POP {r4-r12,lr}
-	MOV pc, lr
 	MOV pc, lr
 ;================================================================
 
@@ -112,16 +117,13 @@ read_from_push_btns:
 ;----------------------------------------------------------------
 illuminate_LEDs:
 	PUSH {r4-r12,lr}
-
 	MOV r4, r0			;keep safe this is the half byte
-	MOV r0, #2			;port B
+	MOV r0, #1			;port B
 	BL portINIT			;B address in reg R1
-
 	;Store LED data
-	LDR r2, [r1, GPIODATA] ;grabs data
+	LDRB r2, [r1, #GPIODATA] ;grabs data 
 	EOR r2, r2, r4			   ;this will give us new pins to be lit up or not
-	STR r2, [r1, GPIODATA] ;stores the data to the same place
-
+	STRB r2, [r1, #GPIODATA] ;stores the data to the same place
 
 	POP {r4-r12,lr}
 	MOV pc, lr
@@ -130,14 +132,12 @@ illuminate_LEDs:
 ;----------------------------------------------------------------
 ;illuminate_RGB_LED: - illuminates the RBG LED
 ;	input - R0 will be the address of the colors number passed through.//NEEDS TO BE F FOR THIS ONE
-;			R1 will be the number of the color
+;		  - R1 input color
 ;----------------------------------------------------------------
 illuminate_RGB_LED:
 	PUSH {r4-r12,lr};The color from the colorPrompt is passed into r0 ;WE will need a color prompt sub routine too
-
-	CMP r0, #0;checks error ;Decide with tim if we should loop in here or only print out the message and continue
+	CMP r1, #0;checks error ;Decide with tim if we should loop in here or only print out the message and continue
 	BLS ERRORFOUND;This should be an end of the road subroutine so it will stop us if there is an issue
-
 	;If white
 	CMP r1, #1
 	BEQ whiteOUT
@@ -195,8 +195,7 @@ read_tiva_push_button:
 	PUSH {r4-r12,lr}
 	MOV r4, #0x5000		;port f memory address
 	MOVT r4 , #0x4002
-	MOV r5, #GPIODATA
-	LDRB r0, [r4,r5]
+	LDRB r0, [r4,#GPIODATA]
 	AND r0, #0x10 		;convert it so 1 is off and 0 is on
 	EOR r0,r0, #0x10
 	LSR r0,r0,#4
@@ -211,35 +210,35 @@ read_tiva_push_button:
 ;----------------------------------------------------------------
 div_and_mod:
 	PUSH {r4-r12,lr}
-	MOV r4, r1 ;Sets the temp vals, this is the divisor
-	MOV r5, r0 ;Sets the temp vals, this is the number to divide, the remainder is stored in r1
-	MOV r2, #0 ;resets this the counter returned in r0
-	MOV r6, #0 ;resets
-	CMP r4, #0 ;comparing it to zero
-	BGT NEGCHECK
-	EOR r4, r4, #0xFFFFFFFF ;flips bits for the divisor
-	ADD r4, r4, #1 ;adds 1 for twos comp
-	ADD r6, r6, #1 ;For the negative sign
+    MOV r4, r1 ;Sets the temp vals, this is the divisor
+    MOV r5, r0 ;Sets the temp vals, this is the number to divide, the remainder is stored in r1
+    MOV r2, #0 ;resets this the counter returned in r0
+    MOV r6, #0 ;resets
+    CMP r4, #0 ;comparing it to zero
+    BGT NEGCHECK
+    EOR r4, r4, #0xFFFFFFFF ;flips bits for the divisor
+    ADD r4, r4, #1 ;adds 1 for twos comp
+    ADD r6, r6, #1 ;For the negative sign
 NEGCHECK:
-	CMP r5, #0
-	BGT MOD_DIV_LOOP
-	EOR r5, r5, #0xFFFFFFFF ;flips bits for the divided
-	ADD r5, r5, #1
-	ADD r6, r6, #1 ;For the negative sign
+    CMP r5, #0
+    BGT MOD_DIV_LOOP
+    EOR r5, r5, #0xFFFFFFFF ;flips bits for the divided
+    ADD r5, r5, #1
+    ADD r6, r6, #1 ;For the negative sign
 MOD_DIV_LOOP:
-	CMP r5, r4
-	BLT MOD_DIV_DONE
-	SUB r5, r5, r4
-	ADD r2, r2, #1;counting up everytime something divides
-	B MOD_DIV_LOOP
+    CMP r5, r4
+    BLT MOD_DIV_DONE
+    SUB r5, r5, r4
+    ADD r2, r2, #1;counting up everytime something divides
+    B MOD_DIV_LOOP
 MOD_DIV_DONE:;checks for negative in and flip to get correct output
-	CMP r6, #1
+    CMP r6, #1
 	BNE MOD_DIV_NOT_NEG
-	EOR r2, r2, #0xFFFFFFFF ;flips bits for the divisor
-	ADD r2, r2, #1 ;adds 1 for twos comp
+    EOR r2, r2, #0xFFFFFFFF ;flips bits for the divisor
+    ADD r2, r2, #1 ;adds 1 for twos comp
 MOD_DIV_NOT_NEG:
-	MOV r0, r2
-	MOV r1, r5
+    MOV r0, r2
+    MOV r1, r5
 	POP {r4-r12,lr}
 	MOV pc, lr
 ;================================================================
@@ -254,11 +253,11 @@ int2string:
 	MOV r4, r1	;Storing the original integer
 	MOV r5, r0	;Storing the Strings address
 	CMP r4, #0 ;comparing r4 to zero to see if we need to deal with -
-	BGE INT2STRING_NEG_SKIP
-	EOR r4, r4, #0xFFFFFFFF ;flips bits for the string output to make it easy
-	ADD r4, r4, #1 ;adds 1 for twos comp
-	MOV r1, #0x2D;this is a - for negative
-	STRB r1, [r5], #1 ;store the string character to string address
+    BGE INT2STRING_NEG_SKIP
+    EOR r4, r4, #0xFFFFFFFF ;flips bits for the string output to make it easy
+    ADD r4, r4, #1 ;adds 1 for twos comp
+    MOV r1, #0x2D;this is a - for negative
+    STRB r1, [r5], #1 ;store the string character to string address
 INT2STRING_NEG_SKIP:
 	;divide by 100 to start
 	MOV r0, r4 ;setting divised
@@ -291,7 +290,7 @@ string2int:
 	MOV r4, r0 		;Address of passed through string
 	MOV r5,#1
 	MOV r10, #10
-	MOV r6 , #0 	;accumnator'
+	MOV r6 , #0 	;accumnator
 	SUB r4,r4,#1
 negFlag:
 	EOR r5, #1		;neg flag
@@ -325,7 +324,7 @@ stringIntSkip:
 portINIT:
 	PUSH {r4-r12,lr}
 	CMP r0, #0
-	BL ERRORFOUND
+	BLE ERRORFOUND
 	CMP r0, #4
 	BLE A2D
 	CMP r0, #6
@@ -333,7 +332,7 @@ portINIT:
 	BL ERRORFOUND;in the case that we passed in a bad choice
 A2D:
 	MOV r1, #0x4000 ; Getting port D loaded up
-	ADD r1,r1 ,r0, LSL #3
+	ADD r1,r1 ,r0, LSL #12
 	MOVT r1, #0x4000
 	B FINALportINIT
 E2F:
@@ -424,6 +423,7 @@ uart_init:
 ;----------------------------------------------------------------
 output_character:
 	PUSH {r4-r12,lr}
+	MOV r4,#0xC000
     MOVT r4, #0x4000	;Load Memory address into r4
 WAIT2OUTPUT:			;loop to keep waiting for flag to be flipped
 	LDRB r5, [r4, #U0FR];load uart flag registor into r5

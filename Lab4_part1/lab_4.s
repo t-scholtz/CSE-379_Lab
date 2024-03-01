@@ -27,6 +27,7 @@ extmsg:			.string "End of program ※\(^o^)/※", 0
 btnPrompt: 		.string "Checking if button was pressed",0
 btnPressed:		.string "You Pressed the button!",0
 btnNotPressed:	.string "The button was untouched",0
+usrInput:		.string "buffer for user input",0
 
 	.text
 
@@ -39,6 +40,7 @@ ptr_to_extmsg:			.word extmsg
 ptr_to_btnPrompt:		.word btnPrompt
 ptr_to_btnPressed:		.word btnPressed
 ptr_to_btnNotPressed:	.word btnNotPressed
+ptr_to_usrInput:		.word usrInput
 
 lab4:
 	PUSH {r4-r12,lr}
@@ -55,9 +57,13 @@ LOOP:
 	LDR r0, ptr_to_programPrompt
 	MVN r1, #1					;new line at end of str
 	BL output_string
+	LDR r0, ptr_to_usrInput
+	BL read_string
+	LDR r0, ptr_to_usrInput
+	BL string2int			;Get usr input and convert it to a number
 
 	CMP r0, #1
-	BEQ colorPromptOUT
+	BEQ colourSelector
 
 	CMP r0, #2
 	BEQ onBoardLEDsOUT
@@ -73,12 +79,12 @@ LOOP:
 	B ERRORFOUND
 
 
-colorPromptOUT:
+colourSelector:
 ;Print list of colours, get usr input and update the led to the appropriate colour
-
+	B LOOP
 
 onBoardLEDsOUT:
-
+	B LOOP
 
 buttonBitOUT:
 ;Prints out where button was printed was
@@ -96,9 +102,9 @@ BUTTONPUSHED:
 EXITBUTTONPUSHED:
 	MVN r1, #1					;new line at end of str
 	BL output_string
-
+	B LOOP
 sisterButtonsBitOUT:
-
+	B LOOP
 
 exitRoutine:
 ENDOFLAB:

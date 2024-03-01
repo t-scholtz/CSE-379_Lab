@@ -61,6 +61,9 @@ LOOP:
 	LDR r0, ptr_to_usrInput
 	BL read_string
 	LDR r0, ptr_to_usrInput
+	MVN r1, #1
+	BL output_string
+	LDR r0, ptr_to_usrInput
 	BL string2int			;Get usr input and convert it to a number
 
 	CMP r0, #1
@@ -98,10 +101,10 @@ buttonBitOUT:
 	BL read_tiva_push_button
 	CMP r0, #1
 	BEQ BUTTONPUSHED
-	LDR r0, ptr_to_btnPressed
+	LDR r0, ptr_to_btnNotPressed
 	B EXITBUTTONPUSHED
 BUTTONPUSHED:
-	LDR r0, ptr_to_btnNotPressed
+	LDR r0, ptr_to_btnPressed
 	B EXITBUTTONPUSHED
 EXITBUTTONPUSHED:
 	MVN r1, #1					;new line at end of str
@@ -129,7 +132,10 @@ colorPromptOUT:
 	MVN r1, #1
 	BL output_string				;the prompt being printed is in r0
 	LDR r0, ptr_to_usrInput
-	BL read_string					;the number we want is in r0
+	BL read_string
+	LDR r0, ptr_to_usrInput
+	MVN r1, #1
+	BL output_string				;the number we want is in r0
 	LDR r0, ptr_to_usrInput
 	BL string2int					; the integer will be in r0
 	MOV r4, r0 						;KEEP SAFE

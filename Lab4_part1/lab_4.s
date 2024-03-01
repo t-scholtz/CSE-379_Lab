@@ -13,14 +13,20 @@
 	.global lab4
 	.global int2string
 	.global string2int
+	.global ERRORFOUND
+	.global LOOP
+	.global colorPromptOUT
 
 
-colorPrompt:	.string "Enter number for color:\r\nWhite: 1\r\nRed: 2\r\nGreen: 3\r\nBlue: 4\r\nPurple: 5\r\nYellow: 6\r\n", 0
-programPrompt   .string "Enter number for program:\r\nilluminate_RGB_LED: 1\r\nilluminate_LEDs: 2\r\nread_tiva_push_button: 3\r\nread_from_push_btns: 4\r\n",0
+colorPrompt:	.string "Enter number for color:",0x0D, 0x0A,"White: 1",0x0D, 0x0A,"Red: 2",0x0D, 0x0A,"Green: 3",0x0D, 0x0A,"Blue: 4",0x0D, 0x0A,"Purple: 5",0x0D, 0x0A,"Yellow: 6",0x0D, 0x0A, 0
+programPrompt   .string "Enter number for program:",0x0D, 0x0A,"illuminate_RGB_LED: 1",0x0D, 0x0A,"illuminate_LEDs: 2",0x0D, 0x0A,"read_tiva_push_button: 3",0x0D, 0x0A,"read_from_push_btns: 4",0x0D, 0x0A,"Exit Program: 5",0
 startPrompt:	.string "Lab 4 - Tom and Tim",0
 answers			.string "Store answers here",0
 askRunAgain:	.string "Would you like to run again Yes(Y) No(N)?", 0
 extmsg:			.string "End of program ※\(^o^)/※", 0
+btnPrompt: 		.string "Checking if button was pressed",0
+btnPressed:		.string "You Pressed the button!",0
+btnNotPressed:	.string "The button was untouched",0
 
 	.text
 
@@ -30,6 +36,9 @@ ptr_to_startPromt:		.word startPrompt
 ptr_to_answers:			.word answers
 ptr_to_runAgin:			.word askRunAgain
 ptr_to_extmsg:			.word extmsg
+ptr_to_btnPrompt:		.word btnPrompt
+ptr_to_btnPressed:		.word btnPressed
+ptr_to_btnNotPressed:	.word btnNotPressed
 
 lab4:
 	PUSH {r4-r12,lr}
@@ -44,15 +53,11 @@ lab4:
 	;We want to give the user the option to test functionality
 LOOP:
 	LDR r0, ptr_to_programPrompt
-	MOV r1, #0					;new line at end of str
+	MVN r1, #1					;new line at end of str
 	BL output_string
-	LDR r0, ptr_to_answers		;Store the user input here
-	BL read_string				;finds their choice
-	LDR r0, ptr_to_answers		;loads user input before converting it to int
-	BL string2int				;return number and stores it in R0
 
 	CMP r0, #1
-	BEQ colorpromptOUT
+	BEQ colorPromptOUT
 
 	CMP r0, #2
 	BEQ onBoardLEDsOUT
@@ -63,26 +68,45 @@ LOOP:
 	CMP r0, #4
 	BEQ sisterButtonsBitOUT
 
+	CMP r0, #5
+	BEQ exitRoutine
 	B ERRORFOUND
 
 
-colorPromptOUT:					;print out the color prompt and light up LED on board
+colorPromptOUT:
+;Print list of colours, get usr input and update the led to the appropriate colour
+
 
 onBoardLEDsOUT:
 
-onBoardLEDsOUT:
+
+buttonBitOUT:
+;Prints out where button was printed was
+	LDR r0, ptr_to_btnPrompt
+	MVN r1, #1					;new line at end of str
+	BL output_string
+	BL read_tiva_push_button
+	CMP r0, #1
+	BEQ BUTTONPUSHED
+	LDR r0, ptr_to_btnPressed
+	B EXITBUTTONPUSHED
+BUTTONPUSHED:
+	LDR r0, ptr_to_btnNotPressed
+	B EXITBUTTONPUSHED
+EXITBUTTONPUSHED:
+	MVN r1, #1					;new line at end of str
+	BL output_string
 
 sisterButtonsBitOUT:
 
 
+exitRoutine:
 ENDOFLAB:
 	LDR r0, ptr_to_extmsg
 	MVN r1, #1				;new line at end of str
 	BL output_string
-
 	POP {r4-r12,lr}
 	MOV pc, lr
-
 
 
 ;----------------------------------------------------------------
@@ -99,4 +123,4 @@ colorPromptOUT:
 	MOV pc, lr
 ;================================================================
 
-	.end
+.end

@@ -21,7 +21,7 @@
 
 
 colorPrompt:	.string "Enter number for color:",0x0D, 0x0A,"White: 1",0x0D, 0x0A,"Red: 2",0x0D, 0x0A,"Green: 3",0x0D, 0x0A,"Blue: 4",0x0D, 0x0A,"Purple: 5",0x0D, 0x0A,"Yellow: 6",0x0D, 0x0A, 0
-programPrompt   .string "Enter number for program:",0x0D, 0x0A,"illuminate_RGB_LED: 1",0x0D, 0x0A,"illuminate_LEDs: 2",0x0D, 0x0A,"read_tiva_push_button: 3",0x0D, 0x0A,"read_from_push_btns: 4",0x0D, 0x0A,"Exit Program: 5",0
+programPrompt   .string "Enter number for program:",0x0D, 0x0A,"illuminate_RGB_LED: 1",0x0D, 0x0A,"illuminate_LEDs: 2 (Hold Alice button to toggle LEDs)",0x0D, 0x0A,"read_tiva_push_button: 3 (Hold button down)",0x0D, 0x0A,"read_from_push_btns: 4 (Hold buttons down)",0x0D, 0x0A,"Exit Program: 5",0
 startPrompt:	.string "Lab 4 - Tom and Tim",0
 answers			.string "Store answers here",0
 askRunAgain:	.string "Would you like to run again Yes(Y) No(N)?", 0
@@ -127,7 +127,6 @@ EXITBUTTONPUSHED:
 	B LOOP
 sisterButtonsBitOUT:
 	BL read_from_push_btns
-	MOV r0,#0xF0F0
 	MOV r1,#4
 	BL printBits
 	B LOOP

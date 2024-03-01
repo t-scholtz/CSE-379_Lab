@@ -59,13 +59,19 @@ LOOP:
 
 	CMP r0, #3
 	BEQ buttonBitOUT
-	B	sisterButtonsBitOUT
 
-	B LOOP;resets
+	CMP r0, #4
+	BEQ sisterButtonsBitOUT
 
-colorPromptOUT:
+	B ERRORFOUND
+
+
+colorPromptOUT:					;print out the color prompt and light up LED on board
+
 onBoardLEDsOUT:
+
 onBoardLEDsOUT:
+
 sisterButtonsBitOUT:
 
 

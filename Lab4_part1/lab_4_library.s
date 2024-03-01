@@ -13,6 +13,8 @@
 	.global div_and_mod
 	.global int2string
 	.global string2int
+	.global ERRORFOUND
+	.global LOOP
 
 errorPrompt:	.string "Error with subroutine", 0 ;Question to see if we can do this in this file
 newLine:		.byte 0x0D, 0x0A , 0x00,  0x00
@@ -121,7 +123,7 @@ illuminate_LEDs:
 	MOV r0, #1			;port B
 	BL portINIT			;B address in reg R1
 	;Store LED data
-	LDRB r2, [r1, #GPIODATA] ;grabs data 
+	LDRB r2, [r1, #GPIODATA] ;grabs data
 	EOR r2, r2, r4			   ;this will give us new pins to be lit up or not
 	STRB r2, [r1, #GPIODATA] ;stores the data to the same place
 
@@ -354,10 +356,7 @@ FINALportINIT:;comes here once we are all done and we use r1 as the port address
 ERRORFOUND:
 	LDR r0, ptr_to_errorPrompt
 	BL output_string;the prompt being printed is in r0
-
-ERRORLOOP_RUT_ROE_RAGGY
-	ADD r1, r1, #1
-	B ERRORLOOP_RUT_ROE_RAGGY
+	B LOOP
 
 ;================================================================
 

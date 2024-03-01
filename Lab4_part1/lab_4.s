@@ -90,8 +90,12 @@ colourSelector:
 	B LOOP
 
 onBoardLEDsOUT:
+;depending on the button currently held down it will power up LED's
+	BL read_from_push_btns
+	BL illuminate_LEDs
 
 	B LOOP
+
 
 buttonBitOUT:
 ;Prints out where button was printed was

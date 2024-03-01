@@ -81,9 +81,12 @@ LOOP:
 
 colourSelector:
 ;Print list of colours, get usr input and update the led to the appropriate colour
+	BL colorPromptOUT
+
 	B LOOP
 
 onBoardLEDsOUT:
+
 	B LOOP
 
 buttonBitOUT:
@@ -120,11 +123,24 @@ ENDOFLAB:
 ;outputs a color number for the RGB lights to use
 ;----------------------------------------------------------------
 colorPromptOUT:
-	PUSH {r4-r12,lr} ; Store any registers in the range of r4 through r12
+	PUSH {r4-r12,lr} 				; Store any registers in the range of r4 through r12
 	LDR r0, ptr_to_colorPrompt
-	BL output_string;the prompt being printed is in r0
-	BL read_string;the number we want is in r0
-	BL string2int; the integer will be in r0
+	MVN r1, #1
+	BL output_string				;the prompt being printed is in r0
+	LDR r0, ptr_to_usrInput
+	BL read_string					;the number we want is in r0
+	LDR r0, ptr_to_usrInput
+	BL string2int					; the integer will be in r0
+	MOV r4, r0 						;KEEP SAFE
+
+	;Now that we have the users choice we are gonna print it out on the board
+	MOV r0, #6
+	BL PORTINIT						;address we want in r1
+	MOV r0, r4						;color number we want
+	
+	;Now light up
+	BL illuminate_RGB_LED
+
 	POP {r4-r12,lr}
 	MOV pc, lr
 ;================================================================

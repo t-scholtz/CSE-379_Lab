@@ -13,6 +13,7 @@
 	.global div_and_mod
 	.global int2string
 	.global string2int
+	.global portINIT
 	.global ERRORFOUND
 	.global LOOP
 
@@ -181,7 +182,7 @@ purpleOUT:
 	B FINALilluminate_RGB_LED
 
 yellowOUT:
-	MOV r0, #0xC ;should be 1100 ;i have NO CLUE IF I AM ACCESSING THE PINS CORRECTLY
+	MOV r0, #0xA ;should be 1100 ;i have NO CLUE IF I AM ACCESSING THE PINS CORRECTLY
 	B FINALilluminate_RGB_LED
 
 FINALilluminate_RGB_LED:
@@ -301,7 +302,7 @@ stringIntLoop:
 	LDRB r0, [r4], #1
 	CMP r0, #00		;Check for null terminator
 	BEQ ExitstringIntLoop
-	STRB r0, [r4]	;load char
+	;STRB r0, [r4]	;load char
 	CMP r0, #0x2D	;check for neg
 	BEQ negFlag
   	SUB r0, r0, #0x30
@@ -320,7 +321,7 @@ stringIntSkip:
 ;================================================================
 
 ;----------------------------------------------------------------
-;portINIT - SUBroutine given 1-6(A->F) to represent ports
+;portINIT - SUBroutine given 0-5(A->F) to represent ports
 ; The function returns the address of the port in R1
 ;----------------------------------------------------------------
 portINIT:
@@ -330,7 +331,7 @@ portINIT:
 	CMP r0, #4
 	BLE A2D
 	CMP r0, #6
-	BEQ E2F
+	BLE E2F
 	BL ERRORFOUND;in the case that we passed in a bad choice
 A2D:
 	MOV r1, #0x4000 ; Getting port D loaded up
@@ -339,7 +340,7 @@ A2D:
 	B FINALportINIT
 E2F:
 	MOV r1, #0x0000 ; Getting port F loaded up
-	ADD r1,r1 ,r0, LSL #3
+	ADD r1,r1 ,r0, LSL #12
 	MOVT r1, #0x4002
 	B FINALportINIT
 FINALportINIT:;comes here once we are all done and we use r1 as the port address

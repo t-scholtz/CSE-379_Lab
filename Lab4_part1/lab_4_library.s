@@ -16,6 +16,7 @@
 	.global portINIT
 	.global ERRORFOUND
 	.global LOOP
+	.global printBits
 
 errorPrompt:	.string "Error with subroutine", 0 ;Question to see if we can do this in this file
 newLine:		.byte 0x0D, 0x0A , 0x00,  0x00
@@ -348,7 +349,44 @@ FINALportINIT:;comes here once we are all done and we use r1 as the port address
 	MOV pc, lr
 ;================================================================
 
-
+;----------------------------------------------------------------
+;printBits -prints the bits inside of a registor
+;Input	   r0 - value to print
+;		   r1 - num of bits to print
+;----------------------------------------------------------------
+printBits:
+	PUSH {r4-r12,lr}
+	MOV r4,r0
+	MOV r5,r1
+	CMP r5, #0
+	BLE ERRORFOUND	;input valid check - if less than 0 throw error
+	MOV r9,#1 		;bit mask
+	LSL r9, r1		;starting point of the mask
+	CMP r5, #32		;					 if more that 32 set to 32
+	BLE BITLOOP
+	MOV r5, #32
+BITLOOP:
+	AND r6, r4,r9	;load bit to print
+	CMP r5,#0
+	BEQ BITEXIT
+	LSR r9,r9,#1	;update mask
+	SUB r5,r5,#1
+	CMP r6, #0
+	BEQ PRINT0
+PRINT1:
+	MOV r0,#0x31
+	BL output_character
+	B BITLOOP
+PRINT0:
+	MOV r0,#0x30
+	BL output_character
+	B BITLOOP
+BITEXIT:
+	LDR r0, ptr_to_newLine
+	BL output_string
+	POP {r4-r12,lr}
+	MOV pc, lr
+;================================================================
 
 ;----------------------------------------------------------------
 ;ERRORFOUND - creates an infinite loop that will never finish

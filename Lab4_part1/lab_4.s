@@ -17,6 +17,7 @@
 	.global ERRORFOUND
 	.global LOOP
 	.global colorPromptOUT
+	.global printBits
 
 
 colorPrompt:	.string "Enter number for color:",0x0D, 0x0A,"White: 1",0x0D, 0x0A,"Red: 2",0x0D, 0x0A,"Green: 3",0x0D, 0x0A,"Blue: 4",0x0D, 0x0A,"Purple: 5",0x0D, 0x0A,"Yellow: 6",0x0D, 0x0A, 0
@@ -46,7 +47,17 @@ ptr_to_usrInput:		.word usrInput
 lab4:
 	PUSH {r4-r12,lr}
 	;INIT
+
 	BL uart_init
+	MOV r0,#0x1234
+	MOV r1,#12
+	BL printBits
+	MOV r0,#0xFFFF
+	MOV r1,#3
+	BL printBits
+	MOV r0,#0xF0F0
+	MOV r1,#16
+	BL printBits
 	BL gpio_btn_and_LED_init
 
 	LDR r0, ptr_to_startPromt
@@ -115,6 +126,10 @@ EXITBUTTONPUSHED:
 	BL output_string
 	B LOOP
 sisterButtonsBitOUT:
+	BL read_from_push_btns
+	MOV r0,#0xF0F0
+	MOV r1,#4
+	BL printBits
 	B LOOP
 
 exitRoutine:

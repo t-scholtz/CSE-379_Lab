@@ -16,6 +16,7 @@ Tim and Thomas's 379 collection of lab projects plus ongoing libary of functions
     - [Output_String](#output-string)
     - [Int 2 String](#int2string)
     - [String 2 Int](#string-2-int)
+    - [PrintBits](#printBits )
 
 ## TODO
 
@@ -74,3 +75,8 @@ at the address passed into the routine in r0.
 ### String 2 Int
 Converts the NULL terminated ASCII string pointed to by the address passed into the routine in
 r0 to an integer. The integer should be returned in r0. The string should not be modified by the routine.
+
+###printBits 
+prints the bits inside of a registor
+Input	   r0 - value to print
+		   r1 - num of bits to print

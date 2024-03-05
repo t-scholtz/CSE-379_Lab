@@ -26,6 +26,8 @@ mydata:	.byte	0x20	; This is where you can store data.
 	
 ptr_to_prompt:		.word prompt
 ptr_to_mydata:		.word mydata
+UARTIM: 			.equ 0x038		; UARTIM offset
+ENO:				.equ 0x100		;Enable pin interupt offset
 
 lab5:								; This is your main routine which is called from 
 ; your C wrapper.  
@@ -45,12 +47,37 @@ lab5:								; This is your main routine which is called from
 
 
 
+;----------------------------------------------------------------
+;uart_interrupt_init: This subroutine will generate an interupt when a keystroke is generated
+; by a user in PUTTY
+;----------------------------------------------------------------
 uart_interrupt_init:
-		
+
+	MOV r0, #0xc0000 ;This is the UART Base address
+	MOVT r0, #0x4000
+
+							;We need to access bit 5 at the UARTIM position
+	LDR r1, [r0, UARTIM]	;This loads the base value of the UARTIM data and we need to update it
+	OR r1, r1, #32			;Now we have the updated value to store back
+	STR r1 [r0, UARTIM]
+
+							;Now we need to set the ENABLE pin
+	MOV r0, #0xE0000 		;This is the UART Base address
+	MOVT r0, #0xE000
+
+							;We need to access bit 5 at the ENABLE position
+	LDR r1, [r0, UARTIM]	;This loads the base value of the ENABLE data and we need to update it
+	OR r1, r1, #32			;Now we have the updated value to store back
+	STR r1 [r0, UARTIM]
+
+							;NOW both the UART should be set to take interupts along with the enable pin to allow the interups
+
+
+
 	; Your code to initialize the UART0 interrupt goes here
 
 	MOV pc, lr
-
+;================================================================
 
 gpio_interrupt_init:
 		

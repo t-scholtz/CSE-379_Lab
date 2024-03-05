@@ -27,12 +27,14 @@ mydata:	.byte	0x20	; This is where you can store data.
 	
 ptr_to_prompt:		.word prompt
 ptr_to_mydata:		.word mydata
+
 UARTIM: 			.equ 0x038		; UARTIM offset
 ENO:				.equ 0x100		;Enable pin interupt offset
-GPIOIS: 	.equ 0x404	;GPIO Interrupt Sense Register
-GPIOIBE:	.equ 0x408 	;GPIO Interrupt Both Edges Register
-GPIOIV:		.equ 0x40C	;GPIO Interrupt Event Register
-GPIOIS:		.equ 0x410	;GPIO Interrupt Mask Register
+GPIOIS: 			.equ 0x404	;GPIO Interrupt Sense Register
+GPIOIBE:			.equ 0x408 	;GPIO Interrupt Both Edges Register
+GPIOIV:				.equ 0x40C	;GPIO Interrupt Event Register
+GPIOIS:				.equ 0x410	;GPIO Interrupt Mask Register
+GPIOICR:			.equ 0x41C	;GPIO Interrupt Clear Register
 
 lab5:								; This is your main routine which is called from 
 ; your C wrapper.  
@@ -44,6 +46,9 @@ lab5:								; This is your main routine which is called from
 	bl uart_interrupt_init
 	bl gpio_interrupt_init
 
+infLoopForTesting:
+
+	BL infLoopForTesting
 	; This is where you should implement a loop, waiting for the user to 
 	; enter a q, indicating they want to end the program.
  
@@ -95,7 +100,7 @@ gpio_interrupt_init:
 	AND r1,r1,#0xF7
 	STRB r1, [r0,GPIOIS]
 	LDRB r1, [r0,GPIOIBE]	;set to trigger on single edge change
-	AND r1,r1,#0xF7			
+	AND r1,r1,#0xF7
 	STRB r1, [r0,GPIOIBE]
 	LDRB r1, [r0,GPIOIV]	;set to trigger on falling edge
 	AND r1,r1,#0xF7
@@ -109,7 +114,7 @@ gpio_interrupt_init:
 	MOVT r2, #0x4000
 	OR r1,r1,r2
 	STR r1 [r,#0x100]
-	
+
 	; Don't forget to follow the procedure you followed in Lab #4
 	; to initialize SW1.
 	POP {r4-r12,lr}
@@ -124,14 +129,27 @@ UART0_Handler:
 
 	BX lr       	; Return
 
-
+;----------------------------------------------------------------
+;Switch_Handler - handles interupt for sw1 being pressed
+;----------------------------------------------------------------
 Switch_Handler:
+	PUSH {r0-r12,lr}
+	;Clear interupt value
+	MOV r0, #0x5000
+	MOVT r0, #0x4002
+	LDRB r1 [r0,GPIOICR]
+	OR r1,r1,#0x08
+	STRB r1 [r0,#0x100]
 	
-	; Your code for your UART handler goes here.
-	; Remember to preserver registers r4-r11 by pushing then popping 
-	; them to & from the stack at the beginning & end of the handler
+	;print to screen btn was pushed
+	MOV r0, ptr_to_prompt
+	BL output_string
 
+
+
+	POP {r0-r12,lr}
 	BX lr       	; Return
+;================================================================
 
 
 Timer_Handler:

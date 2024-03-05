@@ -23,11 +23,16 @@ mydata:	.byte	0x20	; This is where you can store data.
 	.global output_string			; This is from your Lab #4 Library
 	.global uart_init					; This is from your Lab #4 Library
 	.global lab5
+	 .global portINIT
 	
 ptr_to_prompt:		.word prompt
 ptr_to_mydata:		.word mydata
 UARTIM: 			.equ 0x038		; UARTIM offset
 ENO:				.equ 0x100		;Enable pin interupt offset
+GPIOIS: 	.equ 0x404	;GPIO Interrupt Sense Register
+GPIOIBE:	.equ 0x408 	;GPIO Interrupt Both Edges Register
+GPIOIV:		.equ 0x40C	;GPIO Interrupt Event Register
+GPIOIS:		.equ 0x410	;GPIO Interrupt Mask Register
 
 lab5:								; This is your main routine which is called from 
 ; your C wrapper.  
@@ -79,14 +84,37 @@ uart_interrupt_init:
 	MOV pc, lr
 ;================================================================
 
+;----------------------------------------------------------------
+;gpio_interrupt_init - initliase interupt for sw1
+;----------------------------------------------------------------
 gpio_interrupt_init:
-		
-	; Your code to initialize the SW1 interrupt goes here
+	PUSH {r4-r12,lr}
+	MOV r0,#5		;load port f
+	BL portINIT
+	LDRB r1, [r0,GPIOIS]
+	AND r1,r1,#0xF7
+	STRB r1, [r0,GPIOIS]
+	LDRB r1, [r0,GPIOIBE]	;set to trigger on single edge change
+	AND r1,r1,#0xF7			
+	STRB r1, [r0,GPIOIBE]
+	LDRB r1, [r0,GPIOIV]	;set to trigger on falling edge
+	AND r1,r1,#0xF7
+	STRB r1, [r0,GPIOIV]
+	LDRB r1, [r0,GPIOIM]	;set to trigger on falling edge
+	AND r1,r1,#0xFF
+	STRB r1, [r0,GPIOIM]
+	MOV r0, #0xE000
+	MOVT r0, #0xE000
+	LDR r1 [r,#0x100]
+	MOVT r2, #0x4000
+	OR r1,r1,r2
+	STR r1 [r,#0x100]
+	
 	; Don't forget to follow the procedure you followed in Lab #4
 	; to initialize SW1.
-
+	POP {r4-r12,lr}
 	MOV pc, lr
-
+;================================================================
 
 UART0_Handler: 
 	

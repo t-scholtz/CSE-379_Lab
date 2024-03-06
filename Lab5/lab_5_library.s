@@ -404,6 +404,7 @@ ERRORFOUND:
 ;Uart init - handles setting up connection to Uart
 ;----------------------------------------------------------------
 uart_init:
+	NOP
 	PUSH {r4-r12,lr}
     MOV r4, #0xE618
 	MOVT r4,#0x400F

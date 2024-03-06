@@ -23,14 +23,10 @@ mydata:	.byte	0x20	; This is where you can store data.
 	.global output_string			; This is from your Lab #4 Library
 	.global uart_init					; This is from your Lab #4 Library
 	.global lab5
-<<<<<<< HEAD
+
 	.global portINIT
 	.global LOOP
 
-=======
-	 .global portINIT
-	
->>>>>>> fdc1368180966dbb16aaf873fca258eb61451fa2
 ptr_to_prompt:		.word prompt
 ptr_to_mydata:		.word mydata
 
@@ -39,20 +35,15 @@ ENO:				.equ 0x100		;Enable pin interupt offset
 GPIOIS: 			.equ 0x404	;GPIO Interrupt Sense Register
 GPIOIBE:			.equ 0x408 	;GPIO Interrupt Both Edges Register
 GPIOIV:				.equ 0x40C	;GPIO Interrupt Event Register
-<<<<<<< HEAD
+
 GPIOIM:				.equ 0x410	;GPIO Interrupt Mask Register
 GPIOICR:			.equ 0x41C	;GPIO Interrupt Clear Register
 
 
-lab5:								; This is your main routine which is called from
-; your C wrapper.
-=======
-GPIOIS:				.equ 0x410	;GPIO Interrupt Mask Register
-GPIOICR:			.equ 0x41C	;GPIO Interrupt Clear Register
 
 lab5:								; This is your main routine which is called from 
 ; your C wrapper.  
->>>>>>> fdc1368180966dbb16aaf873fca258eb61451fa2
+
 	PUSH {r4-r12,lr}   		; Preserve registers to adhere to the AAPCS
 
 
@@ -60,7 +51,7 @@ lab5:								; This is your main routine which is called from
 	bl uart_interrupt_init
 	bl gpio_interrupt_init
 
-<<<<<<< HEAD
+
 	ldr r4, ptr_to_prompt
 	ldr r5, ptr_to_mydata
 
@@ -68,12 +59,6 @@ LOOP:
 
 	BL LOOP
 	; This is where you should implement a loop, waiting for the user to
-=======
-infLoopForTesting:
-
-	BL infLoopForTesting
-	; This is where you should implement a loop, waiting for the user to 
->>>>>>> fdc1368180966dbb16aaf873fca258eb61451fa2
 	; enter a q, indicating they want to end the program.
 
 	POP {lr}		; Restore registers to adhere to the AAPCS
@@ -91,34 +76,22 @@ uart_interrupt_init:
 	MOVT r0, #0x4000
 
 							;We need to access bit 5 at the UARTIM position
-<<<<<<< HEAD
+
 	LDR r1, [r0, #UARTIM]	;This loads the base value of the UARTIM data and we need to update it
 	ORR r1, r1, #32			;Now we have the updated value to store back
 	STR r1, [r0, #UARTIM]
-=======
-	LDR r1, [r0, UARTIM]	;This loads the base value of the UARTIM data and we need to update it
-	OR r1, r1, #32			;Now we have the updated value to store back
-	STR r1 [r0, UARTIM]
->>>>>>> fdc1368180966dbb16aaf873fca258eb61451fa2
+
 
 							;Now we need to set the ENABLE pin
 	MOV r0, #0xE0000 		;This is the UART Base address
 	MOVT r0, #0xE000
 
-							;We need to access bit 5 at the ENABLE position
-<<<<<<< HEAD
 	LDR r1, [r0, #UARTIM]	;This loads the base value of the ENABLE data and we need to update it
 	ORR r1, r1, #32			;Now we have the updated value to store back
 	STR r1, [r0, #UARTIM]
-=======
-	LDR r1, [r0, UARTIM]	;This loads the base value of the ENABLE data and we need to update it
-	OR r1, r1, #32			;Now we have the updated value to store back
-	STR r1 [r0, UARTIM]
->>>>>>> fdc1368180966dbb16aaf873fca258eb61451fa2
+
 
 							;NOW both the UART should be set to take interupts along with the enable pin to allow the interups
-
-
 
 	; Your code to initialize the UART0 interrupt goes here
 
@@ -132,7 +105,6 @@ gpio_interrupt_init:
 	PUSH {r4-r12,lr}
 	MOV r0,#5		;load port f
 	BL portINIT
-<<<<<<< HEAD
 	LDRB r1, [r0,#GPIOIS]
 	AND r1,r1,#0xF7
 	STRB r1, [r0,#GPIOIS]
@@ -151,37 +123,17 @@ gpio_interrupt_init:
 	MOVT r2, #0x4000
 	ORR r1,r1,r2
 	STR r1, [r0,#0x100]
-=======
-	LDRB r1, [r0,GPIOIS]
-	AND r1,r1,#0xF7
-	STRB r1, [r0,GPIOIS]
-	LDRB r1, [r0,GPIOIBE]	;set to trigger on single edge change
-	AND r1,r1,#0xF7
-	STRB r1, [r0,GPIOIBE]
-	LDRB r1, [r0,GPIOIV]	;set to trigger on falling edge
-	AND r1,r1,#0xF7
-	STRB r1, [r0,GPIOIV]
-	LDRB r1, [r0,GPIOIM]	;set to trigger on falling edge
-	AND r1,r1,#0xFF
-	STRB r1, [r0,GPIOIM]
-	MOV r0, #0xE000
-	MOVT r0, #0xE000
-	LDR r1 [r,#0x100]
-	MOVT r2, #0x4000
-	OR r1,r1,r2
-	STR r1 [r,#0x100]
->>>>>>> fdc1368180966dbb16aaf873fca258eb61451fa2
+
 
 	; Don't forget to follow the procedure you followed in Lab #4
 	; to initialize SW1.
 	POP {r4-r12,lr}
 	MOV pc, lr
 ;================================================================
-<<<<<<< HEAD
+
 
 UART0_Handler:
-=======
->>>>>>> fdc1368180966dbb16aaf873fca258eb61451fa2
+
 
 	; Your code for your UART handler goes here.
 	; Remember to preserver registers r4-r11 by pushing then popping
@@ -197,7 +149,7 @@ Switch_Handler:
 	;Clear interupt value
 	MOV r0, #0x5000
 	MOVT r0, #0x4002
-<<<<<<< HEAD
+
 	LDRB r1, [r0,#GPIOICR]
 	ORR r1,r1,#0x08
 	STRB r1, [r0,#0x100]
@@ -206,16 +158,6 @@ Switch_Handler:
 	LDR r0, ptr_to_prompt
 	BL output_string
 
-=======
-	LDRB r1 [r0,GPIOICR]
-	OR r1,r1,#0x08
-	STRB r1 [r0,#0x100]
-	
-	;print to screen btn was pushed
-	MOV r0, ptr_to_prompt
-	BL output_string
-
->>>>>>> fdc1368180966dbb16aaf873fca258eb61451fa2
 
 
 	POP {r0-r12,lr}

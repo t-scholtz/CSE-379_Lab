@@ -80,7 +80,7 @@ TESTLOOP:
 ;----------------------------------------------------------------
 uart_interrupt_init:
 
-	MOV r0, #0xc0000 ;This is the UART Base address
+	MOV r0, #0xC000 ;This is the UART Base address
 	MOVT r0, #0x4000
 
 	LDR r1, [r0, #UARTIM]	;This loads the base value of the UARTIM data and we need to update it
@@ -88,7 +88,7 @@ uart_interrupt_init:
 	STR r1, [r0, #UARTIM]
 
 							;Now we need to set the ENABLE pin
-	MOV r0, #0xE0000 		;This is the UART Base address
+	MOV  r0, #0xE000 		;This is the UART Base address
 	MOVT r0, #0xE000
 							;We need to access bit 5 at the ENABLE position
 	LDR r1, [r0, #UARTIM]	;This loads the base value of the ENABLE data and we need to update it

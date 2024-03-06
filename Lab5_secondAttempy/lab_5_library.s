@@ -1,36 +1,56 @@
 	.data
 
+;LIST OF SUBROUTINES
+;================================================================
 	.global uart_init
 	.global gpio_btn_and_LED_init
 	.global output_character
 	.global read_character
 	.global read_string
 	.global output_string
-	.global read_from_push_btns
-	.global illuminate_LEDs
 	.global illuminate_RGB_LED
 	.global read_tiva_push_button
 	.global div_and_mod
 	.global int2string
 	.global string2int
 	.global portINIT
-	.global ERRORFOUND
-	.global LOOP
 	.global printBits
+	.global ERRORFOUND
 
+;IMPORTED SUB_ROUTINES
+;_______________________________________________________________
+
+
+;================================================================
+
+
+;LIST OF PROPMPTS
+;================================================================
 errorPrompt:	.string "Error with subroutine", 0 ;Question to see if we can do this in this file
 newLine:		.byte 0x0D, 0x0A , 0x00,  0x00
+;================================================================
 
 	.text
 
+;POINTERS TO STRING
+;================================================================
 ptr_to_errorPrompt:		.word errorPrompt
 ptr_to_newLine:			.word newLine
+;================================================================
 
+
+;LIST OF CONSTANTS
+;================================================================
 U0FR: 		.equ 0x18	; UART0 Flag Register
-GPIODATA:	.equ 0x3FC ;data location
-GPIODIG:	.equ 0x51C ;Pin activation location
+GPIODATA:	.equ 0x3FC 	;data location
+GPIODIG:	.equ 0x51C 	;Pin activation location
 GPIODIR:	.equ 0x400  ;Pin Direction location
 GPIOPUR: 	.equ 0x510	;Pull-Up Resistor
+;================================================================
+
+
+;CODE
+;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
 ;----------------------------------------------------------------
@@ -53,20 +73,7 @@ gpio_btn_and_LED_init:
 	BL gpio_setup
 	MOV r0, #0x10		;pull up registors
 	STRB r3, [r1,#GPIOPUR]
-	;SET BUTTONS ON ALICE Swithes 2-5 - port D Pins 0-3
-	MOV r0, #8			;port d
-	MOV r1, #0x7000		;port d memory address
-	MOVT r1 , #0x4000
-	MOV r2, #0x00		;Pin 2-5 will be read - set 0
-	MOV r3, #0x0F		;Pin 2-5 set active
-	BL gpio_setup
-	;SET LEDS ON ALICE - port B Pins 0-3
-	MOV r0, #2			;port b
-	MOV r1, #0x5000		;port b memory address
-	MOVT r1 , #0x4000
-	MOV r2, #0x0F		;Pin 0-3 will be write - set 1
-	MOV r3, #0x0F		;Pin 0-3 set active
-	BL gpio_setup
+
 	POP {r4-r12,lr}
 	MOV pc, lr
 ;================================================================
@@ -97,41 +104,6 @@ gpio_setup:
 	MOV pc, lr
 ;================================================================
 
-;----------------------------------------------------------------
-;read_from_push_btns - reads the momentary push buttons
-;Output: r0 - 4bit value with MSB -> button 2, LSB -> button 5
-;----------------------------------------------------------------
-read_from_push_btns:
-	PUSH {r4-r12,lr}
-	MOV r0,#3
-	BL portINIT
-	LDRB r0, [r1,#GPIODATA]
-	;AND r0, #0x3C 		;convert it so 1 is off and 0 is on
-	;EOR r0,r0, #0x3C
-	;LSR r0,r0,#2
-	;TODO flip bits around right now 5,4,3,2  - need 2,3,4,5
-	POP {r4-r12,lr}
-	MOV pc, lr
-;================================================================
-
-;----------------------------------------------------------------
-;illuminate_LEDs:	-illuminates the sister board LEDs
-;			input   -half a byte in r0 describing what LEDs to light up
-;			output	-LED light
-;----------------------------------------------------------------
-illuminate_LEDs:
-	PUSH {r4-r12,lr}
-	MOV r4, r0			;keep safe this is the half byte
-	MOV r0, #1			;port B
-	BL portINIT			;B address in reg R1
-	;Store LED data
-	LDRB r2, [r1, #GPIODATA] ;grabs data
-	EOR r2, r2, r4			   ;this will give us new pins to be lit up or not
-	STRB r2, [r1, #GPIODATA] ;stores the data to the same place
-
-	POP {r4-r12,lr}
-	MOV pc, lr
-;================================================================
 
 ;----------------------------------------------------------------
 ;illuminate_RGB_LED: - illuminates the RBG LED
@@ -161,31 +133,24 @@ illuminate_RGB_LED:
 	CMP r0, #6
 	BEQ yellowOUT
 	B ERRORFOUND;this is if no options were found; Mabye create a user error sub???
-
 whiteOUT:
 	MOV r0, #0xE ;should be 1110
 	B FINALilluminate_RGB_LED
-
 redOUT:
 	MOV r0, #0x2 ;should be 0010
 	B FINALilluminate_RGB_LED
-
 greenOUT:
 	MOV r0, #0x8 ;should be 1000
 	B FINALilluminate_RGB_LED
-
 blueOUT:
 	MOV r0, #0x4 ;should be 0100
 	B FINALilluminate_RGB_LED
-
 purpleOUT:
 	MOV r0, #0x6 ;should be 0110
 	B FINALilluminate_RGB_LED
-
 yellowOUT:
 	MOV r0, #0xA ;should be 1100 ;i have NO CLUE IF I AM ACCESSING THE PINS CORRECTLY
 	B FINALilluminate_RGB_LED
-
 FINALilluminate_RGB_LED:
 	STRB r0, [r1, #GPIODATA]
 	POP {r4-r12,lr}
@@ -390,21 +355,19 @@ BITEXIT:
 ;================================================================
 
 ;----------------------------------------------------------------
-;ERRORFOUND - creates an infinite loop that will never finish
+;ERRORFOUND - Exits code safetly
 ;----------------------------------------------------------------
 
 ERRORFOUND:
 	LDR r0, ptr_to_errorPrompt
 	BL output_string;the prompt being printed is in r0
-	B LOOP
-
+	B EMERGENCY_EXIT
 ;================================================================
 
 ;----------------------------------------------------------------
 ;Uart init - handles setting up connection to Uart
 ;----------------------------------------------------------------
 uart_init:
-	NOP
 	PUSH {r4-r12,lr}
     MOV r4, #0xE618
 	MOVT r4,#0x400F
@@ -538,4 +501,8 @@ NONEWLINE:
 	MOV pc, lr
 ;================================================================
 
+
+
+EMERGENCY_EXIT:
 	.end
+;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

@@ -14,6 +14,7 @@
 	.global uart_init
 	.global output_string
 	.global portINIT
+	.global gpio_btn_and_LED_init
 ;================================================================
 
 ;LIST OF PROPMPTS
@@ -58,8 +59,10 @@ lab5:								; This is your main routine which is called from
 	ldr r5, ptr_to_mydata
 
 	bl uart_init
+	bl gpio_btn_and_LED_init
 	bl uart_interrupt_init
 	bl gpio_interrupt_init
+
 
 TESTLOOP:
 	ADD r4,r4,#1
@@ -104,21 +107,23 @@ gpio_interrupt_init:
 	PUSH {r4-r12,lr}
 	MOV r0,#5		;load port f
 	BL portINIT
+	MOV r0,r1
 	LDRB r1, [r0,#GPIOIS]
-	AND r1,r1,#0xF7
+	AND r1,r1,#0xEF
 	STRB r1, [r0,#GPIOIS]
 	LDRB r1, [r0,#GPIOIBE]	;set to trigger on single edge change
-	AND r1,r1,#0xF7
+	AND r1,r1,#0xEF
 	STRB r1, [r0,#GPIOIBE]
 	LDRB r1, [r0,#GPIOIV]	;set to trigger on falling edge
-	AND r1,r1,#0xF7
+	ORR r1,r1,#0x10
 	STRB r1, [r0,#GPIOIV]
-	LDRB r1, [r0,#GPIOIM]	;set to trigger on falling edge
-	AND r1,r1,#0xFF
+	LDRB r1, [r0,#GPIOIM]	;
+	ORR r1,r1,#0x10
 	STRB r1, [r0,#GPIOIM]
 	MOV r0, #0xE000
 	MOVT r0, #0xE000
 	LDR r1, [r0,#0x100]
+	MOV r2, #0
 	MOVT r2, #0x4000
 	ORR r1,r1,r2
 	STR r1, [r0,#0x100]
@@ -137,16 +142,13 @@ UART0_Handler:
 	; Your code for your UART handler goes here.
 	; Remember to preserver registers r4-r11 by pushing then popping
 	; them to & from the stack at the beginning & end of the handler
-	
-	BL read_character
-	
-	;AFTER WE READ THE CHARACTER if it is a spcace bar and this is the first one, the computer player wins
-	MOV r0, #0xC000 					;This is the UART Base address
-	MOVT r0, #0x4000
 
-	LDR r1, [r0, #UARTICR]				;This loads the base value of the UARTIM data and we need to update it
-	AND r1, r1, #0xFFFFFFEF				;Should set the 4th bit to 0
-	STR r1, [r0, #UARTICR]
+	;MOV r0, #0xC000 					;This is the UART Base address
+	;MOVT r0, #0x4000
+
+	;LDR r1, [r0, #UARTICR]				;This loads the base value of the UARTIM data and we need to update it
+	;AND r1, r1, #0xFFFFFFEF				;Should set the 4th bit to 0
+	;STR r1, [r0, #UARTICR]
 
 	POP {r4-r12,lr}
 	BX lr

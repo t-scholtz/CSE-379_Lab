@@ -127,14 +127,30 @@ gpio_interrupt_init:
 ;================================================================
 
 
+;----------------------------------------------------------------
+;UART0_Handler - This is the interupt that is ran Once a signal from the UART ex
+;----------------------------------------------------------------
 UART0_Handler:
+	PUSH {r4-r12,lr}
+
 
 	; Your code for your UART handler goes here.
 	; Remember to preserver registers r4-r11 by pushing then popping
 	; them to & from the stack at the beginning & end of the handler
+	
+	BL read_character
+	
+	;AFTER WE READ THE CHARACTER if it is a spcace bar and this is the first one, the computer player wins
+	MOV r0, #0xC000 					;This is the UART Base address
+	MOVT r0, #0x4000
 
-	BX lr       	; Return
+	LDR r1, [r0, #UARTICR]				;This loads the base value of the UARTIM data and we need to update it
+	AND r1, r1, #0xFFFFFFEF				;Should set the 4th bit to 0
+	STR r1, [r0, #UARTICR]
 
+	POP {r4-r12,lr}
+	BX lr
+;================================================================
 
 ;----------------------------------------------------------------
 ;Switch_Handler - handles interupt for sw1 being pressed

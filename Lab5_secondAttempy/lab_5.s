@@ -17,6 +17,7 @@
 	.global portINIT
 	.global gpio_btn_and_LED_init
 	.global div_and_mod
+	.global read_character
 ;================================================================
 
 ;PROGRAM DATA
@@ -29,6 +30,7 @@ state:			.byte	0x01
 p1Score:		.byte	0x00
 p2Score:		.byte	0x00
 disqualified:	.byte	0x00
+space:			.string "space" ,0
 
 ;================================================================
 
@@ -43,6 +45,7 @@ ptr_to_state:			.word state
 ptr_to_p1Score:			.word p1Score
 ptr_to_p2Score:			.word p2Score
 ptr_to_disqualified:	.word disqualified
+ptr_to_space:			.word space
 ;================================================================
 
 ;LIST OF CONSTANTS
@@ -149,16 +152,16 @@ uart_interrupt_init:
 	MOVT r0, #0x4000
 
 	LDR r1, [r0, #UARTIM]	;This loads the base value of the UARTIM data and we need to update it
-	ORR r1, r1, #32			;Now we have the updated value to store back
+	ORR r1, r1, #16			;Now we have the updated value to store back
 	STR r1, [r0, #UARTIM]
 
 							;Now we need to set the ENABLE pin
 	MOV  r0, #0xE000 		;This is the UART Base address
 	MOVT r0, #0xE000
 							;We need to access bit 5 at the ENABLE position
-	LDR r1, [r0, #UARTIM]	;This loads the base value of the ENABLE data and we need to update it
+	LDR r1, [r0, #ENO]	;This loads the base value of the ENABLE data and we need to update it
 	ORR r1, r1, #32			;Now we have the updated value to store back
-	STR r1, [r0, #UARTIM]
+	STR r1, [r0, #ENO]
 	MOV pc, lr
 ;================================================================
 
@@ -201,6 +204,13 @@ UART0_Handler:
 	PUSH {r0-r12,lr}
 	LDR r0, ptr_to_state
 	LDRB r1, [r0]		;state of program is stored in r1
+	;BL read_character					;if it return the space bar space was pressed P1 WINS
+	CMP r0, #0x20
+	;IF not space
+	BNE FINISH_UART0_HANDLER
+	;IF space
+	LDR r0, ptr_to_space
+	BL output_string
 
 	CMP r1, #1
 
@@ -210,7 +220,12 @@ UART0_Handler:
 
 	CMP r1, #4
 
-
+FINISH_UART0_HANDLER:
+	MOV r0, #0xC000 					;This is the UART Base address
+	MOVT r0, #0x4000
+	LDRB r1, [r0, #UARTICR]				;This loads the base value of the UARTIM data and we need to update it
+	ORR r1, r1, #16				;Should set the 4th bit to 0 to clear register
+	STRB r1, [r0, #UARTICR]
 
 	POP {r0-r12,lr}
 	BX lr
@@ -237,9 +252,7 @@ Switch_Handler:
 	LDRB r1, [r0,#GPIOICR]
 	ORR r1,r1,#0x08
 	STRB r1, [r0,#0x100]
-	;print to screen btn was pushed
-	LDR r0, ptr_to_intructions
-	BL output_string
+
 	POP {r0-r12,lr}
 	BX lr       	; Return
 ;================================================================

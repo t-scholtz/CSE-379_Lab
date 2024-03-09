@@ -156,9 +156,9 @@ uart_interrupt_init:
 	MOV  r0, #0xE000 		;This is the UART Base address
 	MOVT r0, #0xE000
 							;We need to access bit 5 at the ENABLE position
-	LDR r1, [r0, #ENO]	;This loads the base value of the ENABLE data and we need to update it
+	LDR r1, [r0, #UARTIM]	;This loads the base value of the ENABLE data and we need to update it
 	ORR r1, r1, #32			;Now we have the updated value to store back
-	STR r1, [r0, #ENO]
+	STR r1, [r0, #UARTIM]
 	MOV pc, lr
 ;================================================================
 

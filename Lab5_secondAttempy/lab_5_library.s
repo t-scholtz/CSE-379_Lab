@@ -445,11 +445,7 @@ read_character:
 	PUSH {r4-r12,lr}
     MOV r4,#0xC000
 	MOVT r4, #0x4000	;Load Memory address into r4
-WAIT4INPUT:
-	LDRB r0, [r4, #U0FR];Flag register
-	AND r0, r0, #0x0010;checks RxFE
-	CMP r0, #0;checks if 0
-	BNE WAIT4INPUT
+	;I MADE A MAJOR CHANGE HERE! WE DELETED THE LOOP DUE TO THE REACTION FROM THE INTERUPT;;;;;TALK TO TIM ABOUT THIS
 	LDRB r0, [r4] ;load char from uart data reg
 	POP {r4-r12,lr}
 	MOV pc, lr

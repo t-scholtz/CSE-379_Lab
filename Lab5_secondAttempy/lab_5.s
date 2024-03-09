@@ -37,12 +37,14 @@ ptr_to_mydata:		.word mydata
 ;LIST OF CONSTANTS
 ;================================================================
 UARTIM: 			.equ 0x038	; UARTIM offset
+UARTICR:			.equ 0x044  ;Interrupt clear register
 ENO:				.equ 0x100	;Enable pin interupt offset
 GPIOIS: 			.equ 0x404	;GPIO Interrupt Sense Register
 GPIOIBE:			.equ 0x408 	;GPIO Interrupt Both Edges Register
 GPIOIV:				.equ 0x40C	;GPIO Interrupt Event Register
 GPIOIM:				.equ 0x410	;GPIO Interrupt Mask Register
 GPIOICR:			.equ 0x41C	;GPIO Interrupt Clear Register
+
 ;================================================================
 
 
@@ -94,9 +96,9 @@ uart_interrupt_init:
 	MOV  r0, #0xE000 		;This is the UART Base address
 	MOVT r0, #0xE000
 							;We need to access bit 5 at the ENABLE position
-	LDR r1, [r0, #UARTIM]	;This loads the base value of the ENABLE data and we need to update it
+	LDR r1, [r0, #ENO]	;This loads the base value of the ENABLE data and we need to update it
 	ORR r1, r1, #32			;Now we have the updated value to store back
-	STR r1, [r0, #UARTIM]
+	STR r1, [r0, #ENO]
 	MOV pc, lr
 ;================================================================
 
@@ -136,21 +138,25 @@ gpio_interrupt_init:
 ;UART0_Handler - This is the interupt that is ran Once a signal from the UART ex
 ;----------------------------------------------------------------
 UART0_Handler:
-	PUSH {r4-r12,lr}
+	PUSH {r4-r11,lr};IN THE NOTES THEY SAID YOU DON"T NEED TO PRESEVE R12, check into this
+
+	BL read_character					;if it return the space bar space was pressed P1 WINS
+	CMP r0, #0x20
+	;IF not space
+	BNE FINISH_UART0_HANDLER
+	;IF space
+	LDR r0, ptr_to_space
+	BL output_string
 
 
-	; Your code for your UART handler goes here.
-	; Remember to preserver registers r4-r11 by pushing then popping
-	; them to & from the stack at the beginning & end of the handler
+FINISH_UART0_HANDLER:
+	MOV r0, #0xC000 					;This is the UART Base address
+	MOVT r0, #0x4000
+	LDR r1, [r0, #UARTICR]				;This loads the base value of the UARTIM data and we need to update it
+	AND r1, r1, #0xFFFFFFEF				;Should set the 4th bit to 0 to clear register
+	STR r1, [r0, #UARTICR]
 
-	;MOV r0, #0xC000 					;This is the UART Base address
-	;MOVT r0, #0x4000
-
-	;LDR r1, [r0, #UARTICR]				;This loads the base value of the UARTIM data and we need to update it
-	;AND r1, r1, #0xFFFFFFEF				;Should set the 4th bit to 0
-	;STR r1, [r0, #UARTICR]
-
-	POP {r4-r12,lr}
+	POP {r4-r11,lr}
 	BX lr
 ;================================================================
 
@@ -165,8 +171,8 @@ Switch_Handler:
 	LDRB r1, [r0,#GPIOICR]
 	ORR r1,r1,#0x08
 	STRB r1, [r0,#0x100]
-	;print to screen btn was pushed
-	LDR r0, ptr_to_prompt
+	;print to screen btn was pushed, P2 WINS
+	LDR r0, ptr_to_button
 	BL output_string
 	POP {r0-r12,lr}
 	BX lr       	; Return

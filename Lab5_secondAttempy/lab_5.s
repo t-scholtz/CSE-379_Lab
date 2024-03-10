@@ -1,4 +1,4 @@
-	.data
+		.data
 
 ;LIST OF SUBROUTINES
 ;================================================================
@@ -18,22 +18,25 @@
 	.global gpio_btn_and_LED_init
 	.global div_and_mod
 	.global read_character
-	.global output_character
 ;================================================================
 
 ;PROGRAM DATA
 ;================================================================
 startUpPrompt:	.string 0x0D, 0x0A, "Hello! Lab 5 - Tom and Tim",0
-intructions:	.string 0x0D, 0x0A, "Game intructions: This is a 2 player game in which players test their reaction speed",0x0D, 0x0A,"The goal is to press your button faster than your oponent, but not too early",0x0D, 0x0A,"The text, ready, set, go, will appear, and only after go should you press your button",0x0D, 0x0A,"Player 1 - press space bar",0x0D, 0x0A,"Player 2 - press sw1",0x0D, 0x0A , 0
+intructions:	.string 0x0D, 0x0A, "Game intructions: This is a 2 player game in which players test their reaction speed",0x0D, 0x0A,"The goal is to press your button faster than your oponent, but not too early",0x0D, 0x0A,"Player 1 - press space bar",0x0D, 0x0A,"Player 2 - press sw1" , 0
 waiting:		.string "Waiting: ",0
-press:			.string "<<< Press Enter to Start / Q to Exit >>>",0x0D, 0x0A,0
+press:			.string "<<< Press to Start >>>",0
 ready:			.string 0x0D, 0x0A, "READY?...",0
 set:			.string 0x0D, 0x0A, "SET!...",0
 gogo:			.string 0x0D, 0x0A, "GOOOOO!!!",0
+askRunAgain:	.string "Would you like to run again Yes(Y) No(N)?", 0
+extmsg:			.string "End of program â€»\(^o^)/â€»", 0
 state:			.byte	0x01
 p1Score:		.byte	0x00
+p1WINS:			.string 0x0D, 0x0A, "Player 1 WINS", 0
 p2Score:		.byte	0x00
-disqualified:	.byte	0x00 ;INSTEAD OF HANFLING IT HERE I AM GOING TO HAVE IT AT THE BOTTOM - ??? - I was gonna do it bit 0 = player 1 , bit 1 = player 2 | 1 means they are disqaulided
+p2WINS:			.string 0x0D, 0x0A, "Player 2 WINS", 0
+disqualified:	.byte	0x00 ;INSTEAD OF HANFLING IT HERE I AM GOING TO HAVE IT AT THE BOTTOM
 space:			.string "space" ,0
 
 ;================================================================
@@ -48,9 +51,13 @@ ptr_to_press:			.word press
 ptr_to_ready:			.word ready
 ptr_to_set:				.word set
 ptr_to_gogo:			.word gogo
+ptr_to_askRunAgain		.word askRunAgain
+ptr_to_extmsg			.word extmsg
 ptr_to_state:			.word state
 ptr_to_p1Score:			.word p1Score
+ptr_to_p1WINS:			.word p1WINS
 ptr_to_p2Score:			.word p2Score
+ptr_to_p2WINS:			.word p2WINS
 ptr_to_disqualified:	.word disqualified
 ptr_to_space:			.word space
 ;================================================================
@@ -94,7 +101,7 @@ lab5:								; This is your main routine which is called from
 	MOVT r10, #0x00F0
 	;This should give us a healthy clock of 3 billion(TEMP)
 
-;================================================================;~~~~~~~~~~~~~~~~~~~~~~~~~
+;~~~~~~~~~~~~~~~~~~~~~~~~~
 ;Game state table
 ;	1 - start mode
 ;	2 - round start (wait perdiod)
@@ -102,49 +109,56 @@ lab5:								; This is your main routine which is called from
 ;	4 - calculation mode (don't accept input)
 ;~~~~~~~~~~~~~~~~~~~~~~~~~
 GAMELOOP:
-instructions:	;Print Instructions to screen
+
+instructions:			;Print Instructions to screen
+
 	MOV r4,#1
-	LDR r5, ptr_to_state	;set Program state to 1
+	LDR r5, ptr_to_state;set Program state to 1
 	STRB r4, [r5]
 	LDR r0, ptr_to_intructions
 	MVN r1, #1
 	BL output_string
-	LDR r0, ptr_to_press
-	BL output_string	;print press to start
 
-waitforgametostart:	;waiting for user to press enter tostart the game
+waitforgametostart:		;waiting for user to press enter tostart the game
 
 	MOV r3, #0			;counter
 	MOV r1, #0x01
 
 waitforgameLoop:		;wait for usr input loop - prints scrolling text to show program still running
-	MOV r0, #0x0C
-	BL output_character		;clear screen
+
 	MOV r0, #0x0D
-	BL output_character		;print cariage return
-	MOV r0, #0x0C
-	BL output_character		;clear screen
 	MOV r1, #1
-	LDR r0, ptr_to_waiting	;printing waiting
+	BL output_character	;print cariage return
+	LDR r0, ptr_to_waiting
 	BL output_string
 	MOV r4, #0
 
 printPressLoop:
 
 	ADD r4,r4,#1
-	MOV r0, #0x2E
+	MOV r0, #0x20
 	BL output_character
 	CMP r4,r3
 	BLT printPressLoop	;Loop to print spaces where r3 is the num to print
 	ADD r3, #1			;after loop increment r3
+	LDR r0, ptr_to_press
+	BL output_string	;print press to start
 	MOV r0,r3
-	MOV r1,#8
-	BL div_and_mod		;mod r3 by 8 to reset r3 to 0 for when it gets to 8
+	MOV r1,#100
+	BL div_and_mod		;mod r3 by 100 to reset r3 to 0 for when it gets to 100
 	MOV r3, r1
 	MOV r7,#0			;count to a big number
 	MOVT r7, #0x000F
 	MOV r8, #0
 burn:					;TIM: More comments would be appricated to narrate your thought process when you are not with me coding
+
+	;TOMS CODE, I am adding a check because it seems to get stuck here after the first state needs to change
+	LDR r0, ptr_to_state
+	LDRB r1, [r0]		;state of program is stored in r1
+	CMP r1, #2 			;This will let us know when it needs to switch
+	BEQ game_startLOOP
+	;TOMS CODE END, this is to make sure it switches to the countdown state
+
 
 	add r8,r8, #1
 	NOP
@@ -152,75 +166,137 @@ burn:					;TIM: More comments would be appricated to narrate your thought proces
 	BLE burn
 	B waitforgameLoop
 
-round_Loop:				;This is the round loop - prints the round number + player scores
-	LDR r5, ptr_to_disqualified
-	MOV r6, #0
-	STRB r6, [r5]		;Reset disqualifed status of both players
-	;Print round num + player scores
-
-
 game_startLOOP: 		;This is gonna be the point where we do the READY... SET... GO...
 ;R10 will be reseved for clock time
 ;r9 will be the comparing adress represeing a huge number for the clock
-	MVN r1,#1 	;move neg one onto r1 so print stings will print neg numbres
+
+	;First print READY 3 billion
+
 THREE_BILL:
 	MOV r9, #0x0000
 	MOVT r9, #0x00F0
 	CMP r10, r9
 	BEQ print_ready
+
 ONE_HALF_BILL:
+	;HALF DONE print SET!, 1.5 billion
 	MOV r9,  #0x0000
 	MOVT r9, #0x0080
 	CMP r10, r9
 	BEQ print_set
-;DONE print gogo!!! 0 billion
-;JUMPS to press and read which prints GO! plus updates to state 3 and waits for user input\
-	CMP r10, #0x0
-	BEQ press_and_read
 
+ZERO_BILL:
+	;DONE print gogo!!! 0 billion
+	CMP r10, #0x0
+	BEQ print_go
+	;CHECK state
+	LDR r0, ptr_to_state
+	LDRB r1, [r0]
 	;FINALLY just sub 1 and branch
 	SUB r10, r10, #1
 	B game_startLOOP
 
-print_ready:
+
+
+;these need to stay at the end so they don't accidently get called
+print_ready:		;r0 used to store val
+					;r1 is the newline flag
 	LDR r0, ptr_to_ready
 	MVN r1, #1
 	BL output_string
-	SUB r10, r10, #1
-	B game_startLOOP
+	B ONE_HALF_BILL
 
-print_set:
+print_set:			;r0 used to store val
+					;r1 is the newline flag
 	LDR r0, ptr_to_set
 	MVN r1, #1
 	BL output_string
-	SUB r10, r10, #1
-	B game_startLOOP
+	B ZERO_BILL
 
-press_and_read:;THIS IS WHERE I AM WORKING AND IT IS NOT CORRECTLY EXICUTING THESE
-	;step 1 check if both players have disqualified themselves
-	LDR r5, ptr_to_disqualified
-	LDRB r6, [r5]				;load disqualfied memory address and set bit 0 to 1
-	CMP r6, #3
-	BEQ BOTH_DISQUALIFIED
-
-	;step 2 print go
+print_go:			;r0 used to store val
+					;r1 is the newline flag
 	LDR r0, ptr_to_gogo
 	MVN r1, #1
 	BL output_string
-	;step 3 update to state 3 and wait for users to react
+
+press_and_read:		;r1 is going to be used to change the value in the state before storing it back
+
+	;The first thing we need to do is change the state to 3
+	LDR r0, ptr_to_state
+	LDRB r1, [r0]
+	MOV r1, #3
+	STRB r1, [r0]
+
+press_and_readLOOP: ;r0 used to store and read values to see who won
+
+	;First check the values and as long as no one had presses continue to loop
+	LDR r0, ptr_to_p1Score
+	LDRB r1, [r0]
+	CMP r1, #0
+	BGT P1Wins
+	LDR r0, ptr_to_p2Score
+	LDRB r1, [r0]
+	CMP r1, #0
+	BGT P2Wins
+
+P1Wins:				;r0 used to store val
+					;r1 is the newline flag
+	LDR r0, ptr_to_p1WINS
+	MVN r1, #1
+	BL output_string
+	B RESET_OR_END
+
+P2Wins: 			;r0 used to store val
+					;r1 is the newline flag
+	LDR r0, ptr_to_p2WINS
+	MVN r1, #1
+	BL output_string
+
+RESET_OR_END:		;r0 is used to store values at addresses, alters them and stores them back
+					;THIS IS TECNICALLY STATE 4 BUT THE ACTUAL INT IS NOT USED
+
+	;Here we have to set all the values again and reset state to one before asking
+	; if they want to continue or not
+	LDR r0, ptr_to_p1Score			;RESET P1
+	MOV r1, #0
+	STR r1, [r0]
+
+	LDR r0, ptr_to_p2Score		    ;RESET P2
+	MOV r1, #0
+	STR r1, [r0]
+
+	LDR r0, ptr_to_state			;RESET state
+	LDRB r1, [r0]
+	MOV r1, #1
+	STRB r1, [r0]
+
+	LDR r0, ptr_to_askRunAgain				;see's if the user wants to go again
+	MVN r1, #1
+	BL output_string
+
+	;BL read_character //HANDLED BY UART
+	CMP r0, #0x59
+	BEQ Lab5FINAL
+	B GAMELOOP
+
+
+
+Lab5FINAL:
+	LDR r0, ptr_to_extmsg			;see's if the user wants to go again
+	MVN r1, #1
+	BL output_string
+
+
+
+
+
 
 	; This is where you should implement a loop, waiting for the u  ser to
 	; enter a q, indicating they want to end the program.
 
-BOTH_DISQUALIFIED:
-	;Print somthing realted
-	B round_Loop
-
-END_PROGRAM:
-	POP {r4-r12,lr} 		; Restore registers to adhere to the AAPCS
+	POP {lr}		; Restore registers to adhere to the AAPCS
 	MOV pc, lr
 ;================================================================
-
 
 ;----------------------------------------------------------------
 ;uart_interrupt_init: This subroutine will generate an interupt

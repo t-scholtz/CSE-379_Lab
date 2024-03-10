@@ -202,7 +202,7 @@ print_go:
 	BL output_string
 	B game_startLOOP
 
-press_and_read:
+press_and_read:;THIS IS WHERE I AM WORKING AND IT IS NOT CORRECTLY EXICUTING THESE
 
 	; This is where you should implement a loop, waiting for the u  ser to
 	; enter a q, indicating they want to end the program.

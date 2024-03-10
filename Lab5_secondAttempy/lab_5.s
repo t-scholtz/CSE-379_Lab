@@ -18,21 +18,22 @@
 	.global gpio_btn_and_LED_init
 	.global div_and_mod
 	.global read_character
+	.global output_character
 ;================================================================
 
 ;PROGRAM DATA
 ;================================================================
 startUpPrompt:	.string 0x0D, 0x0A, "Hello! Lab 5 - Tom and Tim",0
-intructions:	.string 0x0D, 0x0A, "Game intructions: This is a 2 player game in which players test their reaction speed",0x0D, 0x0A,"The goal is to press your button faster than your oponent, but not too early",0x0D, 0x0A,"Player 1 - press space bar",0x0D, 0x0A,"Player 2 - press sw1" , 0
+intructions:	.string 0x0D, 0x0A, "Game intructions: This is a 2 player game in which players test their reaction speed",0x0D, 0x0A,"The goal is to press your button faster than your oponent, but not too early",0x0D, 0x0A,"The text, ready, set, go, will appear, and only after go should you press your button",0x0D, 0x0A,"Player 1 - press space bar",0x0D, 0x0A,"Player 2 - press sw1",0x0D, 0x0A , 0
 waiting:		.string "Waiting: ",0
-press:			.string "<<< Press to Start >>>",0
-ready:			.string 0x0D, 0x0A, "READY?..."
-set:			.string 0x0D, 0x0A, "SET!..."
-gogo:			.string 0x0D, 0x0A, "GOOOOO!!!"
+press:			.string "<<< Press Enter to Start / Q to Exit >>>",0x0D, 0x0A,0
+ready:			.string 0x0D, 0x0A, "READY?...",0
+set:			.string 0x0D, 0x0A, "SET!...",0
+gogo:			.string 0x0D, 0x0A, "GOOOOO!!!",0
 state:			.byte	0x01
 p1Score:		.byte	0x00
 p2Score:		.byte	0x00
-disqualified:	.byte	0x00 ;INSTEAD OF HANFLING IT HERE I AM GOING TO HAVE IT AT THE BOTTOM
+disqualified:	.byte	0x00 ;INSTEAD OF HANFLING IT HERE I AM GOING TO HAVE IT AT THE BOTTOM - ??? - I was gonna do it bit 0 = player 1 , bit 1 = player 2 | 1 means they are disqaulided
 space:			.string "space" ,0
 
 ;================================================================
@@ -93,7 +94,7 @@ lab5:								; This is your main routine which is called from
 	MOVT r10, #0x00F0
 	;This should give us a healthy clock of 3 billion(TEMP)
 
-;~~~~~~~~~~~~~~~~~~~~~~~~~
+;================================================================;~~~~~~~~~~~~~~~~~~~~~~~~~
 ;Game state table
 ;	1 - start mode
 ;	2 - round start (wait perdiod)
@@ -101,15 +102,15 @@ lab5:								; This is your main routine which is called from
 ;	4 - calculation mode (don't accept input)
 ;~~~~~~~~~~~~~~~~~~~~~~~~~
 GAMELOOP:
-
-instructions:			;Print Instructions to screen
-
+instructions:	;Print Instructions to screen
 	MOV r4,#1
-	LDR r5, ptr_to_state;set Program state to 1
+	LDR r5, ptr_to_state	;set Program state to 1
 	STRB r4, [r5]
 	LDR r0, ptr_to_intructions
 	MVN r1, #1
 	BL output_string
+	LDR r0, ptr_to_press
+	BL output_string	;print press to start
 
 waitforgametostart:	;waiting for user to press enter tostart the game
 
@@ -117,40 +118,33 @@ waitforgametostart:	;waiting for user to press enter tostart the game
 	MOV r1, #0x01
 
 waitforgameLoop:		;wait for usr input loop - prints scrolling text to show program still running
-
+	MOV r0, #0x0C
+	BL output_character		;clear screen
 	MOV r0, #0x0D
+	BL output_character		;print cariage return
+	MOV r0, #0x0C
+	BL output_character		;clear screen
 	MOV r1, #1
-	BL output_character	;print cariage return
-	LDR r0, ptr_to_waiting
+	LDR r0, ptr_to_waiting	;printing waiting
 	BL output_string
 	MOV r4, #0
 
 printPressLoop:
 
 	ADD r4,r4,#1
-	MOV r0, #0x20
+	MOV r0, #0x2E
 	BL output_character
 	CMP r4,r3
 	BLT printPressLoop	;Loop to print spaces where r3 is the num to print
 	ADD r3, #1			;after loop increment r3
-	LDR r0, ptr_to_press
-	BL output_string	;print press to start
 	MOV r0,r3
-	MOV r1,#100
-	BL div_and_mod		;mod r3 by 100 to reset r3 to 0 for when it gets to 100
+	MOV r1,#8
+	BL div_and_mod		;mod r3 by 8 to reset r3 to 0 for when it gets to 8
 	MOV r3, r1
 	MOV r7,#0			;count to a big number
 	MOVT r7, #0x000F
 	MOV r8, #0
 burn:					;TIM: More comments would be appricated to narrate your thought process when you are not with me coding
-
-	;TOMS CODE, I am adding a check because it seems to get stuck here after the first state needs to change
-	LDR r0, ptr_to_state
-	LDRB r1, [r0]		;state of program is stored in r1
-	CMP r1, #2 			;This will let us know when it needs to switch
-	BEQ game_startLOOP
-	;TOMS CODE END, this is to make sure it switches to the countdown state
-
 
 	add r8,r8, #1
 	NOP
@@ -158,59 +152,69 @@ burn:					;TIM: More comments would be appricated to narrate your thought proces
 	BLE burn
 	B waitforgameLoop
 
+round_Loop:				;This is the round loop - prints the round number + player scores
+	LDR r5, ptr_to_disqualified
+	MOV r6, #0
+	STRB r6, [r5]		;Reset disqualifed status of both players
+	;Print round num + player scores
+
+
 game_startLOOP: 		;This is gonna be the point where we do the READY... SET... GO...
 ;R10 will be reseved for clock time
 ;r9 will be the comparing adress represeing a huge number for the clock
-
-	;First print READY 3 billion
-
+	SUB r10, r10, #1
 THREE_BILL:
 	MOV r9, #0x0000
 	MOVT r9, #0x00F0
 	CMP r10, r9
 	BEQ print_ready
-
 ONE_HALF_BILL:
-	;HALF DONE print SET!, 1.5 billion
 	MOV r9,  #0x0000
 	MOVT r9, #0x0080
 	CMP r10, r9
 	BEQ print_set
-
-ZERO_BILL:
-	;DONE print gogo!!! 0 billion
+;DONE print gogo!!! 0 billion
+;JUMPS to press and read which prints GO! plus updates to state 3 and waits for user input\
 	CMP r10, #0x0
-	BEQ print_go
-	;CHECK state
-	LDR r0, ptr_to_state
-	LDRB r1, [r0]
+	BEQ press_and_read
+
 	;FINALLY just sub 1 and branch
-	SUB r10, r10, #1
 	B game_startLOOP
 
 print_ready:
 	LDR r0, ptr_to_ready
 	MVN r1, #1
 	BL output_string
-	B ONE_HALF_BILL
+	B game_startLOOP
 
 print_set:
 	LDR r0, ptr_to_set
 	MVN r1, #1
 	BL output_string
-	B ZERO_BILL
+	B game_startLOOP
 
-print_go:
+press_and_read:;THIS IS WHERE I AM WORKING AND IT IS NOT CORRECTLY EXICUTING THESE
+	;step 1 check if both players have disqualified themselves
+	LDR r5, ptr_to_disqualified
+	LDRB r6, [r5]				;load disqualfied memory address and set bit 0 to 1
+	CMP r6, #3
+	BEQ BOTH_DISQUALIFIED
+
+	;step 2 print go
 	LDR r0, ptr_to_gogo
 	MVN r1, #1
 	BL output_string
-
-press_and_read:;THIS IS WHERE I AM WORKING AND IT IS NOT CORRECTLY EXICUTING THESE
+	;step 3 update to state 3 and wait for users to react
 
 	; This is where you should implement a loop, waiting for the u  ser to
 	; enter a q, indicating they want to end the program.
 
-	POP {lr}		; Restore registers to adhere to the AAPCS
+BOTH_DISQUALIFIED:
+	;Print somthing realted
+	B round_Loop
+
+END_PROGRAM:
+	POP {r4-r12,lr} 		; Restore registers to adhere to the AAPCS
 	MOV pc, lr
 ;================================================================
 
@@ -275,33 +279,59 @@ gpio_interrupt_init:
  ;----------------------------------------------------------------
 UART0_Handler:
 	PUSH {r0-r12,lr}
-	LDR r0, ptr_to_state
-	LDRB r1, [r0]		;state of program is stored in r1
-	;BL read_character					;if it return the space bar space was pressed P1 WINS
-	CMP r0, #0x20
-	;IF not space
-	BNE FINISH_UART0_HANDLER
-	;IF space
-	LDR r0, ptr_to_space
-	BL output_string
-
-	CMP r1, #1
-
-	CMP r1, #2
-
-	CMP r1, #3
-
-	CMP r1, #4
-
-FINISH_UART0_HANDLER:
 	MOV r0, #0xC000 					;This is the UART Base address
 	MOVT r0, #0x4000
 	LDRB r1, [r0, #UARTICR]				;This loads the base value of the UARTIM data and we need to update it
-	ORR r1, r1, #0x10				;Should set the 4th bit to 0 to clear register
+	ORR r1, r1, #16				;Should set the 4th bit to 0 to clear register
 	STRB r1, [r0, #UARTICR]
 
+	LDR r0, ptr_to_state
+	LDRB r1, [r0]		;state of program is stored in r1
+	BL read_character					;if it return the space bar space was pressed P1 WINS
+	MOV r4,r0			;copy value read to r4
+	BL output_character
+	CMP r1, #1			;Check what state the code is in and act acorindly
+	BEQ U_STATE1
+	CMP r1, #2
+	BEQ U_STATE2
+	CMP r1, #3
+	BEQ U_STATE4
+	CMP r1, #4
+	BEQ U_STATE4
+EXIT_UART_HANDLER:
 	POP {r0-r12,lr}
 	BX lr
+
+EXIT_ROUTINE:
+	POP {r0-r12,lr}
+	B END_PROGRAM
+
+U_STATE1:
+	CMP r4,#0x71	;check if q was pressed and if so exit
+	BEQ EXIT_ROUTINE
+	CMP r4,#0x51 	;check if Q was pressed and if so exit
+	BEQ EXIT_ROUTINE
+	CMP r4,#0x0D
+	BNE EXIT_UART_HANDLER
+	LDR r0, ptr_to_state		;load stateProgram
+	MOV r1, #2					;update state of program
+	STRB r1, [r0]
+	POP {r0-r12,lr}
+	B game_startLOOP			;jump to start of next part of program
+U_STATE2:
+	CMP r4,#0x20 				;If user pressed space - disqualife them
+	BNE EXIT_UART_HANDLER
+	LDR r5, ptr_to_disqualified
+	LDRB r6, [r5]				;load disqualfied memory address and set bit 0 to 1
+	ORR r6,r6,#1
+	STRB r6, [r5]
+	B EXIT_UART_HANDLER
+U_STATE3:
+
+	B EXIT_UART_HANDLER
+U_STATE4:
+
+	B EXIT_UART_HANDLER
 ;================================================================
 
 ;----------------------------------------------------------------
@@ -309,66 +339,42 @@ FINISH_UART0_HANDLER:
 ;----------------------------------------------------------------
 Switch_Handler:
 	PUSH {r0-r12,lr}
-	LDR r0, ptr_to_state
-	LDRB r1, [r0]		;state of program is stored in r1
-
-	BL state_changer 	;Have all of the state discitions moved to here
-
-	;Clear interupt value
 	MOV r0, #0x5000
 	MOVT r0, #0x4002
 	LDRB r1, [r0,#GPIOICR]
-	ORR r1,r1,#0x10
+	ORR r1,r1,#16
 	STRB r1, [r0,#GPIOICR]
+	LDR r0, ptr_to_state
+	LDRB r1, [r0]		;state of program is stored in r1
 
+	CMP r1, #1
+	BEQ EXIT_SWITCH_HANDLER	;No action required for state 1
+	CMP r1, #2
+	BEQ S_STATE2
+	CMP r1, #3
+	BEQ S_STATE4
+	CMP r1, #4
+	BEQ S_STATE4
+EXIT_SWITCH_HANDLER
 	POP {r0-r12,lr}
 	BX lr       	; Return
+
+
+S_STATE2:
+	LDR r5, ptr_to_disqualified
+	LDRB r6, [r5]				;load disqualfied memory address and set bit 1 to 1
+	ORR r6,r6,#2
+	STRB r6, [r5]
+	B EXIT_UART_HANDLER
+S_STATE3:
+
+	B EXIT_UART_HANDLER
+S_STATE4:
+
+	B EXIT_UART_HANDLER
 ;================================================================
 
-;----------------------------------------------------------------
-;state_changer - Takes in current state in r1
-; 				 Then alters it depending on certian copnditions
-;---------------------------------------------------------------
-state_changer:
-	PUSH {r4-r12,lr}
-	;IF you are currently in state one
-	CMP r1, #1
-	BEQ FIRST_S
 
-	;IF you are currently in state two
-	CMP r1, #2
-	BEQ SECOND_S
-
-	;IF you are currently in state three
-	CMP r1, #3
-	BEQ THIRD_S
-
-	;IF you are currently in state four
-	CMP r1, #4
-	BEQ FOURTH_S
-
-FIRST_S:
-	;Currently they should be in the press to start portion
-	;All that is needed here is the to move up to the next
-	MOV r1, #2
-	STRB r1, [r0]				;This will alter the value of the state
-	;MOV  pc, game_startLOOP		;I don't know if this will update the program counter but I need to update the location
-	BL FINISH_state_changer
-
-SECOND_S:
-	BL FINISH_state_changer
-
-THIRD_S:
-	BL FINISH_state_changer
-
-FOURTH_S:
-	BL FINISH_state_changer
-
-FINISH_state_changer:
-
-	POP {r4-r12,lr}
-	MOV pc, lr
-;================================================================
 Timer_Handler:
 
 	; Your code for your Timer handler goes here.  It is not needed for

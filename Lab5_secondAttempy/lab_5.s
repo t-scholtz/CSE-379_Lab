@@ -89,8 +89,8 @@ lab5:								; This is your main routine which is called from
 	BL output_string
 
 	;SETTING up the clock for later
-	MOV r10, #0x5E00
-	MOVT r10, #0xB2D0
+	MOV r10, #0x0000
+	MOVT r10, #0x00F0
 	;This should give us a healthy clock of 3 billion(TEMP)
 
 ;~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -163,23 +163,27 @@ game_startLOOP: 		;This is gonna be the point where we do the READY... SET... GO
 ;r9 will be the comparing adress represeing a huge number for the clock
 
 	;First print READY 3 billion
-	MOV r9,  #0x5E00
-	MOVT r9, #0xB2D0
+
+THREE_BILL:
+	MOV r9, #0x0000
+	MOVT r9, #0x00F0
 	CMP r10, r9
 	BEQ print_ready
+
+ONE_HALF_BILL:
 	;HALF DONE print SET!, 1.5 billion
-	MOV r9,  #0x2F00
-	MOVT r9, #0x5968
+	MOV r9,  #0x0000
+	MOVT r9, #0x0080
 	CMP r10, r9
 	BEQ print_set
+
+ZERO_BILL:
 	;DONE print gogo!!! 0 billion
 	CMP r10, #0x0
 	BEQ print_go
 	;CHECK state
 	LDR r0, ptr_to_state
 	LDRB r1, [r0]
-	CMP r1, #3
-	BEQ press_and_read
 	;FINALLY just sub 1 and branch
 	SUB r10, r10, #1
 	B game_startLOOP
@@ -188,19 +192,18 @@ print_ready:
 	LDR r0, ptr_to_ready
 	MVN r1, #1
 	BL output_string
-	B game_startLOOP
+	B ONE_HALF_BILL
 
 print_set:
 	LDR r0, ptr_to_set
 	MVN r1, #1
 	BL output_string
-	B game_startLOOP
+	B ZERO_BILL
 
 print_go:
 	LDR r0, ptr_to_gogo
 	MVN r1, #1
 	BL output_string
-	B game_startLOOP
 
 press_and_read:;THIS IS WHERE I AM WORKING AND IT IS NOT CORRECTLY EXICUTING THESE
 

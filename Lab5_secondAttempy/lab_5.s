@@ -162,7 +162,7 @@ round_Loop:				;This is the round loop - prints the round number + player scores
 game_startLOOP: 		;This is gonna be the point where we do the READY... SET... GO...
 ;R10 will be reseved for clock time
 ;r9 will be the comparing adress represeing a huge number for the clock
-	SUB r10, r10, #1
+	MVN r1,#1 	;move neg one onto r1 so print stings will print neg numbres
 THREE_BILL:
 	MOV r9, #0x0000
 	MOVT r9, #0x00F0
@@ -179,18 +179,21 @@ ONE_HALF_BILL:
 	BEQ press_and_read
 
 	;FINALLY just sub 1 and branch
+	SUB r10, r10, #1
 	B game_startLOOP
 
 print_ready:
 	LDR r0, ptr_to_ready
 	MVN r1, #1
 	BL output_string
+	SUB r10, r10, #1
 	B game_startLOOP
 
 print_set:
 	LDR r0, ptr_to_set
 	MVN r1, #1
 	BL output_string
+	SUB r10, r10, #1
 	B game_startLOOP
 
 press_and_read:;THIS IS WHERE I AM WORKING AND IT IS NOT CORRECTLY EXICUTING THESE

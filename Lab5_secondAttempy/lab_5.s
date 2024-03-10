@@ -23,8 +23,8 @@
 ;PROGRAM DATA
 ;================================================================
 startUpPrompt:	.string 0x0D, 0x0A, "Hello! Lab 5 - Tom and Tim",0
-intructions:	.string 0x0D, 0x0A, "Game intructions go here but tim is too lazt to write them" , 0
-waiting:		.string "Waiting: "
+intructions:	.string 0x0D, 0x0A, "Game intructions: This is a 2 player game in which players test their reaction speed"0x0D, 0x0A,"The goal is to press your button faster than your oponent, but not too early",0x0D, 0x0A,"Player 1 - press space bar",0x0D, 0x0A,"Player 2 - press sw1" , 0
+waiting:		.string "Waiting: ",0
 press:			.string "<<< Press to Start >>>",0
 ready:			.string 0x0D, 0x0A, "READY?..."
 set:			.string 0x0D, 0x0A, "SET!..."
@@ -294,7 +294,7 @@ FINISH_UART0_HANDLER:
 	MOV r0, #0xC000 					;This is the UART Base address
 	MOVT r0, #0x4000
 	LDRB r1, [r0, #UARTICR]				;This loads the base value of the UARTIM data and we need to update it
-	ORR r1, r1, #16				;Should set the 4th bit to 0 to clear register
+	ORR r1, r1, #0x10				;Should set the 4th bit to 0 to clear register
 	STRB r1, [r0, #UARTICR]
 
 	POP {r0-r12,lr}
@@ -315,8 +315,8 @@ Switch_Handler:
 	MOV r0, #0x5000
 	MOVT r0, #0x4002
 	LDRB r1, [r0,#GPIOICR]
-	ORR r1,r1,#0x08
-	STRB r1, [r0,#0x100]
+	ORR r1,r1,#0x10
+	STRB r1, [r0,#GPIOICR]
 
 	POP {r0-r12,lr}
 	BX lr       	; Return

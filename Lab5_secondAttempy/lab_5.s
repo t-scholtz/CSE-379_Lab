@@ -23,7 +23,7 @@
 ;PROGRAM DATA
 ;================================================================
 startUpPrompt:	.string 0x0D, 0x0A, "Hello! Lab 5 - Tom and Tim",0
-intructions:	.string 0x0D, 0x0A, "Game intructions: This is a 2 player game in which players test their reaction speed"0x0D, 0x0A,"The goal is to press your button faster than your oponent, but not too early",0x0D, 0x0A,"Player 1 - press space bar",0x0D, 0x0A,"Player 2 - press sw1" , 0
+intructions:	.string 0x0D, 0x0A, "Game intructions: This is a 2 player game in which players test their reaction speed",0x0D, 0x0A,"The goal is to press your button faster than your oponent, but not too early",0x0D, 0x0A,"Player 1 - press space bar",0x0D, 0x0A,"Player 2 - press sw1" , 0
 waiting:		.string "Waiting: ",0
 press:			.string "<<< Press to Start >>>",0
 ready:			.string 0x0D, 0x0A, "READY?..."

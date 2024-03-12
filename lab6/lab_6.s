@@ -141,6 +141,8 @@ EXIT_UART_HANDLER:
 Switch_Handler:
 	PUSH {r0-r11,lr}
 
+	;pauses game
+
 EXIT_SWITCH_HANDLER
 	POP {r0-r11,lr}
 	BX lr       	; Return
@@ -160,10 +162,13 @@ timer_init:
 	LDR r6, [r4,r5]
 	ORR r6, #0x01
 	STR r6, [r4,r5]
-	;Configure Timer
+	;Disable Timer
 	MOV r4, #0
 	MOVT r4,#0x4003
 	MOV r5, #0x00C
+	LDRB r6, [r4,r5]
+	AND r6, #0xFE
+	STRB r6, [r4,r5]
 	;Enable Timer Interrupt
 	;Enable Timer
 

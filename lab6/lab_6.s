@@ -125,11 +125,53 @@ update_screen:
 ;----------------------------------------------------------------
 UART0_Handler:
 	PUSH {r0-r11,lr}
+	;Clear uart hanlder flag reg
+	MOV r0, #0xC000
+	MOVT r0, #0x4000
+	LDRB r1, [r0, #UARTICR]
+	ORR r1, r1, #0x10
+	STRB r1, [r0, #UARTICR]
 
+	;Check if Game is paused - skip if paused
+	LDR r0, ptr_to_paused
+	LDRB r1, [r0]
+	CMP r1, #0x00
+	BNE EXIT_UART_HANDLER
 
+	;Grab player input
+	BL read_character
+	CMP r0, #0x64 ;w
+	BEQ DIR_UP
+	CMP r0, #0x57 ;W
+	BEQ DIR_UP
+	CMP r0, #0x64 ;d
+	BEQ DIR_R
+	CMP r0, #0x44 ;D
+	BEQ DIR_R
+	CMP r0, #0x73 ;s
+	BEQ DIR_DOWN
+	CMP r0, #0x43 ;S
+	BEQ DIR_DOWN
+	CMP r0, #0x61 ;a
+	BEQ DIR_L
+	CMP r0, #0x41 ;A
+	BEQ DIR_L
 	;Uart handler needs to take in input, check if the WASD/ arrows keys were pressed and then update player direction
-
-
+DIR_UP:
+	MOV r6, #0
+	B UPDATE_DIR
+DIR_R:
+	MOV r6, #1
+	B UPDATE_DIR
+DIR_DOWN:
+	MOV r6, #2
+	B UPDATE_DIR
+DIR_L:
+	MOV r6, #3
+	B UPDATE_DIR
+UPDATE_DIR:
+	LDR r5, ptr_to_playerDir
+	STRB r6, [r5]
 EXIT_UART_HANDLER:
 	POP {r0-r11,lr}
 	BX lr

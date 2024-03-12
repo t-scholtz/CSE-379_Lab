@@ -182,15 +182,23 @@ EXIT_UART_HANDLER:
 ;----------------------------------------------------------------
 Switch_Handler:
 	PUSH {r0-r11,lr}
+	;rest switch interupt reg
+	MOV r0, #0x5000
+	MOVT r0, #0x4002
+	LDRB r1, [r0,#GPIOICR]
+	ORR r1,r1,#16
+	STRB r1, [r0,#GPIOICR]
 
-	;pauses game
+	;toggle puase game value
+	LDR r4, ptr_to_paused
+	LDRB r5, [r4]
+	EOR r5, #1
+	STRB r5, [r4]
 
 EXIT_SWITCH_HANDLER
 	POP {r0-r11,lr}
 	BX lr       	; Return
-
 ;================================================================
-
 ;----------------------------------------------------------------
 ;timer_init - conencts the timer to the interupt handler
 ;	takes no input

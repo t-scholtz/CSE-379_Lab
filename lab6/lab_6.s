@@ -25,32 +25,38 @@
 ;================================================================
 startUpPrompt:	.string 0x0D, 0x0A, "Hello! Lab 6 - Tom and Tim",0
 scorePrompt:	.string "Score: ",0
-gameBoard:		.string "----------------------",0x0D, 0x0A,
-				.string "|                    |",0x0D, 0x0A,
-				.string "|                    |",0x0D, 0x0A,
-				.string "|                    |",0x0D, 0x0A,
-				.string "|                    |",0x0D, 0x0A,
-				.string "|                    |",0x0D, 0x0A,
-				.string "|                    |",0x0D, 0x0A,
-				.string "|                    |",0x0D, 0x0A,
-				.string "|                    |",0x0D, 0x0A,
-				.string "|                    |",0x0D, 0x0A,
-				.string "|                    |",0x0D, 0x0A,
-				.string "|                    |",0x0D, 0x0A,
-				.string "|                    |",0x0D, 0x0A,
-				.string "|                    |",0x0D, 0x0A,
-				.string "|                    |",0x0D, 0x0A,
-				.string "|                    |",0x0D, 0x0A,
-				.string "|                    |",0x0D, 0x0A,
-				.string "|                    |",0x0D, 0x0A,
-				.string "|                    |",0x0D, 0x0A,
-				.string "|                    |",0x0D, 0x0A,
-				.string "|                    |",0x0D, 0x0A,
+gameBoard:		.string "----------------------",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
 				.string "----------------------",0x0D, 0x0A,0
 playerDir:		.byte	0x00	; 0 up 1 right 2 down 3 left
 xPos:			.byte	0x0A
 yPos:			.byte	0x0A
 score:			.byte	0x00
+scoreStr:		.string "12345",0
+paused:			.byte	0x00	; 0 -> not puased | 1 pauesed
+pausePrompt:	.string "TODO",0x0D, 0x0A
+				.string "TODO",0x0D, 0x0A
+				.string "TODO",0x0D, 0x0A
+				.string "TODO",0
 
 ;================================================================
 
@@ -63,6 +69,9 @@ ptr_to_playerDir:		.word playerDir
 ptr_to_xPos:			.word xPos
 ptr_to_yPos:			.word ypos
 ptr_to_score:			.word score
+ptr_to_scoreStr:		.word scoreStr
+ptr_to_paused:			.word paused
+ptr_to_pausePrompt:		.word pausePrompt
 ;================================================================
 
 ;LIST OF CONSTANTS
@@ -114,7 +123,21 @@ update_screen:
 	;check that game hasn't ended -> if ended handle
 	;draw the new * on the map
 	;update the score
+
 	;draw score and map to screen
+	MOV r0, #12
+	BL output_character		;clear the screen
+	LDR r0, ptr_to_scorePrompt
+	MVN r1, #1
+	BL output_string		;print score prompt to screen
+	LDR r1, ptr_to_score
+	LDR r0 ,ptr_to_scoreStr
+	BL int2string			;convert the score num to a str value
+	LDR r0, ptr_to_scoreStr
+	MOV r1, #1
+	BL output_string		;print score value followed by a new line
+	LDR r0, ptr_to_gameBoard
+	BL output_string 		;print game map to screen
 
 	POP {r4-r12,lr}
 	MOV pc, lr
@@ -198,7 +221,9 @@ Switch_Handler:
 EXIT_SWITCH_HANDLER
 	POP {r0-r11,lr}
 	BX lr       	; Return
+
 ;================================================================
+
 ;----------------------------------------------------------------
 ;timer_init - conencts the timer to the interupt handler
 ;	takes no input

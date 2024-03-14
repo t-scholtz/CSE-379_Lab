@@ -47,6 +47,28 @@ gameBoard:		.string "----------------------",0x0D, 0x0A
 				.string "|                    |",0x0D, 0x0A
 				.string "|                    |",0x0D, 0x0A
 				.string "----------------------",0x0D, 0x0A,0
+PAUSEBoard:		.string "----------------------",0x0D, 0x0A,
+				.string "|                    |",0x0D, 0x0A,
+				.string "|                    |",0x0D, 0x0A,
+				.string "|                    |",0x0D, 0x0A,
+				.string "|     GAME PAUSED    |",0x0D, 0x0A,
+				.string "|PRESS SW1 to RESUME |",0x0D, 0x0A,
+				.string "|                    |",0x0D, 0x0A,
+				.string "|                    |",0x0D, 0x0A,
+				.string "|                    |",0x0D, 0x0A,
+				.string "|                    |",0x0D, 0x0A,
+				.string "|                    |",0x0D, 0x0A,
+				.string "|                    |",0x0D, 0x0A,
+				.string "|                    |",0x0D, 0x0A,
+				.string "|                    |",0x0D, 0x0A,
+				.string "|                    |",0x0D, 0x0A,
+				.string "|                    |",0x0D, 0x0A,
+				.string "|                    |",0x0D, 0x0A,
+				.string "|                    |",0x0D, 0x0A,
+				.string "|                    |",0x0D, 0x0A,
+				.string "|                    |",0x0D, 0x0A,
+				.string "|                    |",0x0D, 0x0A,
+				.string "----------------------",0x0D, 0x0A,0
 playerDir:		.byte	0x00	; 0 up 1 right 2 down 3 left
 xPos:			.byte	0x0A
 yPos:			.byte	0x0A
@@ -85,6 +107,15 @@ GPIOIV:				.equ 0x40C		;GPIO Interrupt Event Register
 GPIOIM:				.equ 0x410		;GPIO Interrupt Mask Register
 GPIOICR:			.equ 0x41C		;GPIO Interrupt Clear Register
 TIMER:				.equ 0xB2D05E00 ;THIS will be the timer for the countDOWN
+RCGCTIMER:			.equ 0x604		;General purpose timer run mode clock gating control register
+GPTMCTL:			.equ 0x00C		;General purpose timer control register
+GPTMCFG:			.equ 0x0		;General Purpose Timer configuration Register
+GPTMTAMR:			.equ 0x4		;General Purpose TImer Timer A Mode Register
+CLC_Interrupt:		.equ 0x7A1200	;This is the rate that our clock will interupt
+GPTMTAILR:			.equ 0x028		;General Purpose Timer inteval load Register
+GPTMIMR:			.equ 0x018		;General Purpose Timer Interrupt Mask Register
+GPTMCTL:			.equ 0x00C		;General Purpose Timer Control Reg
+
 ;================================================================
 
 ;CODE
@@ -231,22 +262,54 @@ EXIT_SWITCH_HANDLER
 timer_init:
 	PUSH {r4-r12,lr}
 	;Connect Clock to Timer
-	MOV r4, #0xE000
-	MOVT r4, #0x400F
-	MOV r5, #0x604
-	LDR r6, [r4,r5]
-	ORR r6, #0x01
-	STR r6, [r4,r5]
+	MOV r4, #0xE000 			;Clock register address
+	MOVT r4, #0x400F			;Clock register address
+	LDR r6, [r4,RCGCTIMER]		;Get the value of that address
+	ORR r6, #0x01				;Set 1 to bit 0 to ENABLE clock
+	STR r6, [r4,RCGCTIMER]
 	;Disable Timer
-	MOV r4, #0
-	MOVT r4,#0x4003
-	MOV r5, #0x00C
-	LDRB r6, [r4,r5]
-	AND r6, #0xFE
-	STRB r6, [r4,r5]
-	;Enable Timer Interrupt
-	;Enable Timer
-
+	MOV r4, #0x0				;Clock register address
+	MOVT r4,#0x4003				;Clock register address
+	LDRB r6, [r4,GPTMCTL]
+	AND r6, #0xFE				;Preserving everything besides 0 bit
+	STRB r6, [r4,GPTMCTL]
+	;Configuration 0 as 32-bit timer
+	MOV r4, #0x0				;Clock register address
+	MOVT r4,#0x4003				;Clock register address
+	LDRB r6, [r4]				;This is not changed
+	AND r6, #0xFF00				;Preserving everything besides 0 bit
+	STRB r6, [r4]
+	;Timer A Mode Register
+	MOV r4, #0x0				;Clock register address
+	MOVT r4,#0x4003				;Clock register address
+	LDRB r6, [r4,GPTMTAMR]	    ;This is not changed
+	ORR r6, #0x2				;Preserving everything besides 0 bit
+	STRB r6, [r4,GPTMTAMR]
+	;Clock interval
+	MOV r4, #0x0				;Clock register address
+	MOVT r4,#0x4003				;Clock register address
+	LDRB r6, [r4,GPTMTAILR]	    ;This is not changed
+	MOV r6, CLC_Interrupt		;ASK tim if this will put the correct value that we want in the register
+	STRB r6, [r4,GPTMTAILR]
+	;Interrupt Mask Reg
+	MOV r4, #0x0				;Clock register address
+	MOVT r4,#0x4003				;Clock register address
+	LDRB r6, [r4,GPTMIMR]	    ;This is not changed
+	ORR r6, #0x01				;This will set bit 0
+	STRB r6, [r4,GPTMIMR]
+	;Enable Register
+	MOV r4, #0xE000				;Clock register address
+	MOVT r4,#0xE000				;Clock register address
+	LDRB r6, [r4,EN0]	    	;This is not changed
+	MOV r7, 0xFFF7FFFF			;This is setting r7 to AND it with r6 later
+	AND r6, r6, r7				;We want to set Bit 19 to 0 bit position
+	STRB r6, [r4,EN0]
+	;Time Control Reg
+	MOV r4, #0x0				;Clock register address
+	MOVT r4,#0x4003				;Clock register address
+	LDRB r6, [r4,GPTMCTL]	    ;This is not changed
+	ORR r6, #0x01				;This will set bit 0
+	STRB r6, [r4,GPTMCTL]
 
 
 
@@ -257,6 +320,10 @@ timer_init:
 ;----------------------------------------------------------------
 Timer_Handler:
 
+	MOV r0, #0x21
+	BL output_character
+
+
 	; Your code for your Timer handler goes here.  It is not needed for
 	; Lab #5, but will be used in Lab #6.  It is referenced here because
 	; the interrupt enabled startup code has declared Timer_Handler.
@@ -266,6 +333,7 @@ Timer_Handler:
 	; them to & from the stack at the beginning & end of the handler.
 
 	BX lr       	; Return
+
 
 
 ;Not sure why this is here

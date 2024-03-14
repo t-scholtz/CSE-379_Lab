@@ -1,3 +1,4 @@
+
 	.data
 
 ;LIST OF SUBROUTINES
@@ -19,6 +20,7 @@
 	.global div_and_mod
 	.global read_character
 	.global output_character
+	.global int2string
 ;================================================================
 
 ;PROGRAM DATA
@@ -47,27 +49,27 @@ gameBoard:		.string "----------------------",0x0D, 0x0A
 				.string "|                    |",0x0D, 0x0A
 				.string "|                    |",0x0D, 0x0A
 				.string "----------------------",0x0D, 0x0A,0
-PAUSEBoard:		.string "----------------------",0x0D, 0x0A,
-				.string "|                    |",0x0D, 0x0A,
-				.string "|                    |",0x0D, 0x0A,
-				.string "|                    |",0x0D, 0x0A,
-				.string "|     GAME PAUSED    |",0x0D, 0x0A,
-				.string "|PRESS SW1 to RESUME |",0x0D, 0x0A,
-				.string "|                    |",0x0D, 0x0A,
-				.string "|                    |",0x0D, 0x0A,
-				.string "|                    |",0x0D, 0x0A,
-				.string "|                    |",0x0D, 0x0A,
-				.string "|                    |",0x0D, 0x0A,
-				.string "|                    |",0x0D, 0x0A,
-				.string "|                    |",0x0D, 0x0A,
-				.string "|                    |",0x0D, 0x0A,
-				.string "|                    |",0x0D, 0x0A,
-				.string "|                    |",0x0D, 0x0A,
-				.string "|                    |",0x0D, 0x0A,
-				.string "|                    |",0x0D, 0x0A,
-				.string "|                    |",0x0D, 0x0A,
-				.string "|                    |",0x0D, 0x0A,
-				.string "|                    |",0x0D, 0x0A,
+PAUSEBoard:		.string "----------------------",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|     GAME PAUSED    |",0x0D, 0x0A
+				.string "|PRESS SW1 to RESUME |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
 				.string "----------------------",0x0D, 0x0A,0
 playerDir:		.byte	0x00	; 0 up 1 right 2 down 3 left
 xPos:			.byte	0x0A
@@ -87,9 +89,10 @@ pausePrompt:	.string "TODO",0x0D, 0x0A
 ;================================================================
 ptr_to_startUpPrompt:	.word startUpPrompt
 ptr_to_scorePrompt:		.word scorePrompt
+ptr_to_gameBoard:		.word gameBoard
 ptr_to_playerDir:		.word playerDir
 ptr_to_xPos:			.word xPos
-ptr_to_yPos:			.word ypos
+ptr_to_yPos:			.word yPos
 ptr_to_score:			.word score
 ptr_to_scoreStr:		.word scoreStr
 ptr_to_paused:			.word paused
@@ -264,54 +267,55 @@ timer_init:
 	;Connect Clock to Timer
 	MOV r4, #0xE000 			;Clock register address
 	MOVT r4, #0x400F			;Clock register address
-	LDR r6, [r4,RCGCTIMER]		;Get the value of that address
+	LDR r6, [r4,#RCGCTIMER]		;Get the value of that address
 	ORR r6, #0x01				;Set 1 to bit 0 to ENABLE clock
-	STR r6, [r4,RCGCTIMER]
+	STR r6, [r4,#RCGCTIMER]
 	;Disable Timer
 	MOV r4, #0x0				;Clock register address
 	MOVT r4,#0x4003				;Clock register address
-	LDRB r6, [r4,GPTMCTL]
+	LDRB r6, [r4,#GPTMCTL]
 	AND r6, #0xFE				;Preserving everything besides 0 bit
-	STRB r6, [r4,GPTMCTL]
+	STRB r6, [r4,#GPTMCTL]
 	;Configuration 0 as 32-bit timer
-	MOV r4, #0x0				;Clock register address
+	MOV r4, #0x0000				;Clock register address
 	MOVT r4,#0x4003				;Clock register address
 	LDRB r6, [r4]				;This is not changed
-	AND r6, #0xFFF8				;Preserving everything besides 0 bit
+	MOV r8, #0xFFF8
+	AND r6, r6, r8			;Preserving everything besides 0 bit
 	STRB r6, [r4]
 	;Timer A Mode Register
 	MOV r4, #0x0				;Clock register address
 	MOVT r4,#0x4003				;Clock register address
-	LDRB r6, [r4,GPTMTAMR]	    ;This is not changed
+	LDRB r6, [r4,#GPTMTAMR]	    ;This is not changed
 	ORR r6, #0x2				;Preserving everything besides 0 bit
-	STRB r6, [r4,GPTMTAMR]
+	STRB r6, [r4,#GPTMTAMR]
 	;Clock interval
 	MOV r4, #0x0				;Clock register address
 	MOVT r4,#0x4003				;Clock register address
-	LDRB r6, [r4,GPTMTAILR]	    ;This is not changed
-	MOV r6, CLC_Interrupt		;ASK tim if this will put the correct value that we want in the register
-	STRB r6, [r4,GPTMTAILR]
+	LDRB r6, [r4,#GPTMTAILR]	    ;This is not changed
+	MOV r6, #0x1200		;ASK tim if this will put the correct value that we want in the register
+	MOV r6, #0x007A
+	STRB r6, [r4,#GPTMTAILR]
 	;Interrupt Mask Reg
 	MOV r4, #0x0				;Clock register address
 	MOVT r4,#0x4003				;Clock register address
-	LDRB r6, [r4,GPTMIMR]	    ;This is not changed
+	LDRB r6, [r4,#GPTMIMR]	    ;This is not changed
 	ORR r6, #0x01				;This will set bit 0
-	STRB r6, [r4,GPTMIMR]
+	STRB r6, [r4,#GPTMIMR]
 	;Enable Register
 	MOV r4, #0xE000				;Clock register address
 	MOVT r4,#0xE000				;Clock register address
-	LDRB r6, [r4,EN0]	    	;This is not changed
-	MOV r7, 0xFFF7FFFF			;This is setting r7 to AND it with r6 later
+	LDRB r6, [r4,#ENO]	    	;This is not changed
+	MOV r7, #0xFFFF			;This is setting r7 to AND it with r6 later
+	MOVT r7, #0xFFF7
 	AND r6, r6, r7				;We want to set Bit 19 to 0 bit position
-	STRB r6, [r4,EN0]
+	STRB r6, [r4,#ENO]
 	;Time Control Reg
 	MOV r4, #0x0				;Clock register address
 	MOVT r4,#0x4003				;Clock register address
-	LDRB r6, [r4,GPTMCTL]	    ;This is not changed
+	LDRB r6, [r4,#GPTMCTL]	    ;This is not changed
 	ORR r6, #0x01				;This will set bit 0
-	STRB r6, [r4,GPTMCTL]
-
-
+	STRB r6, [r4,#GPTMCTL]
 
 	POP {r4-r12,lr}
 	MOV pc, lr

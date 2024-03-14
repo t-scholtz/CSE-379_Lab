@@ -118,7 +118,7 @@ CLC_Interrupt:		.equ 0x7A1200	;This is the rate that our clock will interupt
 GPTMTAILR:			.equ 0x028		;General Purpose Timer inteval load Register
 GPTMIMR:			.equ 0x018		;General Purpose Timer Interrupt Mask Register
 GPTMCTL:			.equ 0x00C		;General Purpose Timer Control Reg
-
+GPTMICR:			.equ 0x024		;Interrupt Servicing in the Handler
 ;================================================================
 
 ;CODE
@@ -138,6 +138,9 @@ lab5:								; This is your main routine which is called from
 	bl gpio_interrupt_init
 	bl timer_init
 	;Start up sequence
+	LDR r0, ptr_to_startUpPrompt
+	MOV r1, #1
+	BL output_string
 
 progLoop:
 
@@ -268,53 +271,52 @@ timer_init:
 	MOV r4, #0xE000 			;Clock register address
 	MOVT r4, #0x400F			;Clock register address
 	LDR r6, [r4,#RCGCTIMER]		;Get the value of that address
-	ORR r6, #0x01				;Set 1 to bit 0 to ENABLE clock
+	ORR r6,r6, #0x01				;Set 1 to bit 0 to ENABLE clock
 	STR r6, [r4,#RCGCTIMER]
 	;Disable Timer
 	MOV r4, #0x0				;Clock register address
 	MOVT r4,#0x4003				;Clock register address
 	LDRB r6, [r4,#GPTMCTL]
-	AND r6, #0xFE				;Preserving everything besides 0 bit
+	AND r6,r6, #0xFE				;Preserving everything besides 0 bit
 	STRB r6, [r4,#GPTMCTL]
 	;Configuration 0 as 32-bit timer
 	MOV r4, #0x0000				;Clock register address
 	MOVT r4,#0x4003				;Clock register address
 	LDRB r6, [r4]				;This is not changed
-	MOV r8, #0xFFF8
-	AND r6, r6, r8			;Preserving everything besides 0 bit
+	AND r6, r6, #0xF8			;Preserving everything besides 0 bit
 	STRB r6, [r4]
 	;Timer A Mode Register
 	MOV r4, #0x0				;Clock register address
 	MOVT r4,#0x4003				;Clock register address
 	LDRB r6, [r4,#GPTMTAMR]	    ;This is not changed
-	ORR r6, #0x2				;Preserving everything besides 0 bit
+	ORR r6, r6, #0x2
+	AND r6, r6, #0xFE			;Preserving everything besides 0 bit
 	STRB r6, [r4,#GPTMTAMR]
 	;Clock interval
 	MOV r4, #0x0				;Clock register address
 	MOVT r4,#0x4003				;Clock register address
-	LDRB r6, [r4,#GPTMTAILR]	    ;This is not changed
-	MOV r6, #0x1200		;ASK tim if this will put the correct value that we want in the register
-	MOV r6, #0x007A
-	STRB r6, [r4,#GPTMTAILR]
+	MOV r6, #0x2400		;ASK tim if this will put the correct value that we want in the register f42400
+	MOVT r6, #0x00f4
+	STR r6, [r4,#GPTMTAILR]
 	;Interrupt Mask Reg
 	MOV r4, #0x0				;Clock register address
 	MOVT r4,#0x4003				;Clock register address
 	LDRB r6, [r4,#GPTMIMR]	    ;This is not changed
-	ORR r6, #0x01				;This will set bit 0
+	ORR r6, r6, #0x01				;This will set bit 0
 	STRB r6, [r4,#GPTMIMR]
 	;Enable Register
 	MOV r4, #0xE000				;Clock register address
 	MOVT r4,#0xE000				;Clock register address
-	LDRB r6, [r4,#ENO]	    	;This is not changed
+	LDR r6, [r4,#ENO]	    	;This is not changed
 	MOV r7, #0xFFFF			;This is setting r7 to AND it with r6 later
 	MOVT r7, #0xFFF7
 	AND r6, r6, r7				;We want to set Bit 19 to 0 bit position
-	STRB r6, [r4,#ENO]
+	STR r6, [r4,#ENO]
 	;Time Control Reg
 	MOV r4, #0x0				;Clock register address
 	MOVT r4,#0x4003				;Clock register address
 	LDRB r6, [r4,#GPTMCTL]	    ;This is not changed
-	ORR r6, #0x01				;This will set bit 0
+	ORR r6,r6, #0x01				;This will set bit 0
 	STRB r6, [r4,#GPTMCTL]
 
 	POP {r4-r12,lr}
@@ -323,6 +325,14 @@ timer_init:
 ;Timer_Handler
 ;----------------------------------------------------------------
 Timer_Handler:
+	PUSH {r0-r11,lr}
+	;Clear interupt
+	MOV r4, #0x0000
+	MOVT r4, #0x4003
+	LDRB r6, [r4, #GPTMICR]
+	ORR r6,r6, #0x01
+	STRB r6, [r4, #GPTMICR]
+
 
 	MOV r0, #0x21
 	BL output_character
@@ -335,7 +345,7 @@ Timer_Handler:
 	; Lab #6.  Instead, you can use the same startup code as for Lab #5.
 	; Remember to preserver registers r4-r11 by pushing then popping
 	; them to & from the stack at the beginning & end of the handler.
-
+	POP {r0-r11,lr}
 	BX lr       	; Return
 
 

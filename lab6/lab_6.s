@@ -277,7 +277,7 @@ timer_init:
 	MOV r4, #0x0				;Clock register address
 	MOVT r4,#0x4003				;Clock register address
 	LDRB r6, [r4]				;This is not changed
-	AND r6, #0xFF00				;Preserving everything besides 0 bit
+	AND r6, #0xFFF8				;Preserving everything besides 0 bit
 	STRB r6, [r4]
 	;Timer A Mode Register
 	MOV r4, #0x0				;Clock register address

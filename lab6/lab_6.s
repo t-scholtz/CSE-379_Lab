@@ -266,6 +266,7 @@ EXIT_SWITCH_HANDLER
 ;----------------------------------------------------------------
 timer_init:
 	PUSH {r4-r12,lr}
+<<<<<<< HEAD
 	MOV r0, #0xE604
 	MOVT r0, #0x400F
 	LDRB r1, [r0]
@@ -290,6 +291,59 @@ timer_init:
 	AND r1, r1, #0xFC
 	ORR r1, r1, #2
 	STRB r1, [r0]
+=======
+	;Connect Clock to Timer
+	MOV r4, #0xE000 			;Clock register address
+	MOVT r4, #0x400F			;Clock register address
+	LDR r6, [r4,#RCGCTIMER]		;Get the value of that address
+	ORR r6,r6, #0x01				;Set 1 to bit 0 to ENABLE clock
+	STR r6, [r4,#RCGCTIMER]
+	;Disable Timer
+	MOV r4, #0x0				;Clock register address
+	MOVT r4,#0x4003				;Clock register address
+	LDRB r6, [r4,#GPTMCTL]
+	AND r6,r6, #0xFE				;Preserving everything besides 0 bit
+	STRB r6, [r4,#GPTMCTL]
+	;Configuration 0 as 32-bit timer
+	MOV r4, #0x0000				;Clock register address
+	MOVT r4,#0x4003				;Clock register address
+	LDRB r6, [r4]				;This is not changed
+	AND r6, r6, #0xF8			;Preserving everything besides 0 bit
+	STRB r6, [r4]
+	;Timer A Mode Register
+	MOV r4, #0x0				;Clock register address
+	MOVT r4,#0x4003				;Clock register address
+	LDRB r6, [r4,#GPTMTAMR]	    ;This is not changed
+	ORR r6, r6, #0x2
+	AND r6, r6, #0xFE			;Preserving everything besides 0 bit
+	STRB r6, [r4,#GPTMTAMR]
+	;Clock interval
+	MOV r4, #0x0				;Clock register address
+	MOVT r4,#0x4003				;Clock register address
+	MOV r6, #0x2400		;ASK tim if this will put the correct value that we want in the register f42400
+	MOVT r6, #0x00f4
+	STR r6, [r4,#GPTMTAILR]
+	;Interrupt Mask Reg
+	MOV r4, #0x0				;Clock register address
+	MOVT r4,#0x4003				;Clock register address
+	LDRB r6, [r4,#GPTMIMR]	    ;This is not changed
+	ORR r6, r6, #0x01				;This will set bit 0
+	STRB r6, [r4,#GPTMIMR]
+	;Enable Register
+	MOV r4, #0xE000				;Clock register address
+	MOVT r4,#0xE000				;Clock register address
+	LDR r6, [r4,#ENO]	    	;This is not changed
+	MOV r7, #0xFFFF			;This is setting r7 to AND it with r6 later
+	MOVT r7, #0xFFF7
+	AND r6, r6, r7				;We want to set Bit 19 to 0 bit position
+	STR r6, [r4,#ENO]
+	;Time Control Reg
+	MOV r4, #0x0				;Clock register address
+	MOVT r4,#0x4003				;Clock register address
+	LDRB r6, [r4,#GPTMCTL]	    ;This is not changed
+	ORR r6,r6, #0x01				;This will set bit 0
+	STRB r6, [r4,#GPTMCTL]
+>>>>>>> 4a1138ca3fbe48fcd9ecf4bf4ddf4f7f1e2eddc5
 
 	MOV r0,#0x28
 	MOVT r0, #0x4003
@@ -344,7 +398,10 @@ Timer_Handler:
 
 
 	MOV r0, #0x21
+<<<<<<< HEAD
 	POP {r0-r11,lr}
+=======
+>>>>>>> 4a1138ca3fbe48fcd9ecf4bf4ddf4f7f1e2eddc5
 	BL output_character
 
 

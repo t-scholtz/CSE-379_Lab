@@ -1,0 +1,6 @@
+"./lab6.obj"
+"./lab6_wrapper.obj"
+"./lab_6_libary.obj"
+"./tm4c123gh6pm_startup_ccs.obj"
+"../tm4c123gh6pm.cmd"
+-llibc.a

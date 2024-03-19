@@ -32,6 +32,34 @@ gameBoard:		.string "----------------------",0x0D, 0x0A
 				.string "|                    |",0x0D, 0x0A
 				.string "|                    |",0x0D, 0x0A
 				.string "----------------------",0x0D, 0x0A,0
+pauseMsg:		.string "Paused",0
+pausePosX:		.byte	0x08
+pausePosY:		.byte	0x0A
+pauseDirX:		.byte 	0x01
+pauseDirY:		.byte 	0x02
+pauseMenu:		.string "----------------------",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "|                    |",0x0D, 0x0A
+				.string "----------------------",0x0D, 0x0A,0
+movCurTp:		.string 0x1B, 0x5B, 0x32 ,0x32, 0x41, 0x00
 ;================================================================
 
 	.text
@@ -47,6 +75,13 @@ ptr_to_paused:			.word paused
 ptr_to_startUpPrompt:	.word startUpPrompt
 ptr_to_scorePrompt:		.word scorePrompt
 ptr_to_gameBoard:		.word gameBoard
+ptr_to_pauseMsg:		.word pauseMsg
+ptr_to_pausePosX:		.word pausePosX
+ptr_to_pausePosY:		.word pausePosY
+ptr_to_pauseDirX:		.word pauseDirX
+ptr_to_pauseDirY:		.word pauseDirY
+ptr_to_pauseMenu:		.word pauseMenu
+ptr_to_movCurTp:		.word movCurTp
 ;================================================================
 
 
@@ -156,10 +191,11 @@ timer_init:
 	AND r1, r1, #0xFC
 	ORR r1, r1, #2
 	STRB r1, [r0]
-
+	;set actual timer lenght here
 	MOV r0,#0x28
 	MOVT r0, #0x4003
-	MOVT r1, #0x0040
+	MOV r1, #0x1200
+	MOVT r1, #0x007A
 	STR r1, [r0]
 
 	MOV r0,#0x18
@@ -293,10 +329,124 @@ Timer_Handler:
 	LDRB r6, [r4, #GPTMICR]
 	ORR r6,r6, #0x01
 	STRB r6, [r4, #GPTMICR]
-
-	MOV r0, #0x21
+	;clear game screen and mov cur to start
+	MOV r0, #0x0C
+	BL output_character
+	MOV r0, #0x0D
 	BL output_character
 
+	;check if game is paused
+	LDR r4, ptr_to_paused
+	LDRB r5, [r4]
+	CMP r5, #0
+	BNE GAME_PAUSED
+	;if game not paused update player info and screen
+
+	B EXIT_TIMER_HANDLER
+
+GAME_PAUSED:						;game paused state - have moveing puause string across page
+	LDR r0, ptr_to_pauseMenu
+	MOV r1, #1
+	BL output_string
+	LDR r0 , ptr_to_movCurTp		;move cursor to top of screen using ansi commands
+	BL output_string
+	;print current positon of pause
+	LDR r10, ptr_to_pausePosX
+	LDRB r3, [r10]
+	LDR r10, ptr_to_pausePosY
+	LDRB r4, [r10]
+
+	MOV r0, #0x0D
+	BL output_character
+	MOV r0, #0x0A
+	BL output_character				;charige ruetnr and mov on line down from the ceiling
+	MOV r1, r4						;make a copy of posY
+movDownY:
+	MOV r0, #0x0A
+	BL output_character
+	SUB r1,r1,#1
+	CMP r1,#1
+	BGT movDownY
+
+	;Mov the cursor and print pause at correct loaction
+	MOV r0, #0x7C			;print wall
+	BL output_character
+	MOV r1, r3						;make a copy of poxX
+movRightX:
+	MOV r0, #0x20
+	BL output_character
+	SUB r1,r1,#1
+	CMP r1,#1
+	BGT movRightX
+
+	LDR r0, ptr_to_pauseMsg
+	BL output_string
+
+	;update pause location and velcotiry
+	LDR r10, ptr_to_pauseDirX
+	LDRSB r5, [r10]
+	LDR r10, ptr_to_pauseDirY
+	LDRSB r6, [r10]
+	;update x value
+updateX:
+	ADD r3, r3, r5
+	cmp r3, #2
+	BLE leftWall
+	cmp r3, #16
+	BGE rightWall
+	LDR r10, ptr_to_pausePosX
+	STRB r3, [r10]
+	B updateY
+leftWall:
+	MOV r3,#2
+	LDR r10, ptr_to_pausePosX
+	STRB r3, [r10]
+	MOV r5, #1
+	LDR r10, ptr_to_pauseDirX
+	STRB r5, [r10]
+	B updateY
+
+rightWall:
+	MOV r3,#16
+	LDR r10, ptr_to_pausePosX
+	STRB r3, [r10]
+	MVN r5, #1
+	LDR r10, ptr_to_pauseDirX
+	STRB r5, [r10]
+	B updateY
+
+	;updateYVal
+updateY:
+	ADD r4, r4, r6
+	cmp r4, #2
+	BLE top
+	cmp r4, #21
+	BGE bottom
+	LDR r10, ptr_to_pausePosY
+	STRB r4, [r10]
+	B EXIT_TIMER_HANDLER
+top:
+	MOV r4,#2
+	LDR r10, ptr_to_pausePosY
+	STRB r4, [r10]
+	MOV r6, #2
+	LDR r10, ptr_to_pauseDirY
+	STRB r6, [r10]
+	B EXIT_TIMER_HANDLER
+
+bottom:
+	MOV r4,#21
+	LDR r10, ptr_to_pausePosY
+	STRB r4, [r10]
+	MVN r6, #2
+	LDR r10, ptr_to_pauseDirY
+	STRB r6, [r10]
+	B EXIT_TIMER_HANDLER
+
+
+
+	B EXIT_TIMER_HANDLER
+EXIT_TIMER_HANDLER:
 	POP {r0-r11,lr}
 	BX lr       	; Return
 ;================================================================

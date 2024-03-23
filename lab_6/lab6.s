@@ -129,12 +129,8 @@ TIMER:				.equ 0xB2D05E00 ;THIS will be the timer for the countDOWN
 ;----------------------------------------------------------------
 ;LAB 6 MAIN
 ;----------------------------------------------------------------
-
-;----------------------------------------------------------------
-;LAB 5 MAIN
-;----------------------------------------------------------------
-lab6:								; This is your main routine which is called from
 ; your C wrapper.
+lab6:
 	PUSH {r4-r12,lr}   		; Preserve registers to adhere to the AAPCS
 
 	;Set up connections and interupts
@@ -150,89 +146,17 @@ lab6:								; This is your main routine which is called from
 	MOV r1, #1
 	BL output_string
 	MOV r0, #1
+	;Inf Loop
 LOOP:
 	ADD r0, r0, #1
 	B LOOP
 
+	;Exit routine
 END_PROGRAM:
-	POP {r4-r12,lr} 		; Restore registers to adhere to the AAPCS
+	POP {r4-r12,lr}
 	MOV pc, lr
 ;================================================================
 
-
-
-;----------------------------------------------------------------
-;timer_init - conencts the timer to the interupt handler
-;	takes no input
-;----------------------------------------------------------------
-timer_init:
-	PUSH {r4-r12,lr}
-	MOV r0, #0xE604
-	MOVT r0, #0x400F
-	LDRB r1, [r0]
-	ORR r1,r1,#1		;activate bits 0-5 if not work
-	STRB r1, [r0]
-
-	MOV r0, #0xC
-	MOVT r0, #0x4003
-	LDRB r1,[r0]
-	AND r1, r1,#0xFE
-	STRB r1, [r0]
-
-	MOV r0,#0
-	MOVT r0, #0x4003
-	LDRB r1,[r0]
-	AND r1, r1, #0xF8
-	STRB r1, [r0]
-
-	MOV r0, #4
-	MOVT r0, #0x4003
-	LDRB r1, [r0]
-	AND r1, r1, #0xFC
-	ORR r1, r1, #2
-	STRB r1, [r0]
-	;set actual timer lenght here
-	MOV r0,#0x28
-	MOVT r0, #0x4003
-	MOV r1, #0x1200
-	MOVT r1, #0x007A
-	STR r1, [r0]
-
-	MOV r0,#0x18
-	MOVT r0, #0x4003
-	LDRB r1,[r0]
-	ORR r1, r1, #0x01
-	STRB r1, [r0]
-
-	MOV r0,#0xE100
-	MOVT r0, #0xE000
-	LDR r1, [r0]
-	MOV r2, #0
-	MOVT r2, #0x0008
-	ORR r1, r1, r2
-	STR r1, [r0]
-
-	MOV r0,#0x18
-	MOVT r0, #0x4003
-	LDRB r1,[r0]
-	ORR r1, r1, #0x01
-	STRB r1, [r0]
-
-	MOV r0,#0xC
-	MOVT r0, #0x4003
-	LDRB r1,[r0]
-	ORR r1, r1, #0x01
-	STRB r1, [r0]
-
-	MOV r4, #0x0000
-	MOVT r4, #0x4003
-	LDRB r6, [r4, #GPTMICR]
-	ORR r6,r6, #0x01
-	STRB r6, [r4, #GPTMICR]
-
-	POP {r4-r12,lr} 		; Restore registers to adhere to the AAPCS
-	MOV pc, lr
-;================================================================
 
 
 ;----------------------------------------------------------------
@@ -276,9 +200,9 @@ UART0_Handler:
 	LDR r0, ptr_to_paused
 	LDRB r1, [r0]
 	CMP r1, #0x00
-	BNE EXIT_UART_HANDLER
+	BEQ EXIT_UART_HANDLER
 
-	;Grab player input
+	;Grab player input and update dir to up/down/left/right
 	BL read_character
 	CMP r0, #0x64 ;w
 	BEQ DIR_UP
@@ -289,9 +213,9 @@ UART0_Handler:
 	CMP r0, #0x44 ;D
 	BEQ DIR_R
 	CMP r0, #0x73 ;s
-	BEQ DIR_DOWN
+	BEQ DIR_D
 	CMP r0, #0x43 ;S
-	BEQ DIR_DOWN
+	BEQ DIR_D
 	CMP r0, #0x61 ;a
 	BEQ DIR_L
 	CMP r0, #0x41 ;A
@@ -303,7 +227,7 @@ DIR_UP:
 DIR_R:
 	MOV r6, #1
 	B UPDATE_DIR
-DIR_DOWN:
+DIR_D:
 	MOV r6, #2
 	B UPDATE_DIR
 DIR_L:
@@ -339,12 +263,69 @@ Timer_Handler:
 	LDR r4, ptr_to_paused
 	LDRB r5, [r4]
 	CMP r5, #0
-	BNE GAME_PAUSED
+	BNE Pause_Screen
 	;if game not paused update player info and screen
+	B Update_Game
+	B EXIT_TIMER_HANDLER
+
+EXIT_TIMER_HANDLER:
+	POP {r0-r11,lr}
+	BX lr       	; Return
+;================================================================
+
+
+;----------------------------------------------------------------
+;Update Game - the main game screen
+;Updates the point * depening on the game settings
+;only access from Timer Handler
+;----------------------------------------------------------------
+Update_Game:
+	;load player date
+	LDR r0, ptr_to_playerDir
+	LDRB r4, [r0]
+	LDR r0, ptr_to_xPos
+	LDRB r5, [r0]
+	LDR r0, ptr_to_yPos
+	LDRB r6, [r0]
+
+
+
+	;check for colisiont -> handle if Case
+	CMP r5, #0
+	BLE COLISION
+	CMP r5, #22
+	BGE COLISION
+	CMP r6, #0
+	BLE COLISION
+	CMP r6, #22
+	BGE COLISION
+
+	;Update game map and score
+
+	;print game map and score
+
+	;update player values
+
+
+COLISION:
+
+
 
 	B EXIT_TIMER_HANDLER
 
-GAME_PAUSED:						;game paused state - have moveing puause string across page
+;================================================================
+
+;----------------------------------------------------------------
+;Pause Screen - pause screen to show game is paused
+;shows the word paused getting bounced around the playing box
+;only access from Timer Handler
+;----------------------------------------------------------------
+Pause_Screen:						;game paused state - have moveing puause string across page
+	;print Paused - (replaces player score)
+	LDR r0, ptr_to_pauseMsg
+	MOV r1, #1
+	BL output_string
+	;print pause box
 	LDR r0, ptr_to_pauseMenu
 	MOV r1, #1
 	BL output_string
@@ -361,6 +342,11 @@ GAME_PAUSED:						;game paused state - have moveing puause string across page
 	MOV r0, #0x0A
 	BL output_character				;charige ruetnr and mov on line down from the ceiling
 	MOV r1, r4						;make a copy of posY
+
+
+	;the pause word has the attrubutes of position - x,y, - and velecity which is stored as x and y
+	;when pause encounters a wall its velcoty chnages to the complement value
+	;y moves 2 per screen and x moves 1
 movDownY:
 	MOV r0, #0x0A
 	BL output_character
@@ -387,7 +373,7 @@ movRightX:
 	LDRSB r5, [r10]
 	LDR r10, ptr_to_pauseDirY
 	LDRSB r6, [r10]
-	;update x value
+	;update x value of pause
 updateX:
 	ADD r3, r3, r5
 	cmp r3, #2
@@ -415,7 +401,7 @@ rightWall:
 	STRB r5, [r10]
 	B updateY
 
-	;updateYVal
+	;updateYVal of pause
 updateY:
 	ADD r4, r4, r6
 	cmp r4, #2
@@ -442,19 +428,80 @@ bottom:
 	LDR r10, ptr_to_pauseDirY
 	STRB r6, [r10]
 	B EXIT_TIMER_HANDLER
-
-
-
-	B EXIT_TIMER_HANDLER
-EXIT_TIMER_HANDLER:
-	POP {r0-r11,lr}
-	BX lr       	; Return
 ;================================================================
 
+;----------------------------------------------------------------
+;timer_init - conencts the timer to the interupt handler
+;	takes no input
+;----------------------------------------------------------------
+timer_init:
+	PUSH {r4-r12,lr}
+	MOV r0, #0xE604
+	MOVT r0, #0x400F
+	LDRB r1, [r0]
+	ORR r1,r1,#1
+	STRB r1, [r0]
 
-simple_read_character:
+	MOV r0, #0xC
+	MOVT r0, #0x4003
+	LDRB r1,[r0]
+	AND r1, r1,#0xFE
+	STRB r1, [r0]
 
-	MOV pc, lr	; Return
+	MOV r0,#0
+	MOVT r0, #0x4003
+	LDRB r1,[r0]
+	AND r1, r1, #0xF8
+	STRB r1, [r0]
+
+	MOV r0, #4
+	MOVT r0, #0x4003
+	LDRB r1, [r0]
+	AND r1, r1, #0xFC
+	ORR r1, r1, #2
+	STRB r1, [r0]
+	;Set timer lenght here -- stored in R0
+	MOV r0,#0x28
+	MOVT r0, #0x4003
+	MOV r1, #0x1200
+	MOVT r1, #0x007A
+	STR r1, [r0]
+
+	MOV r0,#0x18
+	MOVT r0, #0x4003
+	LDRB r1,[r0]
+	ORR r1, r1, #0x01
+	STRB r1, [r0]
+
+	MOV r0,#0xE100
+	MOVT r0, #0xE000
+	LDR r1, [r0]
+	MOV r2, #0
+	MOVT r2, #0x0008
+	ORR r1, r1, r2
+	STR r1, [r0]
+
+	MOV r0,#0x18
+	MOVT r0, #0x4003
+	LDRB r1,[r0]
+	ORR r1, r1, #0x01
+	STRB r1, [r0]
+
+	MOV r0,#0xC
+	MOVT r0, #0x4003
+	LDRB r1,[r0]
+	ORR r1, r1, #0x01
+	STRB r1, [r0]
+
+	MOV r4, #0x0000
+	MOVT r4, #0x4003
+	LDRB r6, [r4, #GPTMICR]
+	ORR r6,r6, #0x01
+	STRB r6, [r4, #GPTMICR]
+
+	POP {r4-r12,lr}
+	MOV pc, lr
+;================================================================
 
 	.end
 	;Exit

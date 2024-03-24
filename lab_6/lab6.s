@@ -3,14 +3,18 @@
 ;PROGRAM DATA
 ;================================================================
 playerDir:		.byte	0x00	; 0 up 1 right 2 down 3 left
-xPos:			.byte	0x0A
-yPos:			.byte	0x0A
-score:			.byte	0x00
+xPos:			.byte	0x0A	;Starts at x = 10
+yPos:			.byte	0x0A	;starts at x = 10
+score:			.word	0x0000
+game_started:	.byte	0x00	;it can only be 1 or 0 to show if the user has started the game yet
 scoreStr:		.string "12345",0
 paused:			.byte	0x00	; 0 -> not puased | 1 pauesed
-startUpPrompt:	.string 0x0D, 0x0A, "Hello! Lab 6 - Tom and Tim",0
+startUpPrompt:	.string 0x0D, 0x0A, "Hello! Lab 6 - Tom and Tim"
+				.string 0x0D, 0x0A, "TO play w=up, a=left, s=down, d=right, and SW1(onboard)=pause "
+				.string 0x0D, 0x0A, "MAKE AS LONG AS A BODY AS POSSIBLE TO RACK UP POINTS"
+				.string 0x0D, 0x0A, "PRESS E to start", 0
 scorePrompt:	.string "Score: ",0
-gameBoard:		.string "----------------------",0x0D, 0x0A
+gameBoard:		.string 0x0D, 0x0A,	"----------------------",0x0D, 0x0A		;EACH are 24 LONG so in order to go to Edit the Y axit we need to add 24 bytes
 				.string "|                    |",0x0D, 0x0A
 				.string "|                    |",0x0D, 0x0A
 				.string "|                    |",0x0D, 0x0A
@@ -37,7 +41,7 @@ pausePosX:		.byte	0x08
 pausePosY:		.byte	0x0A
 pauseDirX:		.byte 	0x01
 pauseDirY:		.byte 	0x02
-pauseMenu:		.string "----------------------",0x0D, 0x0A
+pauseMenu:		.string "----------------------",0x0D, 0x0A		;EACH are 24 LONG so in order to go to Edit the Y axit we need to add 24 bytes
 				.string "|                    |",0x0D, 0x0A
 				.string "|                    |",0x0D, 0x0A
 				.string "|                    |",0x0D, 0x0A
@@ -70,6 +74,7 @@ ptr_to_playerDir:		.word playerDir
 ptr_to_xPos:			.word xPos
 ptr_to_yPos:			.word yPos
 ptr_to_score:			.word score
+ptr_to_game_started:	.word game_started
 ptr_to_scoreStr:		.word scoreStr
 ptr_to_paused:			.word paused
 ptr_to_startUpPrompt:	.word startUpPrompt
@@ -88,6 +93,7 @@ ptr_to_movCurTp:		.word movCurTp
 ;LIST OF SUBROUTINES
 ;================================================================
 	.global uart_interrupt_init
+	.global game_start_flip
 	.global gpio_interrupt_init
 	.global UART0_Handler
 	.global Switch_Handler
@@ -140,16 +146,32 @@ lab6:
 	bl gpio_interrupt_init
 	bl timer_init
 
+	LDR r0, ptr_to_scoreStr ;We need to initialize it as 0
+	LDR r2, ptr_to_score
+	LDR r1, [r2] 			;number at the address pulled
+	BL int2string
+
 
 	;Start up sequence
 	LDR r0, ptr_to_startUpPrompt
 	MOV r1, #1
 	BL output_string
-	MOV r0, #1
+	;MOV r0, #1
 	;Inf Loop
-LOOP:
-	ADD r0, r0, #1
-	B LOOP
+gameMenu_LOOP: 					;r1 = pointer address r0 = values at addresses
+	LDR r1, ptr_to_game_started
+	LDRB r0, [r1]					;We have either the 1 or 0
+	CMP r0, #0x00
+	BEQ gameMenu_LOOP
+
+gameStart: ;r0 are addresses r1 are values at addresses 1
+	;LDR r0, ptr_to_gameBoard
+	;MOV r1, #1
+	;BL output_string				;Prints an updated game board
+	;THIS OF SOMETHING PRODUCTIVE TO DO HERE
+	B gameStart
+
+
 
 	;Exit routine
 END_PROGRAM:
@@ -199,12 +221,20 @@ UART0_Handler:
 	;Check if Game is paused - skip if paused
 	LDR r0, ptr_to_paused
 	LDRB r1, [r0]
-	CMP r1, #0x00
+	CMP r1, #0x01
 	BEQ EXIT_UART_HANDLER
 
+	;Check if game needs to be started
+	BL read_character 					;DO not touch r0 after this so it can work for the dir read as well
+	CMP r0, #0x65 ;e
+	BEQ game_start_flip
+	CMP r0, #0x45 ;E
+	BEQ game_start_flip
+
+
 	;Grab player input and update dir to up/down/left/right
-	BL read_character
-	CMP r0, #0x64 ;w
+	;BL read_character
+	CMP r0, #0x77 ;w
 	BEQ DIR_UP
 	CMP r0, #0x57 ;W
 	BEQ DIR_UP
@@ -214,7 +244,7 @@ UART0_Handler:
 	BEQ DIR_R
 	CMP r0, #0x73 ;s
 	BEQ DIR_D
-	CMP r0, #0x43 ;S
+	CMP r0, #0x53 ;S
 	BEQ DIR_D
 	CMP r0, #0x61 ;a
 	BEQ DIR_L
@@ -222,16 +252,16 @@ UART0_Handler:
 	BEQ DIR_L
 	;Uart handler needs to take in input, check if the WASD/ arrows keys were pressed and then update player direction
 DIR_UP:
-	MOV r6, #0
-	B UPDATE_DIR
-DIR_R:
 	MOV r6, #1
 	B UPDATE_DIR
-DIR_D:
+DIR_R:
 	MOV r6, #2
 	B UPDATE_DIR
-DIR_L:
+DIR_D:
 	MOV r6, #3
+	B UPDATE_DIR
+DIR_L:
+	MOV r6, #4
 	B UPDATE_DIR
 UPDATE_DIR:
 	LDR r5, ptr_to_playerDir
@@ -244,15 +274,28 @@ EXIT_UART_HANDLER:
 
 ;----------------------------------------------------------------
 ;Timer_Handler
+;r0 = CHARACTERS
+;r4 = ADDRESSES
+;r6 = values from addresses 1
+;
 ;----------------------------------------------------------------
 Timer_Handler:
+
 	PUSH {r0-r11,lr}
+
 	;Clear interupt
 	MOV r4, #0x0000
 	MOVT r4, #0x4003
 	LDRB r6, [r4, #GPTMICR]
 	ORR r6,r6, #0x01
 	STRB r6, [r4, #GPTMICR]
+
+	;Check if game has started first
+	LDR r4, ptr_to_game_started
+	LDRB r6, [r4]
+	CMP r6, #0x00				;This is altered in UART HANDLER
+	BEQ EXIT_TIMER_HANDLER
+
 	;clear game screen and mov cur to start
 	MOV r0, #0x0C
 	BL output_character
@@ -261,12 +304,12 @@ Timer_Handler:
 
 	;check if game is paused
 	LDR r4, ptr_to_paused
-	LDRB r5, [r4]
-	CMP r5, #0
+	LDRB r6, [r4]
+	CMP r6, #0
 	BNE Pause_Screen
 	;if game not paused update player info and screen
 	B Update_Game
-	B EXIT_TIMER_HANDLER
+	;B EXIT_TIMER_HANDLER
 
 EXIT_TIMER_HANDLER:
 	POP {r0-r11,lr}
@@ -280,35 +323,120 @@ EXIT_TIMER_HANDLER:
 ;only access from Timer Handler
 ;----------------------------------------------------------------
 Update_Game:
-	;load player date
+	;load player date		;THESE LINES BELOW CAN BE SHORTENED
 	LDR r0, ptr_to_playerDir
-	LDRB r4, [r0]
+	LDRB r4, [r0]				;1 up 2 right 3 down 4 left
+	CMP r4, #0
+	BEQ updating_START
+
+	;IF it is zero though
+SCORE_ADJUST:	;r1 is the value of score		r0 is the address of score NUM
+										;increment the counter for score
+	LDR r0, ptr_to_score
+	LDRH r1, [r0]						;This is where we a the actual value ; I don't this this is the actual way to do it
+	ADD r1, r1, #1
+	STRH r1, [r0]
+							;store the adjusted
+	LDR r0, ptr_to_scoreStr ;We need to initialize it as 0
+	LDR r2, ptr_to_score
+	LDR r1, [r2] 			;number at the address pulled
+	BL int2string
+
+
+
+
+
+updating_START:
 	LDR r0, ptr_to_xPos
-	LDRB r5, [r0]
+	LDRSB r5, [r0]				;x =  1-21
 	LDR r0, ptr_to_yPos
-	LDRB r6, [r0]
+	LDRSB r6, [r0]				;y =  1-21
 
-
-
-	;check for colisiont -> handle if Case
-	CMP r5, #0
-	BLE COLISION
-	CMP r5, #22
-	BGE COLISION
-	CMP r6, #0
-	BLE COLISION
-	CMP r6, #22
-	BGE COLISION
 
 	;Update game map and score
+updating_GAMEBOARD:							;Calculate Where the next * will go now we know it's not collision
+	CMP r4, #1
+	BEQ UP
+	CMP r4, #2
+	BEQ RIGHT
+	CMP r4, #3
+	BEQ DOWN
+	CMP r4, #4
+	BEQ LEFT
+	B DIR_DONE
+
+UP:
+	SUB r6, r6, #1
+	B DIR_DONE
+RIGHT:
+	ADD r5, r5, #1
+	B DIR_DONE
+DOWN:
+	ADD r6, r6, #1
+	B DIR_DONE
+LEFT:
+	SUB r5, r5, #1
+	B DIR_DONE
+
+DIR_DONE:
+	MOV r4, #0					;Setting direction to zero to make sure it doesnt move if the user is not changing it
+	LDR r0, ptr_to_playerDir
+	STRB r4, [r0]
+	LDR r0, ptr_to_xPos 		;THis one and the one below could be cut out if we use different reg for the multiple addresses
+	STRB r5, [r0]
+	LDR r0, ptr_to_yPos
+	STRB r6, [r0]
+
+colision_CHECK:	;check for COLISION -> handle if Case
+	CMP r5, #0					;if X = 0
+	BLT COLISION
+	CMP r5, #22					;if x = 22
+	BGE COLISION
+	CMP r6, #0				;if y = 0
+	BLT COLISION
+	CMP r6, #22					;if Y = 22
+	BGE COLISION
+
+										;Edit the game board
+	LDR r0, ptr_to_gameBoard			;r0 is the pointer to the string
+
+	;ADD r0, r0, #24						;GET passed first row
+Y_ADJUST:
+										;We add 24
+	ADD r0, r0, #24						;goes down a "COLUMN" of characters
+	CMP r6, #0
+	SUB r6, r6, #1
+	;CMP r6, #0
+	BNE Y_ADJUST
+
+	;ADD r0, r0, #1
+X_ADJUST:
+	ADD r0, r0, #1					;goes across a "ROW" of characters
+	SUB r5, r5, #1
+	CMP r5, #0
+	BNE X_ADJUST
+
+MAP_ADJUST: ;r1 is value being input into game 		r0 is address of place it needs to go to
+	MOV r1, #0x2A					;R0 is where the next start needs to go
+	STRB r1, [r0]					;A star is now stored in that spot
+
 
 	;print game map and score
+										;Print score string
+	LDR r0, ptr_to_scorePrompt
+	MOV r1, #1
+	BL output_string
+										;Print score NUM
+	LDR r0, ptr_to_scoreStr
+	MOV r1, #1
+	BL output_string
+										;Print updated game board
+	LDR r0, ptr_to_gameBoard
+	MOV r1, #1
+	BL output_string
 
 	;update player values
-
-
-COLISION:
-
+	;NOT EXACTLY SURE what time is doing in paused but I dont think this portion is nessasary because we are handlign the rest
 
 
 	B EXIT_TIMER_HANDLER
@@ -503,7 +631,42 @@ timer_init:
 	MOV pc, lr
 ;================================================================
 
+;----------------------------------------------------------------
+;game_start_flip - NO reg are brought over
+;				   We check to see if the user wanted to start the game and we flip the bit
+;----------------------------------------------------------------
+game_start_flip:
+
+	PUSH {r0-r12,lr}
+
+	MOV r5, #0				;just setting r5 to ZERO
+	LDR r4, ptr_to_game_started
+	LDRB r5, [r4]
+	CMP r5, #0x1			;check to see if game is already started
+	BEQ ENDgame_start_flip
+
+							;IF not 1 then we can change it to 0
+	MOV r5, #0x01			;SET it to 1
+	STRB r5, [r4]			;store it back
+
+
+ENDgame_start_flip:
+
+	POP {r0-r12,lr}
+	BL EXIT_UART_HANDLER
+
+;================================================================
+
+;----------------------------------------------------------------
+;COLISION - SHOULD be no input needed just do what the comments day until the user makes a choice
+;----------------------------------------------------------------
+COLISION:			;THIS IS GAME OVER, print score and give option to restart or EXIT(USE E)
+
+
+
+	B EXIT_TIMER_HANDLER
+;================================================================
+
 	.end
 	;Exit
 ;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-

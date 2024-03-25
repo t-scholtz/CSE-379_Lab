@@ -7,14 +7,20 @@ xPos:			.byte	0x0A	;Starts at x = 10
 yPos:			.byte	0x0A	;starts at x = 10
 score:			.word	0x0000
 game_started:	.byte	0x00	;it can only be 1 or 0 to show if the user has started the game yet
+game_ending:	.byte	0x00
 scoreStr:		.string "12345",0
 paused:			.byte	0x00	; 0 -> not puased | 1 pauesed
-startUpPrompt:	.string 0x0D, 0x0A, "Hello! Lab 6 - Tom and Tim"
+startUpPrompt:	.string 0x0C, 0x0D, 0x0A, "Hello! Lab 6 - Tom and Tim"
 				.string 0x0D, 0x0A, "TO play w=up, a=left, s=down, d=right, and SW1(onboard)=pause "
-				.string 0x0D, 0x0A, "MAKE AS LONG AS A BODY AS POSSIBLE TO RACK UP POINTS"
+				.string 0x0D, 0x0A, "!!!MAKE AS LONG AS A BODY AS POSSIBLE TO RACK UP POINTS!!!"
 				.string 0x0D, 0x0A, "PRESS E to start", 0
+LC_PROMPT:	    .string 0x0C, 0x0D, 0x0A, "WOMP WOMMMMMP, you lost, you only got ", 0
+WC_PROMPT:		.string 0x0C, 0x0D, 0x0A, "WOOT WOOT, you demolished half the board and got ", 0
 scorePrompt:	.string "Score: ",0
-gameBoard:		.string 0x0D, 0x0A,	"----------------------",0x0D, 0x0A		;EACH are 24 LONG so in order to go to Edit the Y axit we need to add 24 bytes
+endPrompt		.string  0x0D, 0x0A, "Would you like to test your skills again?"
+				.string  0x0D, 0x0A, "PRESS Q to RESET"
+				.string  0x0D, 0x0A, "PRESS E to EXIT", 0
+gameBoard:		.string "----------------------",0x0D, 0x0A		;EACH are 24 LONG so in order to go to Edit the Y axit we need to add 24 bytes
 				.string "|                    |",0x0D, 0x0A
 				.string "|                    |",0x0D, 0x0A
 				.string "|                    |",0x0D, 0x0A
@@ -70,6 +76,7 @@ movCurTp:		.string 0x1B, 0x5B, 0x32 ,0x32, 0x41, 0x00
 
 ;POINTERS TO STRING
 ;================================================================
+ptr_to_game_ending		.word game_ending
 ptr_to_playerDir:		.word playerDir
 ptr_to_xPos:			.word xPos
 ptr_to_yPos:			.word yPos
@@ -78,6 +85,9 @@ ptr_to_game_started:	.word game_started
 ptr_to_scoreStr:		.word scoreStr
 ptr_to_paused:			.word paused
 ptr_to_startUpPrompt:	.word startUpPrompt
+ptr_to_LC_PROMPT:		.word LC_PROMPT
+ptr_to_WC_PROMPT:		.word WC_PROMPT
+ptr_to_endPrompt		.word endPrompt
 ptr_to_scorePrompt:		.word scorePrompt
 ptr_to_gameBoard:		.word gameBoard
 ptr_to_pauseMsg:		.word pauseMsg
@@ -250,18 +260,32 @@ UART0_Handler:
 	BEQ DIR_L
 	CMP r0, #0x41 ;A
 	BEQ DIR_L
+	CMP r0, #0x51 ;Q
+	BEQ END_reset
+	CMP r0, #0x71 ;q
+	BEQ END_reset
+	CMP r0, #0x45 ;E
+	BEQ END_exit
+	CMP r0, #0x65 ;e
+	BEQ END_exit
 	;Uart handler needs to take in input, check if the WASD/ arrows keys were pressed and then update player direction
 DIR_UP:
-	MOV r6, #1
+	MOV r6, #0
 	B UPDATE_DIR
 DIR_R:
-	MOV r6, #2
+	MOV r6, #1
 	B UPDATE_DIR
 DIR_D:
-	MOV r6, #3
+	MOV r6, #2
 	B UPDATE_DIR
 DIR_L:
+	MOV r6, #3
+	B UPDATE_DIR
+END_reset:
 	MOV r6, #4
+	B UPDATE_DIR
+END_exit:
+	MOV r6, #5
 	B UPDATE_DIR
 UPDATE_DIR:
 	LDR r5, ptr_to_playerDir
@@ -296,6 +320,13 @@ Timer_Handler:
 	CMP r6, #0x00				;This is altered in UART HANDLER
 	BEQ EXIT_TIMER_HANDLER
 
+	;Check if game is ending
+	LDR r4, ptr_to_game_ending
+	LDRB r6, [r4]
+	CMP r6, #0x01
+	BEQ EXIT_TIMER_HANDLER
+
+
 	;clear game screen and mov cur to start
 	MOV r0, #0x0C
 	BL output_character
@@ -325,15 +356,12 @@ EXIT_TIMER_HANDLER:
 Update_Game:
 	;load player date		;THESE LINES BELOW CAN BE SHORTENED
 	LDR r0, ptr_to_playerDir
-	LDRB r4, [r0]				;1 up 2 right 3 down 4 left
-	CMP r4, #0
-	BEQ updating_START
-
-	;IF it is zero though
-SCORE_ADJUST:	;r1 is the value of score		r0 is the address of score NUM
-										;increment the counter for score
+	LDRB r4, [r0]					;1 up 2 right 3 down 4 left
+									;IF it is zero though
+SCORE_ADJUST:						;r1 is the value of score		r0 is the address of score NUM
+									;increment the counter for score
 	LDR r0, ptr_to_score
-	LDRH r1, [r0]						;This is where we a the actual value ; I don't this this is the actual way to do it
+	LDRH r1, [r0]					;This is where we a the actual value ; I don't this this is the actual way to do it
 	ADD r1, r1, #1
 	STRH r1, [r0]
 							;store the adjusted
@@ -355,15 +383,15 @@ updating_START:
 
 	;Update game map and score
 updating_GAMEBOARD:							;Calculate Where the next * will go now we know it's not collision
-	CMP r4, #1
+	CMP r4, #0
 	BEQ UP
-	CMP r4, #2
+	CMP r4, #1
 	BEQ RIGHT
-	CMP r4, #3
+	CMP r4, #2
 	BEQ DOWN
-	CMP r4, #4
+	CMP r4, #3
 	BEQ LEFT
-	B DIR_DONE
+	B EXIT_TIMER_HANDLER
 
 UP:
 	SUB r6, r6, #1
@@ -379,9 +407,6 @@ LEFT:
 	B DIR_DONE
 
 DIR_DONE:
-	MOV r4, #0					;Setting direction to zero to make sure it doesnt move if the user is not changing it
-	LDR r0, ptr_to_playerDir
-	STRB r4, [r0]
 	LDR r0, ptr_to_xPos 		;THis one and the one below could be cut out if we use different reg for the multiple addresses
 	STRB r5, [r0]
 	LDR r0, ptr_to_yPos
@@ -390,11 +415,11 @@ DIR_DONE:
 colision_CHECK:	;check for COLISION -> handle if Case
 	CMP r5, #0					;if X = 0
 	BLT COLISION
-	CMP r5, #22					;if x = 22
+	CMP r5, #21					;if x = 22
 	BGE COLISION
 	CMP r6, #0				;if y = 0
 	BLT COLISION
-	CMP r6, #22					;if Y = 22
+	CMP r6, #20					;if Y = 22
 	BGE COLISION
 
 										;Edit the game board
@@ -431,6 +456,10 @@ MAP_ADJUST: ;r1 is value being input into game 		r0 is address of place it needs
 	MOV r1, #1
 	BL output_string
 										;Print updated game board
+	MOV r0, #0x0D
+	BL output_character
+	MOV r0, #0x0A
+	BL output_character
 	LDR r0, ptr_to_gameBoard
 	MOV r1, #1
 	BL output_string
@@ -662,8 +691,104 @@ ENDgame_start_flip:
 ;----------------------------------------------------------------
 COLISION:			;THIS IS GAME OVER, print score and give option to restart or EXIT(USE E)
 
+	LDR r0, ptr_to_game_ending
+	MOV r1, #1
+	STRB r1, [r0]
+
+	LDR r0, ptr_to_score ;LEt's check to see if they got over 200 or not
+	LDRH r1, [r0]
+	CMP r1, #200
+	BLT LOST
+	BGE WIN
+	B END
+
+LOST:
+	LDR r0, ptr_to_LC_PROMPT
+	MOV r1, #1
+	BL output_string
+	B ENDING_PROMPT
+
+WIN:
+	LDR r0, ptr_to_WC_PROMPT
+	MOV r1, #1
+	BL output_string
 
 
+ENDING_PROMPT:
+	LDR r0, ptr_to_scorePrompt
+	MOV r1, #1
+	BL output_string
+										;Print score NUM
+	LDR r0, ptr_to_scoreStr
+	MOV r1, #1
+	BL output_string
+
+	LDR r0, ptr_to_endPrompt
+	MOV r1, #1
+	BL output_string
+										;Now we need to figure out How to read a Q or E
+
+BURN:
+	LDR r0, ptr_to_playerDir
+	LDRB r1, [r0]
+	CMP r1, #4
+	NOP
+	BEQ RESET
+	CMP r1, #5
+	NOP
+	BEQ END
+	B BURN
+
+RESET:
+	LDR r0, ptr_to_xPos
+	MOV r1, #0x0A
+	STRB r1, [r0]
+
+	LDR r0, ptr_to_yPos
+	MOV r1, #0x0A
+	STRB r1, [r0]
+
+	LDR r0, ptr_to_score
+	MOV r1, #0x0
+	STR r1, [r0]
+
+	LDR r0, ptr_to_game_started
+	MOV r1, #0x0
+	STRB r1, [r0]
+
+	LDR r0, ptr_to_gameBoard
+	MOV r4, #0x20						;THIS is what we are replacing it with
+	ADD r0, r0, #25						;to start us out right
+
+Y_ADJUST_FINAL:							;We are wiping the graph
+	MOV r5, #0									;We add 24
+	ADD r0, r0, #24						;goes down a "COLUMN" of characters
+	ADD r6, r6, #1
+	CMP r6, #21
+	BEQ ADJUST_FINISHED
+
+
+X_ADJUST_FINAL:
+	ADD r0, r0, #1					;goes across a "ROW" of characters
+	ADD r5, r5, #1					;To keep track how many parts of a row we completed
+	CMP r5, #20
+	BNE X_ADJUST_FINAL
+	B Y_ADJUST_FINAL
+
+ADJUST_FINISHED
+
+	LDR r0, ptr_to_game_ending
+	MOV r1, #0x0
+	STRB r1, [r0]
+	B lab6
+
+END:
+	B END_PROGRAM
+
+
+
+
+COLISION_END:
 	B EXIT_TIMER_HANDLER
 ;================================================================
 

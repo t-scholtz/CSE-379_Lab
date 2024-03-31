@@ -18,7 +18,7 @@
 	.global ERRORFOUND
 	.global gpio_interrupt_init
 	.global uart_interrupt_init
-	.global switch_init
+	.global timer_init
 	.global ansi_print
 
 
@@ -104,29 +104,6 @@ ANSIEXIT:
 
 ;================================================================
 
-;----------------------------------------------------------------
-;switch intit - initliases sw1 on tiva board
-;----------------------------------------------------------------
-switch_init:
-	PUSH {r4-r12,lr}
-	;SET CLCK TO 000
-	MOV r4,#0xE608
-	MOVT r4, #0x400F	;load clck memeory address
-	MOV r0, #0x0000
-	STRB r0, [r4]
-	;SET BUTTON - SW1 - Port F Pin 4 - read
-	MOV r0, #32			;port f
-	MOV r1, #0x5000		;port f memory address
-	MOVT r1 , #0x4002
-	MOV r2, #0x00
-	MOV r3, #0x10
-	BL gpio_setup
-	MOV r0, #0x10		;pull up registors
-	STRB r3, [r1,#GPIOPUR]
-
-	POP {r4-r12,lr}
-	MOV pc, lr
-;================================================================
 
 ;----------------------------------------------------------------
 ;GPIO Button and LED INI - initliase on board button and led for
@@ -585,11 +562,9 @@ uart_interrupt_init:
 
 	MOV r0, #0xC000 ;This is the UART Base address
 	MOVT r0, #0x4000
-
 	LDR r1, [r0, #UARTIM]	;This loads the base value of the UARTIM data and we need to update it
 	ORR r1, r1, #16			;Now we have the updated value to store back
 	STR r1, [r0, #UARTIM]
-
 							;Now we need to set the ENABLE pin
 	MOV  r0, #0xE000 		;This is the UART Base address
 	MOVT r0, #0xE000
@@ -638,6 +613,78 @@ gpio_interrupt_init:
 	LDRB r1, [r0,#GPIOICR]
 	ORR r1,r1,#16
 	STRB r1, [r0,#GPIOICR]
+	POP {r4-r12,lr}
+	MOV pc, lr
+;================================================================
+
+;----------------------------------------------------------------
+;timer_init - conencts the timer to the interupt handler
+;	r0 - time between interupts
+;----------------------------------------------------------------
+timer_init:
+	PUSH {r4-r12,lr}
+	MOV r5,r0 ;save timer period
+	MOV r0, #0xE604
+	MOVT r0, #0x400F
+	LDRB r1, [r0]
+	ORR r1,r1,#1
+	STRB r1, [r0]
+
+	MOV r0, #0xC
+	MOVT r0, #0x4003
+	LDRB r1,[r0]
+	AND r1, r1,#0xFE
+	STRB r1, [r0]
+
+	MOV r0,#0
+	MOVT r0, #0x4003
+	LDRB r1,[r0]
+	AND r1, r1, #0xF8
+	STRB r1, [r0]
+
+	MOV r0, #4
+	MOVT r0, #0x4003
+	LDRB r1, [r0]
+	AND r1, r1, #0xFC
+	ORR r1, r1, #2
+	STRB r1, [r0]
+
+	MOV r1, #0x1200
+	MOVT r1, #0x007A
+	STR r1, [r5]
+
+	MOV r0,#0x18
+	MOVT r0, #0x4003
+	LDRB r1,[r0]
+	ORR r1, r1, #0x01
+	STRB r1, [r0]
+
+	MOV r0,#0xE100
+	MOVT r0, #0xE000
+	LDR r1, [r0]
+	MOV r2, #0
+	MOVT r2, #0x0008
+	ORR r1, r1, r2
+	STR r1, [r0]
+
+	MOV r0,#0x18
+	MOVT r0, #0x4003
+	LDRB r1,[r0]
+	ORR r1, r1, #0x01
+	STRB r1, [r0]
+
+	MOV r0,#0xC
+	MOVT r0, #0x4003
+	LDRB r1,[r0]
+	ORR r1, r1, #0x01
+	STRB r1, [r0]
+
+	MOV r4, #0x0000
+	MOVT r4, #0x4003
+	LDRB r6, [r4, #GPTMICR]
+	ORR r6,r6, #0x01
+	STRB r6, [r4, #GPTMICR]
+
 	POP {r4-r12,lr}
 	MOV pc, lr
 ;================================================================

@@ -3,7 +3,8 @@
 
 ;PROGRAM DATA
 ;================================================================
-helloworld:		.string 0x81,0x86,"H",0x87,"E",0x88,"L",0x89,"L",0x8A,"O ",0x8B,"WOR",0x8C,"LD",0x80,0x0D, 0x0A , 0x00
+helloworld:		.string 0x81,0x86,"H",0x87,"E",0x88,"L",0x89
+				.string "L",0x8A,"O ",0x8B,"WOR",0x8C,"LD",0x80,0x0D, 0x0A , 0x00 ;This is a test string which tests colour + screen clear + sylte reset
 nrm:			.string "now the text it back to normal",0
 	.text
 
@@ -34,11 +35,18 @@ ptr_to_nrm:				.word nrm
 ;----------------------------------------------------------------
 lab7:
 	PUSH {r4-r12,lr}
-	bl uart_init
+	;run all connection code
+	bl init_all
+
+	;Maybe run some tests before game start
+
+
+	;TEST CODE - CAN DELETE
 	LDR r0, ptr_to_helloworld
 	bl ansi_print
 	LDR r0, ptr_to_nrm
 	bl ansi_print
+	;
 
 
 	;Exit routine
@@ -48,9 +56,20 @@ END_PROGRAM:
 ;================================================================
 
 ;----------------------------------------------------------------
-;function template - function description
+;init_all - initialse all hardware, uart, and timer functionality
 ;----------------------------------------------------------------
-
+init_all:
+	PUSH {r4-r12,lr}
+	bl uart_init
+	bl uart_interrupt_init
+	bl gpio_btn_and_LED_init
+	bl gpio_interrupt_init
+	;Choose timer peroid
+	MOV r0,#0x28
+	MOVT r0, #0x4003
+	bl timer_init
+	POP {r4-r12,lr}
+	MOV pc, lr
 ;================================================================
 
 	.end

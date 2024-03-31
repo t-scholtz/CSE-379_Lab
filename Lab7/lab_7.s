@@ -3,12 +3,14 @@
 
 ;PROGRAM DATA
 ;================================================================
-
+helloworld:		.string 0x81,0x86,"H",0x87,"E",0x88,"L",0x89,"L",0x8A,"O ",0x8B,"WOR",0x8C,"LD",0x80,0x0D, 0x0A , 0x00
+nrm:			.string "now the text it back to normal",0
 	.text
 
 ;POINTERS TO DATA
 ;================================================================
-
+ptr_to_helloworld:		.word helloworld
+ptr_to_nrm:				.word nrm
 
 ;LIST OF SUBROUTINES
 ;================================================================
@@ -16,7 +18,8 @@
 
 ;IMPORTED SUB_ROUTINES
 ;_______________________________________________________________
-	.global .global uart_init
+	.global uart_init
+	.global ansi_print
 
 ;LIST OF CONSTANTS
 ;================================================================
@@ -32,6 +35,10 @@
 lab7:
 	PUSH {r4-r12,lr}
 	bl uart_init
+	LDR r0, ptr_to_helloworld
+	bl ansi_print
+	LDR r0, ptr_to_nrm
+	bl ansi_print
 
 
 	;Exit routine

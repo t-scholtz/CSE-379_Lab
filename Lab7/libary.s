@@ -19,12 +19,26 @@
 	.global gpio_interrupt_init
 	.global uart_interrupt_init
 	.global switch_init
+	.global ansi_print
 
 
 ;PROGRAM DATA
 ;================================================================
 errorPrompt:	.string "Error with subroutine", 0 ;Question to see if we can do this in this file
 newLine:		.byte 0x0D, 0x0A , 0x00,  0x00
+lookUpTbl:		.string 27,"[0m",0,0,0,0,0,0,0,0; 80 - reset seetings to normal ;This is the look up table for ansi print.
+				.string 27,"[2J",27,"[1;1H",0,0	; 81 - clear screen and move cursor top right
+				.string 0,0,0,0,0,0,0,0,0,0,0,0	; 82
+				.string 0,0,0,0,0,0,0,0,0,0,0,0	; 83
+				.string 0,0,0,0,0,0,0,0,0,0,0,0	; 84
+				.string 0,0,0,0,0,0,0,0,0,0,0,0	; 85
+				.string 27,"[91m",0,0,0,0,0,0,0	; 86 - HI Red
+				.string 27,"[92m",0,0,0,0,0,0,0	; 87 - HI Green
+				.string 27,"[93m",0,0,0,0,0,0,0	; 88 - HI Yellow
+				.string 27,"[94m",0,0,0,0,0,0,0	; 89 - HI Blue
+				.string 27,"[95m",0,0,0,0,0,0,0	; 8A - HI Pink
+				.string 27,"[96m",0,0,0,0,0,0,0	; 8B - HI Turquie
+				.string 27,"[97m",0,0,0,0,0,0,0	; 8C - Hi White
 ;================================================================
 
 	.text
@@ -33,6 +47,7 @@ newLine:		.byte 0x0D, 0x0A , 0x00,  0x00
 ;================================================================
 ptr_to_errorPrompt:		.word errorPrompt
 ptr_to_newLine:			.word newLine
+ptr_to_lookUpTbl:		.word lookUpTbl
 ;================================================================
 
 ;LIST OF CONSTANTS
@@ -50,10 +65,44 @@ GPIOIBE:			.equ 0x408 		;GPIO Interrupt Both Edges Register
 GPIOIV:				.equ 0x40C		;GPIO Interrupt Event Register
 GPIOIM:				.equ 0x410		;GPIO Interrupt Mask Register
 GPIOICR:			.equ 0x41C		;GPIO Interrupt Clear Register
+
+
 ;================================================================
 
 ;CODE
 ;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+;----------------------------------------------------------------
+;Ansi_print - prints a string, and looks for our escape
+;commands in the string, check docs for defintions
+;	input r0 - string to print memory address
+;----------------------------------------------------------------
+ansi_print:
+	PUSH {r4-r12,lr}
+	MOV r4,r0
+ANSILOOP:
+ 	LDRB r0, [r4],#1
+	CMP r0, #0x00
+	BEQ ANSIEXIT
+	CMP r0, #0x7F
+	BGT LOADANSI
+	BL output_character
+	B ANSILOOP
+LOADANSI:
+	MOV r5, r0			;save a copy of the value of r0 in r5
+	SUB r1, r0,#0x80	;r1 is the offset value
+	MOV r2,	#12			;r2 - size of row in lookup table
+	MUL r1,r1,r2		;calulate offset
+	LDR r2, ptr_to_lookUpTbl
+	ADD	r0,r1,r2		;add the memory address plus offset together
+	MOV r1, #1			;don't print new line
+	BL output_string
+	B ANSILOOP
+ANSIEXIT:
+	POP {r4-r12,lr}
+	MOV pc, lr
+
+;================================================================
 
 ;----------------------------------------------------------------
 ;switch intit - initliases sw1 on tiva board
@@ -387,7 +436,6 @@ BITEXIT:
 ERRORFOUND:
 	LDR r0, ptr_to_errorPrompt
 	BL output_string;the prompt being printed is in r0
-	B EMERGENCY_EXIT
 ;================================================================
 
 ;----------------------------------------------------------------
@@ -504,7 +552,7 @@ EXITREAD:
 ;----------------------------------------------------------------
 ;Output String -
 ;input	- r0 - address of null terminated string
-;	  	- r1 - new line conidtion - set to neg value to turn off
+;	  	- r1 - new line conidtion - set to neg value to turn on
 ;string stored at memory location to term
 ;----------------------------------------------------------------
 output_string:
@@ -518,10 +566,12 @@ PRINTLOOP:
 	B PRINTLOOP
 PRINTEXIT:
 	cmp r1 , #0
-	BGT NONEWLINE
-	MOV r1,#1
+	BGE NONEWLINE
+	MOV r2,r1
+	MOV r1, #1
 	LDR r0, ptr_to_newLine
 	BL output_string
+	MOV r1,r2
 NONEWLINE:
 	POP {r4-r12,lr}
 	MOV pc, lr

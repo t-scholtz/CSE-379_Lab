@@ -39,6 +39,8 @@ lookUpTbl:		.string 27,"[0m",0,0,0,0,0,0,0,0; 80 - reset seetings to normal ;Thi
 				.string 27,"[95m",0,0,0,0,0,0,0	; 8A - HI Pink
 				.string 27,"[96m",0,0,0,0,0,0,0	; 8B - HI Turquie
 				.string 27,"[97m",0,0,0,0,0,0,0	; 8C - Hi White
+				.string 27,"[97m",0,0,0,0,0,0,0	; 8C - Move cursor by X (you mst specify x value afterwards)
+				.string 27,"[97m",0,0,0,0,0,0,0	; 8C - Hi White
 ;================================================================
 
 	.text

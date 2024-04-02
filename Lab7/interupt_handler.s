@@ -16,6 +16,7 @@ ptr_to_state:		.word state
 	.global UART0_Handler
 	.global Switch_Handler
 	.global Timer_Handler
+	.global change_state
 
 ;IMPORTED SUB_ROUTINES
 ;_______________________________________________________________
@@ -35,6 +36,7 @@ GPTMICR:			.equ 0x024		;Interrupt Servicing in the Handler
 ;----------------------------------------------------------------
 ;change_state - updates state value to value in r0
 ;----------------------------------------------------------------
+change_state:
 	PUSH {r0-r11,lr}
 	LDR r1, ptr_to_state
 	STRB r0
@@ -72,7 +74,7 @@ Switch_Handler:
 
 
 
-EXIT_SWITCH_HANDLER
+EXIT_SWITCH_HANDLER:
 	POP {r0-r11,lr}
 	BX lr       	; Return
 
@@ -90,6 +92,12 @@ Timer_Handler:
 	ORR r6,r6, #0x01
 	STRB r6, [r4, #GPTMICR]
 
+	LDR r0, ptr_to_state
+	LDRB r0, [r0]		;load the state value
+	CMP r0, #0
+	BEQ start_up_anim
+
+EXIT_TIMER_HANDLER:
 	POP {r0-r11,lr}
 	BX lr
 ;================================================================

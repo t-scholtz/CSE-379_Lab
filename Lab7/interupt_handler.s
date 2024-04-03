@@ -20,7 +20,7 @@ ptr_to_state:		.word state
 
 ;IMPORTED SUB_ROUTINES
 ;_______________________________________________________________
-
+	.global start_up_anim
 
 
 
@@ -39,7 +39,7 @@ GPTMICR:			.equ 0x024		;Interrupt Servicing in the Handler
 change_state:
 	PUSH {r0-r11,lr}
 	LDR r1, ptr_to_state
-	STRB r0
+	STRB r0,[r1]
 	POP {r0-r11,lr}
 	BX lr
 ;----------------------------------------------------------------
@@ -92,10 +92,10 @@ Timer_Handler:
 	ORR r6,r6, #0x01
 	STRB r6, [r4, #GPTMICR]
 
-	LDR r0, ptr_to_state
-	LDRB r0, [r0]		;load the state value
-	CMP r0, #0
-	BEQ start_up_anim
+	;LDR r0, ptr_to_state
+	;LDRB r0, [r0]		;load the state value
+	;CMP r0, #0
+	;BEQ start_up_anim
 
 EXIT_TIMER_HANDLER:
 	POP {r0-r11,lr}

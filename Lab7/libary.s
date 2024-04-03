@@ -683,9 +683,9 @@ timer_init:
 
 	MOV r4, #0x0000
 	MOVT r4, #0x4003
-	LDRB r6, [r4, #GPTMICR]
+	LDRB r6, [r4, #0x024]
 	ORR r6,r6, #0x01
-	STRB r6, [r4, #GPTMICR]
+	STRB r6, [r4, #0x024]
 
 	POP {r4-r12,lr}
 	MOV pc, lr

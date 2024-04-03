@@ -6,12 +6,14 @@
 helloworld:		.string 0x81,0x86,"H",0x87,"E",0x88,"L",0x89
 				.string "L",0x8A,"O ",0x8B,"WOR",0x8C,"LD",0x80,0x0D, 0x0A , 0x00 ;This is a test string which tests colour + screen clear + sylte reset
 nrm:			.string "now the text it back to normal",0
+test_face:		.string 101,102,103,104,105,106,105,104,103,0
 	.text
 
 ;POINTERS TO DATA
 ;================================================================
 ptr_to_helloworld:		.word helloworld
 ptr_to_nrm:				.word nrm
+ptr_to_test_face:		.word test_face
 
 ;LIST OF SUBROUTINES
 ;================================================================
@@ -20,7 +22,14 @@ ptr_to_nrm:				.word nrm
 ;IMPORTED SUB_ROUTINES
 ;_______________________________________________________________
 	.global uart_init
+	.global uart_interrupt_init
+	.global gpio_btn_and_LED_init
+	.global gpio_interrupt_init
+	.global timer_init
+	;IMPORTED FOR TESTING, CAN DELETE LATER
 	.global ansi_print
+	.global print_sqr
+	.global print_face
 
 ;LIST OF CONSTANTS
 ;================================================================
@@ -47,6 +56,12 @@ lab7:
 	LDR r0, ptr_to_nrm
 	bl ansi_print
 	;
+	MOV r0, #101
+	MOV r1, #10
+	MOV r2, #10
+	BL print_sqr
+	LDR r0, ptr_to_test_face
+	BL print_face
 
 
 	;Exit routine

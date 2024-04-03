@@ -9,7 +9,7 @@ logo:				.string 27,"[101m   ",27,"[0m|",27,"[102m   ",27,"[0m|" ,27,"[103m   ",
 					.string 27,"[0m|",0
 					.string 27,"[104m   ",27,"[0m|",27,"[105m   ",27,"[0m|" ,27,"[106m   ",0
 
-square:				.string "   ", 27, "[3B",27, "[3D   ",27, "[3B",27, "[3D   ",80,81, 0
+square:				.string "   ", 27, "[1B",27, "[3D   ",27, "[1B",27, "[3D   ",0x80, 0
 
 temp:				.string "blank Space",0
 	.text
@@ -27,18 +27,68 @@ ptr_to_temp:			.word temp
 ;LIST OF SUBROUTINES
 ;================================================================
 	.global startCount
+	.global print_face
+	.global print_sqr
+	.global start_up_anim
 
 ;IMPORTED SUB_ROUTINES
 ;_______________________________________________________________
 	.global change_state
 	.global ansi_print
-
+	.global output_character
+	.global int2string
+	.global output_string
 
 ;LIST OF CONSTANTS
 ;================================================================
 
 ;CODE
 ;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+;----------------------------------------------------------------
+;print face- prints a side of the cube to screen
+;	input:	r0 - Take a memory address of a string consisting of 9 bytes, each with a value between(0-5)
+;		   	r1 - Orientation which a value from (0-3)
+;----------------------------------------------------------------
+print_face:
+	PUSH {r4-r12,lr}
+
+	BL print_face_helper
+	POP {r4-r12,lr}
+	MOV pc, lr
+;================================================================
+
+;----------------------------------------------------------------
+;print face helper -
+;	input: r0 - takes in a null terminated string of 9 bytes
+;----------------------------------------------------------------
+print_face_helper:
+	PUSH {r4-r12,lr}
+	MOV r4,r0	;copy string into r1, freeing r0 to pass colours to print sqr | r4 = input string
+	MOV r5, #0	;used in a nested for loop - 3 across - 3 down 	: r5 = i =0
+PFH_LOOP_I:
+	MOV r6, #0	;r6 = j = 0
+	ADD r5, r5, #1	;i++
+	CMP r5, #3
+	BGT PFH_EXITLOOP
+PFH_LOOP_J:
+	ADD r6, r6, #1	;j++
+	MOV r1, #0		;x pos for sqaure - reset value
+	MOV r8, #4		;storing constant for multipication[4 because square is 3x3 with extra layer between
+	MUL r1, r6, r8	;how many blocks right is this square
+	ADD r1, r1, #5	;constant offest for position sqare
+	MUL r2, r5, r8	;how many blocks right is this square
+	ADD r2, r2, #20	;constant offest for position sqare
+	LDRB r0,[r4],#1	;load byte colour to be printed
+	BL print_sqr	;print sqr to screen
+	CMP r6, #3
+	BGE PFH_LOOP_I
+	B PFH_LOOP_J
+PFH_EXITLOOP:
+	POP {r4-r12,lr}
+	MOV pc, lr
+;================================================================
+
 
 ;----------------------------------------------------------------
 ;start_up_anim - plays a strart up animation
@@ -71,7 +121,9 @@ EXIT_SRT_UP:
 ;----------------------------------------------------------------
 print_sqr:
 	PUSH {r4-r12,lr}
-	MOV r8,r0 				;save colour value
+	MOV r8,r0 				;save input values
+	MOV r9,r1
+	MOV r10,r2
 
 	MOV r0, #27
 	BL output_character
@@ -79,7 +131,8 @@ print_sqr:
 	BL output_character		;print ESC[
 
 	LDR r0, ptr_to_temp
-	BL int2String
+	MOV r1,r9
+	BL int2string
 	LDR r0, ptr_to_temp
 	BL output_string		;print num down
 
@@ -87,8 +140,8 @@ print_sqr:
 	BL output_character		;print ;
 
 	LDR r0, ptr_to_temp
-	MOV r1,r2
-	BL int2String
+	MOV r1,r10
+	BL int2string
 	LDR r0, ptr_to_temp
 	BL output_string		;print num right
 
@@ -102,7 +155,7 @@ print_sqr:
 
 	LDR r0, ptr_to_temp
 	MOV r1,r8
-	BL int2String
+	BL int2string
 	LDR r0, ptr_to_temp
 	BL output_string
 

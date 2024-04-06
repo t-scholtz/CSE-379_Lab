@@ -26,12 +26,11 @@
 ;================================================================
 errorPrompt:	.string "Error with subroutine", 0 ;Question to see if we can do this in this file
 newLine:		.byte 0x0D, 0x0A , 0x00,  0x00
-lookUpTbl:		.string 27,"[0m",0,0,0,0,0,0,0,0; 80 - reset seetings to normal ;This is the look up table for ansi print.
-				.string 27,"[2J",27,"[1;1H",0,0	; 81 - clear screen and move cursor top right
-				.string 0,0,0,0,0,0,0,0,0,0,0,0	; 82
-				.string 0,0,0,0,0,0,0,0,0,0,0,0	; 83
+lookUpTbl:		;80 - move cur pos ; 81 mov cur spaces
+				.string 27,"[0m",0,0,0,0,0,0,0,0; 82 - reset seetings to normal ;This is the look up table for ansi print.
+				.string 27,"[2J",27,"[1;1H",0,0	; 83 - clear screen and move cursor top right
 				.string 0,0,0,0,0,0,0,0,0,0,0,0	; 84
-				.string 0,0,0,0,0,0,0,0,0,0,0,0	; 85
+				.string 0,0,0,0,0,0,0,0,0,0,0,0	; 85 -
 				.string 27,"[91m",0,0,0,0,0,0,0	; 86 - HI Red
 				.string 27,"[92m",0,0,0,0,0,0,0	; 87 - HI Green
 				.string 27,"[93m",0,0,0,0,0,0,0	; 88 - HI Yellow
@@ -41,6 +40,7 @@ lookUpTbl:		.string 27,"[0m",0,0,0,0,0,0,0,0; 80 - reset seetings to normal ;Thi
 				.string 27,"[97m",0,0,0,0,0,0,0	; 8C - Hi White
 				.string 27,"[97m",0,0,0,0,0,0,0	; 8C - Move cursor by X (you mst specify x value afterwards)
 				.string 27,"[97m",0,0,0,0,0,0,0	; 8C - Hi White
+temp:			.string "blank Space",0
 ;================================================================
 
 	.text
@@ -50,6 +50,7 @@ lookUpTbl:		.string 27,"[0m",0,0,0,0,0,0,0,0; 80 - reset seetings to normal ;Thi
 ptr_to_errorPrompt:		.word errorPrompt
 ptr_to_newLine:			.word newLine
 ptr_to_lookUpTbl:		.word lookUpTbl
+ptr_to_temp:			.word temp
 ;================================================================
 
 ;LIST OF CONSTANTS
@@ -86,13 +87,17 @@ ANSILOOP:
  	LDRB r0, [r4],#1
 	CMP r0, #0x00
 	BEQ ANSIEXIT
-	CMP r0, #0x7F
+	CMP r0, #0x81
 	BGT LOADANSI
+	CMP r0, #0x80
+	BEQ MOV_CUR_POS
+	CMP r0, #0x81
+	BEQ MOV_CUR_SPC
 	BL output_character
 	B ANSILOOP
 LOADANSI:
 	MOV r5, r0			;save a copy of the value of r0 in r5
-	SUB r1, r0,#0x80	;r1 is the offset value
+	SUB r1, r0,#0x82	;r1 is the offset value
 	MOV r2,	#12			;r2 - size of row in lookup table
 	MUL r1,r1,r2		;calulate offset
 	LDR r2, ptr_to_lookUpTbl
@@ -100,10 +105,84 @@ LOADANSI:
 	MOV r1, #1			;don't print new line
 	BL output_string
 	B ANSILOOP
+MOV_CUR_POS:
+	LDRSB r1, [r4],#1	;x val
+	LDRSB r2, [r4],#1	;y val
+	MOV r5, r2			;save r2
+	MOV r0, #27
+	BL output_character
+	MOV r0, #91
+	BL output_character		;print ESC[
+	LDR r0, ptr_to_temp
+	BL int2string
+	LDR r0, ptr_to_temp
+	BL output_string		;print num down
+	MOV r0, #59
+	BL output_character		;print ;
+	LDR r0, ptr_to_temp
+	MOV r1,r5
+	BL int2string
+	LDR r0, ptr_to_temp
+	BL output_string		;print num right
+	MOV r0, #72
+	BL output_character		;print H
+	B ANSILOOP
+
+MOV_CUR_SPC:
+	LDRSB r1, [r4],#1	;left/right val
+	LDRSB r2, [r4],#1	;up/down val
+
+	MOV r0, #27
+	BL output_character
+	MOV r0, #91
+	BL output_character		;print ESC[
+
+	LDR r0, ptr_to_temp
+	CMP r1,#0
+	BLT MOV_RIGHT
+MOV_LEFT:
+	BL int2string
+	LDR r0, ptr_to_temp
+	BL output_string
+	MOV r0, #67
+	B MOV_UD
+MOV_RIGHT:
+	MVN r1, r1
+	BL int2string
+	LDR r0, ptr_to_temp
+	BL output_string
+	MOV r0, #68
+MOV_UD:
+	BL output_character
+
+	MOV r0, #27
+	BL output_character
+	MOV r0, #91
+	BL output_character		;print ESC[
+
+	LDR r0, ptr_to_temp
+	CMP r2, #0
+	BLT MOV_UP
+MOV_DOWN:
+	MOV r1,r2
+	BL int2string
+	LDR r0, ptr_to_temp
+	BL output_string
+	MOV r0, #64
+	BL output_character
+	B ANSILOOP
+MOV_UP:
+	MVN r1, r2
+	BL int2string
+	LDR r0, ptr_to_temp
+	BL output_string
+	MOV r0, #63
+	BL output_character
+	B ANSILOOP
+
 ANSIEXIT:
 	POP {r4-r12,lr}
 	MOV pc, lr
-
 ;================================================================
 
 
@@ -650,10 +729,10 @@ timer_init:
 	AND r1, r1, #0xFC
 	ORR r1, r1, #2
 	STRB r1, [r0]
-
-	MOV r1, #0x1200
-	MOVT r1, #0x007A
-	STR r1, [r5]
+	;Set timer lenght here -- stored in R0
+	MOV r0,#0x28
+	MOVT r0, #0x4003
+	STR r5, [r0]
 
 	MOV r0,#0x18
 	MOVT r0, #0x4003

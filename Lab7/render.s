@@ -3,6 +3,9 @@
 ;PROGRAM DATA
 ;================================================================
 startCount:			.byte 0x10
+start_up:			.string "Lab 7 - Tim and Tom",0
+
+pause_menu:			.string 0x82,0x83,0x89 , "**************************************",0x82,0x80,0x6,0x6,"Paused",0x80,0x0,0x12 ,0x89 , "**************************************",0
 
 logo_pos:			.string 27,"[10;10H"
 logo:				.string 27,"[101m   ",27,"[0m|",27,"[102m   ",27,"[0m|" ,27,"[103m   ",0
@@ -19,7 +22,8 @@ temp:				.string "blank Space",0
 ptr_to_startCount:		.word startCount
 ptr_to_logo_pos:		.word logo_pos
 ptr_to_logo:			.word logo
-
+ptr_to_start_up:		.word start_up
+ptr_to_pause_menu:		.word pause_menu
 
 ptr_to_square:			.word square
 ptr_to_temp:			.word temp
@@ -30,6 +34,9 @@ ptr_to_temp:			.word temp
 	.global print_face
 	.global print_sqr
 	.global start_up_anim
+	.global print_menu
+	.global print_game
+	.global print_pause
 
 ;IMPORTED SUB_ROUTINES
 ;_______________________________________________________________
@@ -44,6 +51,60 @@ ptr_to_temp:			.word temp
 
 ;CODE
 ;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+;----------------------------------------------------------------
+;start_up_anim - prints a startup animation and then changes game
+;	state to 1
+;----------------------------------------------------------------
+start_up_anim:
+	PUSH {r4-r12,lr}
+	LDR r0, ptr_to_start_up
+	BL ansi_print
+	LDR r0, ptr_to_startCount
+	LDRB r1, [r0]
+	SUB r1,r1,#1
+	STRB r1,[r0]
+	CMP r1, #0
+	BGT END_STARTUP
+	MOV r0, #0
+	BL  change_state
+END_STARTUP:
+	POP {r4-r12,lr}
+	MOV pc, lr
+;================================================================
+
+;----------------------------------------------------------------
+;print_menu - prints game menu
+;----------------------------------------------------------------
+print_menu:
+	PUSH {r4-r12,lr}
+
+	BL print_face_helper
+	POP {r4-r12,lr}
+	MOV pc, lr
+;================================================================
+
+;----------------------------------------------------------------
+;print_game - prints game board + player + handles transistions
+;----------------------------------------------------------------
+print_game:
+	PUSH {r4-r12,lr}
+	LDR r0, ptr_to_temp
+	BL ansi_print
+	POP {r4-r12,lr}
+	MOV pc, lr
+;================================================================
+
+;----------------------------------------------------------------
+;print_pause - prints pause menu
+;----------------------------------------------------------------
+print_pause:
+	PUSH {r4-r12,lr}
+	LDR r0, ptr_to_pause_menu
+	BL ansi_print
+	POP {r4-r12,lr}
+	MOV pc, lr
+;================================================================
 
 ;----------------------------------------------------------------
 ;print face- prints a side of the cube to screen
@@ -85,30 +146,6 @@ PFH_LOOP_J:
 	BGE PFH_LOOP_I
 	B PFH_LOOP_J
 PFH_EXITLOOP:
-	POP {r4-r12,lr}
-	MOV pc, lr
-;================================================================
-
-
-;----------------------------------------------------------------
-;start_up_anim - plays a strart up animation
-;----------------------------------------------------------------
-start_up_anim:
-	PUSH {r4-r12,lr}
-	LDR r0, ptr_to_startCount
-	LDRB r1, [r0]
-	SUB r1,r1,#1
-	STRB r1,[r0]
-	CMP r1, #0
-	BGT BEGGING_ANIM
-	MOV r0,#1
-	BL change_state
-	B EXIT_SRT_UP
-BEGGING_ANIM:
-
-
-
-EXIT_SRT_UP:
 	POP {r4-r12,lr}
 	MOV pc, lr
 ;================================================================

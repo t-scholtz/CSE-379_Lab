@@ -3,9 +3,9 @@
 
 ;PROGRAM DATA
 ;================================================================
-helloworld:		.string 0x81,0x86,"H",0x87,"E",0x88,"L",0x89
-				.string "L",0x8A,"O ",0x8B,"WOR",0x8C,"LD",0x80,0x0D, 0x0A , 0x00 ;This is a test string which tests colour + screen clear + sylte reset
-nrm:			.string "now the text it back to normal",0
+helloworld:		.string 0x82,0x83,0x86,"H",0x87,"E",0x88,"L",0x89
+				.string "L",0x8A,"O ",0x8B,"WOR",0x8C,"LD",0x82,0x0D, 0x0A , 0x00 ;This is a test string which tests colour + screen clear + sylte reset
+nrm:			.string "n T",0x81,0x5,0x5,"this will move the cursor",0x80,0x5,0x5,0
 test_face:		.string 101,102,103,104,105,106,105,104,103,0
 	.text
 
@@ -63,6 +63,12 @@ lab7:
 	LDR r0, ptr_to_test_face
 	BL print_face
 
+LOOP:
+	MOV r0, #0x48
+	MOVT r0, #0x4003
+	LDR r1,[r0]
+	B LOOP
+
 
 	;Exit routine
 END_PROGRAM:
@@ -80,8 +86,8 @@ init_all:
 	bl gpio_btn_and_LED_init
 	bl gpio_interrupt_init
 	;Choose timer peroid
-	MOV r0,#0x28
-	MOVT r0, #0x4003
+	MOV r0,#0x1200
+	MOVT r0, #0x007A
 	bl timer_init
 	POP {r4-r12,lr}
 	MOV pc, lr

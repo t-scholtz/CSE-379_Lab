@@ -26,7 +26,7 @@
 ;================================================================
 errorPrompt:	.string "Error with subroutine", 0 ;Question to see if we can do this in this file
 newLine:		.byte 0x0D, 0x0A , 0x00,  0x00
-lookUpTbl:		;80 - move cur pos ; 81 mov cur spaces
+lookUpTbl:		;80 - move cur pos(x,y) ; 81 mov cur spaces
 				.string 27,"[0m",0,0,0,0,0,0,0,0; 82 - reset seetings to normal ;This is the look up table for ansi print.
 				.string 27,"[2J",27,"[1;1H",0,0	; 83 - clear screen and move cursor top right
 				.string 0,0,0,0,0,0,0,0,0,0,0,0	; 84
@@ -82,7 +82,7 @@ GPIOICR:			.equ 0x41C		;GPIO Interrupt Clear Register
 ;----------------------------------------------------------------
 ansi_print:
 	PUSH {r4-r12,lr}
-	MOV r4,r0
+	MOV r4,r0			;r4 is reseverd to keep track of string index
 ANSILOOP:
  	LDRB r0, [r4],#1
 	CMP r0, #0x00
@@ -108,12 +108,14 @@ LOADANSI:
 MOV_CUR_POS:
 	LDRSB r1, [r4],#1	;x val
 	LDRSB r2, [r4],#1	;y val
-	MOV r5, r2			;save r2
+	MOV r5, r1			;save x
+	MOV r6, r2			;save y
 	MOV r0, #27
 	BL output_character
 	MOV r0, #91
 	BL output_character		;print ESC[
 	LDR r0, ptr_to_temp
+	MOV r1,r6
 	BL int2string
 	LDR r0, ptr_to_temp
 	BL output_string		;print num down

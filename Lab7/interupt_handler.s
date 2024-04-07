@@ -54,6 +54,24 @@ UART0_Handler:
 	ORR r1, r1, #0x10
 	STRB r1, [r0, #UARTICR]
 
+	LDR r0, ptr_to_state
+	LDRB r1, [r0]		;load the state value
+	cmp r1, #1
+	BEQ MENU_MODE
+	cmp r1, #2
+	BEQ GAME_MODE
+	cmp r1, #3
+	BEQ PAUSED_MODE
+	B EXIT_UART_HANDLER
+MENU_MODE:
+
+	B EXIT_UART_HANDLER
+GAME_MODE:
+
+	B EXIT_UART_HANDLER
+PAUSED_MODE:
+
+	B EXIT_UART_HANDLER
 
 EXIT_UART_HANDLER:
 	POP {r0-r11,lr}

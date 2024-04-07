@@ -3,16 +3,15 @@
 ;PROGRAM DATA
 ;================================================================
 startCount:			.byte 0x10
-start_up:			.string "Lab 7 - Tim and Tom",0
+menu:				.string "Lab 7 - Tim and Tom",0
 
 pause_menu:			.string 0x82,0x83,0x89 , "**************************************",0x82,0x80,0x6,0x6,"Paused",0x80,0x0,0x12 ,0x89 , "**************************************",0
 
-logo_pos:			.string 27,"[10;10H"
-logo:				.string 27,"[101m   ",27,"[0m|",27,"[102m   ",27,"[0m|" ,27,"[103m   ",0
-					.string 27,"[0m|",0
-					.string 27,"[104m   ",27,"[0m|",27,"[105m   ",27,"[0m|" ,27,"[106m   ",0
 
-square:				.string "   ", 27, "[1B",27, "[3D   ",27, "[1B",27, "[3D   ",0x80, 0
+logo:				.string 0x82,0x83,0x80,10,10,0x8B," ______    ____   ______   ",0x80,10,11,"/\__  _\ /|  _ \ /\__  _\  ",0x80,10,12,"\/_/\ \/ |/\   | \/_/\ \/  ",0x80,10,13,"   \ \ \  \// __`\/\\ \ \  ",0x80,10,14,"    \ \ \ /|  \L>  <_\ \ \ "
+					.string 0x80,10,15,"     \ \_\| \_____/\/ \ \_\ ",0x80,10,16,"      \/_/ \/____/\/   \/_/",0x80,20,20,0x82,"Lab Games",0
+
+square:				.string "     ", 27, "[1B",27, "[5D     ",27, "[1B",27, "[5D     ",0x80, 0
 
 temp:				.string "blank Space",0
 	.text
@@ -20,9 +19,8 @@ temp:				.string "blank Space",0
 ;POINTERS TO DATA
 ;================================================================
 ptr_to_startCount:		.word startCount
-ptr_to_logo_pos:		.word logo_pos
 ptr_to_logo:			.word logo
-ptr_to_start_up:		.word start_up
+ptr_to_menu:		.word menu
 ptr_to_pause_menu:		.word pause_menu
 
 ptr_to_square:			.word square
@@ -58,14 +56,14 @@ ptr_to_temp:			.word temp
 ;----------------------------------------------------------------
 start_up_anim:
 	PUSH {r4-r12,lr}
-	LDR r0, ptr_to_start_up
+	LDR r0, ptr_to_logo
 	BL ansi_print
 	LDR r0, ptr_to_startCount
 	LDRB r1, [r0]
 	SUB r1,r1,#1
 	STRB r1,[r0]
-	CMP r1, #0
-	BGT END_STARTUP
+	CMP r1, #0			;when start up animation is finished,
+	BGT END_STARTUP		;change state to 1 (menu)
 	MOV r0, #0
 	BL  change_state
 END_STARTUP:
@@ -127,6 +125,8 @@ print_face_helper:
 	PUSH {r4-r12,lr}
 	MOV r4,r0	;copy string into r1, freeing r0 to pass colours to print sqr | r4 = input string
 	MOV r5, #0	;used in a nested for loop - 3 across - 3 down 	: r5 = i =0
+	MOV r8, #5		;storing constant for multipication[5 for block width because square is 3x3 with extra layer between
+	MOV r9, #4		;storing constant for multipication[4 because square is 3x3 with extra layer between
 PFH_LOOP_I:
 	MOV r6, #0	;r6 = j = 0
 	ADD r5, r5, #1	;i++
@@ -135,10 +135,9 @@ PFH_LOOP_I:
 PFH_LOOP_J:
 	ADD r6, r6, #1	;j++
 	MOV r1, #0		;x pos for sqaure - reset value
-	MOV r8, #4		;storing constant for multipication[4 because square is 3x3 with extra layer between
 	MUL r1, r6, r8	;how many blocks right is this square
 	ADD r1, r1, #5	;constant offest for position sqare
-	MUL r2, r5, r8	;how many blocks right is this square
+	MUL r2, r5, r9	;how many blocks right is this square
 	ADD r2, r2, #20	;constant offest for position sqare
 	LDRB r0,[r4],#1	;load byte colour to be printed
 	BL print_sqr	;print sqr to screen

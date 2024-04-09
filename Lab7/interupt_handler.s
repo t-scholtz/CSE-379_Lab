@@ -41,7 +41,7 @@ GPTMICR:			.equ 0x024		;Interrupt Servicing in the Handler
 change_state:
 	LDR r1, ptr_to_state
 	STRB r0,[r1]
-	BX lr
+	MOV pc, lr
 ;----------------------------------------------------------------
 ;UART0_Handler - handle interupt from keyboard
 ;----------------------------------------------------------------

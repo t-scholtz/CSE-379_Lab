@@ -55,13 +55,10 @@ lab7:
 	bl ansi_print
 	LDR r0, ptr_to_nrm
 	bl ansi_print
-	;
-	MOV r0, #101
-	MOV r1, #10
-	MOV r2, #10
-	BL print_sqr
+
 	LDR r0, ptr_to_test_face
 	BL print_face
+	mov r5,#0
 
 LOOP:
 	MOV r0, #0x48

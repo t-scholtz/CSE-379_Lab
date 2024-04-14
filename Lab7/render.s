@@ -14,8 +14,12 @@ logo:				.string 0x82,0x83,0x80,5,10,0x8B," ______    ____   ______   ",0x80,5,1
 					.string 0x80,5,15,"     \ \_\| \_____/\/ \ \_\ ",0x80,5,16,"      \/_/ \/____/\/   \/_/",0x80,10,17,0x82,"Lab Games",0
 
 square:				.string "       ", 27, "[1B",27, "[7D       ",27, "[1B",27, "[7D       ",0x80, 0
-
+;temp space used to store value and such
 temp:				.string "blank Space",0
+;temp space used to hold current face on screen
+rotated_face:		.string 0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x00
+;temp space used to hold the orienation of face moving to
+transition_face:	.string 0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x00
 	.text
 
 ;POINTERS TO DATA
@@ -27,6 +31,8 @@ ptr_to_pause_menu:		.word pause_menu
 
 ptr_to_square:			.word square
 ptr_to_temp:			.word temp
+ptr_to_rotated_face:	.word rotated_face
+ptr_to_transition_face:	.word transition_face
 
 ;LIST OF SUBROUTINES
 ;================================================================
@@ -37,6 +43,8 @@ ptr_to_temp:			.word temp
 	.global print_menu
 	.global print_game
 	.global print_pause
+
+	.global ptr_to_rotated_face
 
 ;IMPORTED SUB_ROUTINES
 ;_______________________________________________________________

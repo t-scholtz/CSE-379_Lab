@@ -44,15 +44,55 @@ ptr_to_block_generation:				.word block_generation
 
 ;IMPORTED SUB_ROUTINES
 ;_______________________________________________________________
-
-
-
+	.global div_and_mod
 
 ;LIST OF CONSTANTS
 ;================================================================
 
 ;CODE
 ;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+;----------------------------------------------------------------
+;get tile - returns the value of tile
+;	Input:
+;		r0 - face number
+;		r1 - tile number
+;		r2 - rotation
+;	Output:
+;		r0 - value of tile colour
+;----------------------------------------------------------------
+get_tile:
+	PUSH {r0-r11,lr}
+	LDR r4, ptr_to_block_generation
+	MOV r6, #9						;constat 9
+	MUL r5,r6,r0					;mul 9 by face number ;r5 offset value
+	ADD r5, r6, r1					;add tile number to offset
+	SUB r5,r5,#9					;sub 9 from offset
+	LDRB r0, [r4,r5]				;load tile value
+	POP {r4-r12,lr}
+	MOV pc, lr
+;================================================================
+
+;----------------------------------------------------------------
+;set tile - updates the value of a tile
+;	Input:
+;		r0 - face number
+;		r1 - tile number
+;		r2 - rotation
+;		r3 - new tile colour
+;	Output:	no output
+;----------------------------------------------------------------
+set_tile:
+	PUSH {r0-r11,lr}
+	LDR r4, ptr_to_block_generation
+	MOV r6, #9						;constat 9
+	MUL r5,r6,r0					;mul 9 by face number ;r5 offset value
+	ADD r5, r6, r1					;add tile number to offset
+	SUB r5,r5,#9					;sub 9 from offset
+	STRB r2, [r4,r5]				;store new value
+	POP {r4-r12,lr}
+	MOV pc, lr
+;================================================================
 
 ;----------------------------------------------------------------
 ;Generate - Reads the clock to generate color, face, player start color, all use MOD 6
@@ -140,7 +180,7 @@ face_load_LOOP:
 	;create a loop that will take you to the cube tile and set that to r4
 tile_load_LOOP:
 	CMP r9, #0x9
-	IT EQ
+	ITTE EQ
 	MOVEQ r9, #0xFF						;this will be our ending flag
 	ADDNE r9, r9, #1
 		;Generate a color for the tile

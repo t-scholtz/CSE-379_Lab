@@ -64,7 +64,13 @@ UART0_Handler:
 	BEQ PAUSED_MODE
 	B EXIT_UART_HANDLER
 MENU_MODE:
-
+	BL read_character
+	CMP r0, #32			;if space pressed - games starts
+	BEQ START_GAME
+	B EXIT_UART_HANDLER
+START_GAME:
+	MOV r0 , #2
+	BL change_state
 	B EXIT_UART_HANDLER
 GAME_MODE:
 

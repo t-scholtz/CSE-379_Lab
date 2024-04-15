@@ -5,8 +5,8 @@
 startCount:			.byte 0x10
 menu:				.string 0x82,0x83,"*********************************",0x0D,0x0A,0x86," ____        _     _ _        ",0x0D,0x0A,"|  _ \ _   _| |__ (_) | _____ ",0x0D,0x0A,"| |_) | | | | '_ \| | |/ / __|",0x0D,0x0A,"|  _ <| |_| | |_) | |   <\__ \ ",0x0D,0x0A,"|_|_\_\\__,_|_.__/|_|_|\_\___/"
 					.string 0x0D,0x0A,0x89,"  ____      _          ",0x0D,0x0A," / ___|   _| |__   ___ ",0x0D,0x0A,"| |__| |_| | |_) |  __/ ",0x0D,0x0A,"| |__| |_| | |_) |  __/ ",0x0D,0x0A," \____\__,_|_.__/ \___| ",0x0D,0x0A,0x82,"*********************************"
-					.string 0x80, 5,14,"Lab 7 - Tim and Tom",0x80, 5,16,"Game time selected: 100",0x80, 5,18,"Push to start",0
-
+					.string 0x80, 5,14,"Lab 7 - Tim and Tom",0x80, 5,16,"Game time selected: ",0
+menu_cont:			.string 0x80, 5,18,"Press <space> to start game",0
 pause_menu:			.string 0x82,0x83,0x89 , "*********************************",0x82,0x80,0x6,0x6,"Paused",0x80,0x0,0x12 ,0x89 , "*********************************",0
 
 
@@ -14,6 +14,9 @@ logo:				.string 0x82,0x83,0x80,5,10,0x8B," ______    ____   ______   ",0x80,5,1
 					.string 0x80,5,15,"     \ \_\| \_____/\/ \ \_\ ",0x80,5,16,"      \/_/ \/____/\/   \/_/",0x80,10,17,0x82,"Lab Games",0
 
 square:				.string "       ", 27, "[1B",27, "[7D       ",27, "[1B",27, "[7D       ",0x80, 0
+
+game_mode:			.string "100", 0x00
+
 ;temp space used to store value and such
 temp:				.string "blank Space",0
 ;temp space used to hold current face on screen
@@ -26,8 +29,10 @@ transition_face:	.string 0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x00
 ;================================================================
 ptr_to_startCount:		.word startCount
 ptr_to_logo:			.word logo
-ptr_to_menu:		.word menu
+ptr_to_menu:			.word menu
+ptr_to_menu_cont:		.word menu_cont
 ptr_to_pause_menu:		.word pause_menu
+ptr_to_game_setting:	.word game_setting
 
 ptr_to_square:			.word square
 ptr_to_temp:			.word temp
@@ -56,6 +61,8 @@ ptr_to_transition_face:	.word transition_face
 
 ;LIST OF CONSTANTS
 ;================================================================
+	.global get_game_mode_str
+
 
 ;CODE
 ;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -92,18 +99,17 @@ ANIM_DONE:
 	MOV r2, #21
 	BL print_sqr
 	MOV r0,#104
-	MOV r1, #17
+	MOV r1, #22
 	MOV r2, #5
 	BL print_sqr
 	MOV r0,#105
-	MOV r1, #17
+	MOV r1, #22
 	MOV r2, #13
 	BL print_sqr
 	MOV r0,#106
-	MOV r1, #17
+	MOV r1, #22
 	MOV r2, #21
 	BL print_sqr
-
 ANIM_COND:
 	SUB r5,r5,#1
 	STRB r5,[r4]
@@ -122,6 +128,10 @@ END_STARTUP:
 print_menu:
 	PUSH {r4-r12,lr}
 	LDR r0, ptr_to_menu
+	BL ansi_print
+	BL get_game_mode_str
+	BL ansi_print
+	LDR r0, ptr_to_menu_cont
 	BL ansi_print
 	POP {r4-r12,lr}
 	MOV pc, lr

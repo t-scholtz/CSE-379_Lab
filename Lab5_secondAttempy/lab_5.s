@@ -458,7 +458,7 @@ Switch_Handler:
 	MOV r0, #0x5000
 	MOVT r0, #0x4002
 	LDRB r1, [r0,#GPIOICR]
-	ORR r1,r1,#16
+	ORR r1,r1,#16			;bit 5 flipped to clear the regitors - set to 1 == is clear
 	STRB r1, [r0,#GPIOICR]
 	LDR r0, ptr_to_state
 	LDRB r1, [r0]		;state of program is stored in r1

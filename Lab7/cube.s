@@ -41,6 +41,9 @@ ptr_to_block_generation:				.word block_generation
 
 ;LIST OF SUBROUTINES
 ;================================================================
+	.global get_tile
+	.global set_tile
+	.global get_face
 
 ;IMPORTED SUB_ROUTINES
 ;_______________________________________________________________
@@ -62,7 +65,7 @@ ptr_to_block_generation:				.word block_generation
 ;		r0 - value of tile colour
 ;----------------------------------------------------------------
 get_tile:
-	PUSH {r0-r11,lr}
+	PUSH {r4-r12,lr}
 	LDR r4, ptr_to_block_generation
 	MOV r6, #9						;constat 9
 	MUL r5,r6,r0					;mul 9 by face number ;r5 offset value
@@ -83,13 +86,32 @@ get_tile:
 ;	Output:	no output
 ;----------------------------------------------------------------
 set_tile:
-	PUSH {r0-r11,lr}
+	PUSH {r4-r12,lr}
 	LDR r4, ptr_to_block_generation
 	MOV r6, #9						;constat 9
 	MUL r5,r6,r0					;mul 9 by face number ;r5 offset value
 	ADD r5, r6, r1					;add tile number to offset
 	SUB r5,r5,#9					;sub 9 from offset
 	STRB r2, [r4,r5]				;store new value
+	POP {r4-r12,lr}
+	MOV pc, lr
+;================================================================
+
+
+;----------------------------------------------------------------
+;get face - updates the value of a tile
+;	Input:
+;		r0 - face number
+;	Output:	r0 - returns the memory address to the begginer of
+;	the cube faace
+;----------------------------------------------------------------
+get_face:
+	PUSH {r4-r12,lr}
+	SUB r0, r0,#1	;subtract 1 from face number
+	MOV r4, #9		;load constant value
+	MUL r0,r0,r4	;How many spaces to skip to get to face row
+	LDR r1 , ptr_to_block_generation
+	LDR r0, [r1,r0]
 	POP {r4-r12,lr}
 	MOV pc, lr
 ;================================================================

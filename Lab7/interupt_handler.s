@@ -68,14 +68,13 @@ MENU_MODE:
 	CMP r0, #32			;if space pressed - games starts
 	BEQ START_GAME
 	B EXIT_UART_HANDLER
-START_GAME:
-	MOV r0 , #2
-	BL change_state
-	B EXIT_UART_HANDLER
 GAME_MODE:
+	;Needs to handle pick up tile + moving player
+
 
 	B EXIT_UART_HANDLER
 PAUSED_MODE:
+	;Needs to handle game reset
 
 	B EXIT_UART_HANDLER
 
@@ -115,7 +114,6 @@ RESUME_GAME:			;update game state and print game board
 EXIT_SWITCH_HANDLER:
 	POP {r0-r11,lr}
 	BX lr       	; Return
-
 ;================================================================
 
 ;----------------------------------------------------------------
@@ -144,19 +142,15 @@ Timer_Handler:
 RENDER_STARTUP:
 	BL start_up_anim
 	B EXIT_TIMER_HANDLER
-
 RENDER_MENU:
 	BL print_menu
 	B EXIT_TIMER_HANDLER
-
 RENDER_GAME:
 	BL print_game
 	B EXIT_TIMER_HANDLER
-
 RENDER_PAUSE:
 	BL print_pause
 	B EXIT_TIMER_HANDLER
-
 EXIT_TIMER_HANDLER:
 	POP {r0-r11,lr}
 	BX lr

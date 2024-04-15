@@ -47,12 +47,6 @@ ptr_to_temp:		.word temp
 ;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 ;----------------------------------------------------------------
-;function template - function description
-;----------------------------------------------------------------
-
-;================================================================
-
-;----------------------------------------------------------------
 ;get_game_mode_str - returns a string of the selected game mode
 ;	Input - none
 ;	Output - r0 - pointer to address of string storing the game mode
@@ -71,13 +65,17 @@ UNLIMATED:
 EXIT_GGMS:
 	POP {r4-r12,lr}
 	MOV pc, lr
-
 ;================================================================
 
 ;----------------------------------------------------------------
 ;set_game_mode - function description
+;	Input - r0 - value for game mode - eg, 100, 200, 300, 400, 0
 ;----------------------------------------------------------------
-
+	PUSH {r4-r11,lr}
+	LDR r1, [game_mode]
+	STR r0, [rr]
+	POP {r4-r12,lr}
+	MOV pc, lr
 ;================================================================
 
 ;----------------------------------------------------------------
@@ -92,10 +90,19 @@ EXIT_GGMS:
 ;----------------------------------------------------------------
 get_plyr_data:
 	PUSH {r4-r11,lr}
-
-	IT EQ
-
-
+	LDR r0, ptr_to_face
+	LDRB r0, [r0]
+	LDR r1, ptr_to_face_dir
+	LDRB r1, [r1]
+	LDR r2, ptr_to_tile_held
+	LDRB r2, [r2]
+	MOV r5, #3
+	LDR r4, ptr_to_y_pos
+	LDRB r4, [r4]
+	MUL r3, r4,r5	;multiple y pos by 3
+	LDR r4, ptr_to_x_pos
+	LDR r4, [r4]
+	ADD r3,r3,r4	; add x value to y*3
 	POP {r4-r12,lr}
 	MOV pc, lr
 ;----------------------------------------------------------------

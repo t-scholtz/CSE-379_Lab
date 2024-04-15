@@ -7,6 +7,7 @@ menu:				.string 0x82,0x83,"*********************************",0x0D,0x0A,0x86," 
 					.string 0x0D,0x0A,0x89,"  ____      _          ",0x0D,0x0A," / ___|   _| |__   ___ ",0x0D,0x0A,"| |__| |_| | |_) |  __/ ",0x0D,0x0A,"| |__| |_| | |_) |  __/ ",0x0D,0x0A," \____\__,_|_.__/ \___| ",0x0D,0x0A,0x82,"*********************************"
 					.string 0x80, 5,14,"Lab 7 - Tim and Tom",0x80, 5,16,"Game time selected: ",0
 menu_cont:			.string 0x80, 5,18,"Press <space> to start game",0
+
 pause_menu:			.string 0x82,0x83,0x89 , "*********************************",0x82,0x80,0x6,0x6,"Paused",0x80,0x0,0x12 ,0x89 , "*********************************",0
 
 
@@ -48,7 +49,7 @@ ptr_to_transition_face:	.word transition_face
 	.global print_menu
 	.global print_game
 	.global print_pause
-
+	.global print_plyr
 	.global ptr_to_rotated_face
 
 ;IMPORTED SUB_ROUTINES
@@ -62,7 +63,7 @@ ptr_to_transition_face:	.word transition_face
 ;LIST OF CONSTANTS
 ;================================================================
 	.global get_game_mode_str
-
+	.global get_face
 
 ;CODE
 ;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -142,8 +143,24 @@ print_menu:
 ;----------------------------------------------------------------
 print_game:
 	PUSH {r4-r12,lr}
-	LDR r0, ptr_to_temp
-	BL ansi_print
+	BL get_plyr_data ;r0 - face | r1 - face direction | r2 - tile being hled | r3 - player postion - num 1-9
+	MOV r6, r2
+	MOV r7, r3		;save data in reg
+	BL get_face
+	;Copy string into local temp copy
+	LDR r1, ptr_to_rotated_face
+	MOV r9, #9		;for loop counter
+COPY_STR:			;r0 - face string data - r1 - temp space to store a copy of the face
+	LDRB r2, [r0], #1
+	STRB r2, [r1], #1
+	CMP r9,#0
+	BGT COPY_STR
+	BL print_sqr
+
+	MOV r0, r6
+	MOV r1, r7
+	BL print_plyr	;print the player
+
 	POP {r4-r12,lr}
 	MOV pc, lr
 ;================================================================
@@ -200,6 +217,20 @@ PFH_LOOP_J:
 	BGE PFH_LOOP_I
 	B PFH_LOOP_J
 PFH_EXITLOOP:
+	POP {r4-r12,lr}
+	MOV pc, lr
+;================================================================
+
+;print_plyr - Prints the player on the board
+;	Input - r0 - colour
+;		  - r1 - tile numb {1-9}
+;	No Output
+;----------------------------------------------------------------
+print_plyr:
+	PUSH {r4-r12,lr}
+
+
+
 	POP {r4-r12,lr}
 	MOV pc, lr
 ;================================================================

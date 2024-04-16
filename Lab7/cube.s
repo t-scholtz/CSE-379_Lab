@@ -20,12 +20,12 @@ Color_Used:			.string 0x0,   0x0,    0x0,  0x0,  0x0,       0x0
 
 
 block_generation:		   ;1  ,2  ,3  ,4  ,5  ,6  ,7  ,8  ,9
-					.string 0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0;UP_1
-					.string 0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0;Bottom_2
-					.string 0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0;Front_3
-					.string 0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0;Back_4
-					.string 0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0;Left_5
-					.string 0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0;Right_6
+					.string 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00;UP_1
+					.string 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00;Bottom_2
+					.string 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00;Front_3
+					.string 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00;Back_4
+					.string 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00;Left_5
+					.string 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00;Right_6
 					.string 0x0 ;This is a finaly NULL incase we wanted it
 					;it will store the number of the color 1-6 Green, Yellow, Blue, Pink, Turquoise, White
 	.text
@@ -41,9 +41,6 @@ ptr_to_block_generation:				.word block_generation
 
 ;LIST OF SUBROUTINES
 ;================================================================
-	.global get_tile
-	.global set_tile
-	.global get_face
 
 ;IMPORTED SUB_ROUTINES
 ;_______________________________________________________________
@@ -65,7 +62,7 @@ ptr_to_block_generation:				.word block_generation
 ;		r0 - value of tile colour
 ;----------------------------------------------------------------
 get_tile:
-	PUSH {r4-r12,lr}
+	PUSH {r0-r11,lr}
 	LDR r4, ptr_to_block_generation
 	MOV r6, #9						;constat 9
 	MUL r5,r6,r0					;mul 9 by face number ;r5 offset value
@@ -86,7 +83,7 @@ get_tile:
 ;	Output:	no output
 ;----------------------------------------------------------------
 set_tile:
-	PUSH {r4-r12,lr}
+	PUSH {r0-r11,lr}
 	LDR r4, ptr_to_block_generation
 	MOV r6, #9						;constat 9
 	MUL r5,r6,r0					;mul 9 by face number ;r5 offset value
@@ -97,35 +94,14 @@ set_tile:
 	MOV pc, lr
 ;================================================================
 
-
-;----------------------------------------------------------------
-;get face - updates the value of a tile
-;	Input:
-;		r0 - face number
-;	Output:	r0 - returns the memory address to the begginer of
-;	the cube faace
-;----------------------------------------------------------------
-get_face:
-	PUSH {r4-r12,lr}
-	SUB r0, r0,#1	;subtract 1 from face number
-	MOV r4, #9		;load constant value
-	MUL r0,r0,r4	;How many spaces to skip to get to face row
-	LDR r1 , ptr_to_block_generation
-	LDR r0, [r1,r0]
-	POP {r4-r12,lr}
-	MOV pc, lr
-;================================================================
-
 ;----------------------------------------------------------------
 ;Generate - Reads the clock to generate color, face, player start color, all use MOD 6
 ;INPUT: NONE
 ;OUTPUT: NONE-> but edits a lot of memory that is set above
-;USES: r8 -> adress of clock, r7 -> number of tile on, r6-> number of face on
+;USES: r7 -> number of tile on, r6-> number of face on
 ;----------------------------------------------------------------
 	PUSH {r4-r12,lr}
 
-	MOV r8,  #0x0050
-	MOVT r8, #0x4003	;this is the memory address of the clock value at any point in time
 	;MOV r7, #1			;#tiles per faces
 	MOV r6, #1			;#faces
 
@@ -144,7 +120,7 @@ BIG_GEN:
 ;load_face - keeps looping until it finds availible face, and until all faces are used up
 ;INPUT: NONE
 ;OUTPUT: NONE-> but edits a lot of memory that is set above
-;USES: r8 -> adress of clock, r7 -> number of tile on, r6-> number of faces left
+;USES: r7 -> number of tile on, r6-> number of faces left
 ;----------------------------------------------------------------
 load_face:
 	PUSH {r4-r12,lr}
@@ -176,12 +152,13 @@ load_face_FINISH:
 ;load_tiles - loops through the tiles and generates and verify those colors can be used
 ;INPUT: NONE
 ;OUTPUT: NONE-> but edits a lot of memory that is set above
-;USES: r8 -> adress of clock, r7 -> , r6-> number of faces left,
+;USES:
 ;	   r5-> memory address of the face we are on, r4->memory adress of what tile we are on in respect to face
-;	   r3-> the color of the tile, r2/r9-> is used for fast computations or load/storing
+;	   r3-> the color of the tile, r2/r9/r6-> is used for fast computations or load/storing
 ;----------------------------------------------------------------
 load_tiles:
 	PUSH {r4-r12,lr}
+	;loading in what colors are usedvis
 
 	;create a loop that will take you to the cube face and set that to r5
 	LDR r2, ptr_to_block_generation
@@ -206,14 +183,34 @@ tile_load_LOOP:
 	MOVEQ r9, #0xFF						;this will be our ending flag
 	ADDNE r9, r9, #1
 		;Generate a color for the tile
+Random_GEN_JUMP:
 	BL Random_Gen
 		;store that color in mem
+	LDR r3, ptr_to_Color_Used
+Verify_tile_color:
+	;once we have the value in r1 we need to make sure we have a space for that
+	;if
+	CMP r1, #0							;This will tell us if we are in need of switching colors that we check
+	BEQ Verify_Finish
+	;if not
+	SUB r1, r1, #1
+	ADD r3, r3, #1						;Change to incoming color
+	B Verify_tile _color
+
+Verify_Finish:
+	LDRB r8, [r3]
+	CMP r8, #9
+	BEQ Random_GEN_JUMP
+
+	BGT Verify_Finish					;forced into infinite loop if it can't resolve it's color
+
+Set_Value:
+	;convert the color into a number for you to correctly store!!!!
 	STRB r1, [r5]
 	;make sure we still need to loop
 	CMP r9, #0x9
 	ADD r5, r5, #1
-
-	BGT tile_load_FINISH
+	BLT tile_load_LOOP:
 
 tile_load_FINISH						;The entire face we are on should be complete
 
@@ -226,18 +223,19 @@ tile_load_FINISH						;The entire face we are on should be complete
 ;----------------------------------------------------------------
 ;Random_Gen - reads the clock value and generates a number 1-6
 ;Returns: 1-6 in r1
-;USES: r8 -> adress of clock, r7 -> , r6-> number of faces left,
+;USES: r6-> number of faces left,
 ;	   r5-> memory address of the face we are on, r4->memory adress of what tile we are on in respect to face
 ;	   r3-> the color of the tile, r2/r9-> is used for fast computations or load/storing
 ;----------------------------------------------------------------
 Random_Gen:
 	PUSH {r4-r12,lr}
 
-	MOV r0, r8  		;divided
-	MOV r1, #6			;divisor
+	MOV r0,  #0x0050
+	MOVT r0, #0x4003	;this is the memory address of the clock value at any point in time     ;divided
+	MOV r1, #6																					;divisor
 
 	BL div_and_mod		;return a number 0-5 in r1
-	ADD r1, r1, #1		;This is adjusting out value to be 1-6
+	;ADD r1, r1, #1		;This is adjusting out value to be 1-6
 
 	POP {r4-r12,lr}
 	MOV pc, lr

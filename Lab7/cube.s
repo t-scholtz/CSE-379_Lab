@@ -57,19 +57,18 @@ ptr_to_block_generation:				.word block_generation
 ;	Input:
 ;		r0 - face number
 ;		r1 - tile number
-;		r2 - rotation
 ;	Output:
 ;		r0 - value of tile colour
 ;----------------------------------------------------------------
 get_tile:
-	PUSH {r0-r11,lr}
+	PUSH {r4-r11,lr}
 	LDR r4, ptr_to_block_generation
-	MOV r6, #9						;constat 9
-	MUL r5,r6,r0					;mul 9 by face number ;r5 offset value
-	ADD r5, r6, r1					;add tile number to offset
-	SUB r5,r5,#9					;sub 9 from offset
+	MOV r5, #9						;constat 9
+	MUL r5,r5,r0					;mul 9 by face number ;r5 offset value
+	ADD r5, r5, r1					;add tile number to offset
+	SUB r5,r5,#10					;sub 9 from offset
 	LDRB r0, [r4,r5]				;load tile value
-	POP {r4-r12,lr}
+	POP {r4-r11,lr}
 	MOV pc, lr
 ;================================================================
 
@@ -78,19 +77,19 @@ get_tile:
 ;	Input:
 ;		r0 - face number
 ;		r1 - tile number
-;		r2 - rotation
 ;		r3 - new tile colour
 ;	Output:	no output
 ;----------------------------------------------------------------
 set_tile:
-	PUSH {r0-r11,lr}
+	PUSH {r4-r11,lr}
 	LDR r4, ptr_to_block_generation
-	MOV r6, #9						;constat 9
-	MUL r5,r6,r0					;mul 9 by face number ;r5 offset value
-	ADD r5, r6, r1					;add tile number to offset
-	SUB r5,r5,#9					;sub 9 from offset
-	STRB r2, [r4,r5]				;store new value
-	POP {r4-r12,lr}
+	MOV r5, #9						;constat 9
+	MUL r5,r5,r0					;mul 9 by face number ;r5 offset value
+	ADD r5, r5, r1					;add tile number to offset
+	SUB r5,r5,#10					;sub 10 from offset
+	;SUB r5,r5,#9					;sub 9 from offset
+	STRB r3, [r4,r5]				;store new value
+	POP {r4-r11,lr}
 	MOV pc, lr
 ;================================================================
 
@@ -104,7 +103,7 @@ Generate:
 	PUSH {r4-r12,lr}
 
 	;MOV r7, #1			;#tiles per faces
-	MOV r6, #1			;#faces
+	MOV r6, #0			;#faces
 
 BIG_GEN:
 	BL load_face
@@ -130,7 +129,6 @@ load_face:
 
 LOADING_face_LOOP:
 	;doing a check to see if we can finish
-	MOV r7, #1						;#tiles per faces
 	CMP r6, #6
 	BEQ load_face_FINISH
 
@@ -225,7 +223,7 @@ tile_load_FINISH						;The entire face we are on should be complete
 
 ;----------------------------------------------------------------
 ;Random_Gen - reads the clock value and generates a number 1-6
-;Returns: 1-6 in r1
+;Returns: 0-5 in r1 (ADD 102 to get the value of the color)
 ;USES: r6-> number of faces left,
 ;	   r5-> memory address of the face we are on, r4->memory adress of what tile we are on in respect to face
 ;	   r3-> the color of the tile, r2/r9-> is used for fast computations or load/storing

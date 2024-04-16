@@ -27,7 +27,7 @@ block_generation:		   ;1  ,2  ,3  ,4  ,5  ,6  ,7  ,8  ,9
 					.string 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00;Left_5
 					.string 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00;Right_6
 					.string 0x0 ;This is a finaly NULL incase we wanted it
-					;it will store the number of the color 1-6 Green, Yellow, Blue, Pink, Turquoise, White
+					;it will store the number of the color 0-5, 102-107 Green, Yellow, Blue, Pink, Turquoise, White
 	.text
 
 ;POINTERS TO DATA
@@ -100,6 +100,7 @@ set_tile:
 ;OUTPUT: NONE-> but edits a lot of memory that is set above
 ;USES: r7 -> number of tile on, r6-> number of face on
 ;----------------------------------------------------------------
+Generate:
 	PUSH {r4-r12,lr}
 
 	;MOV r7, #1			;#tiles per faces
@@ -179,12 +180,13 @@ face_load_LOOP:
 	;create a loop that will take you to the cube tile and set that to r4
 tile_load_LOOP:
 	CMP r9, #0x9
-	ITTE EQ
+	ITE EQ
 	MOVEQ r9, #0xFF						;this will be our ending flag
 	ADDNE r9, r9, #1
 		;Generate a color for the tile
 Random_GEN_JUMP:
 	BL Random_Gen
+	MOV r7, r1							;storing r1 in r7 temporarly
 		;store that color in mem
 	LDR r3, ptr_to_Color_Used
 Verify_tile_color:
@@ -195,7 +197,7 @@ Verify_tile_color:
 	;if not
 	SUB r1, r1, #1
 	ADD r3, r3, #1						;Change to incoming color
-	B Verify_tile _color
+	B Verify_tile_color
 
 Verify_Finish:
 	LDRB r8, [r3]
@@ -206,11 +208,12 @@ Verify_Finish:
 
 Set_Value:
 	;convert the color into a number for you to correctly store!!!!
-	STRB r1, [r5]
+	ADD r7, r7, #102
+	STRB r7, [r5]
 	;make sure we still need to loop
 	CMP r9, #0x9
 	ADD r5, r5, #1
-	BLT tile_load_LOOP:
+	BLT tile_load_LOOP
 
 tile_load_FINISH						;The entire face we are on should be complete
 

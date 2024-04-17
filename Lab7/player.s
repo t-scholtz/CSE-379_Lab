@@ -18,6 +18,7 @@ unlimated:	.string "unlimited",0
 ;POINTERS TO DATA
 ;================================================================
 ptr_to_face:		.word face
+ptr_to_face_dir:	.word face_dir
 ptr_to_tile_held:	.word tile_held
 ptr_to_x_pos:		.word x_pos
 ptr_to_y_pos:		.word y_pos
@@ -51,17 +52,18 @@ ptr_to_temp:		.word temp
 ;	Input - none
 ;	Output - r0 - pointer to address of string storing the game mode
 ;----------------------------------------------------------------
+get_game_mode_str:
 	PUSH {r4-r11,lr}
-	LDR r0, [game_mode]
+	LDR r0, ptr_to_game_mode
 	LDR r1, [r0]
 	CMP r1, #0		;If 0 or neg, will take to be unlimated
 	BLE UNLIMATED
-	LDR r0, [ptr_to_temp]
+	LDR r0, ptr_to_temp
 	BL int2string
-	LDR r0, [ptr_to_temp]
-	B EXIT_GGM
+	LDR r0, ptr_to_temp
+	B EXIT_GGMS
 UNLIMATED:
-	LDR r0, [ptr_to_unlimated]
+	;LDR r0, ptr_to_unlimated
 EXIT_GGMS:
 	POP {r4-r12,lr}
 	MOV pc, lr
@@ -72,8 +74,8 @@ EXIT_GGMS:
 ;	Input - r0 - value for game mode - eg, 100, 200, 300, 400, 0
 ;----------------------------------------------------------------
 	PUSH {r4-r11,lr}
-	LDR r1, [game_mode]
-	STR r0, [rr]
+	LDR r1, ptr_to_game_mode
+	STR r0, [r1]
 	POP {r4-r12,lr}
 	MOV pc, lr
 ;================================================================

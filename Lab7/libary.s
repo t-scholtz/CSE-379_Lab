@@ -29,8 +29,8 @@ newLine:		.byte 0x0D, 0x0A , 0x00,  0x00
 lookUpTbl:		;80 - move cur pos(x,y) ; 81 mov cur spaces
 				.string 27,"[0m",0,0,0,0,0,0,0,0; 82 - reset seetings to normal ;This is the look up table for ansi print.
 				.string 27,"[2J",27,"[1;1H",0,0	; 83 - clear screen and move cursor top right
-				.string 0,0,0,0,0,0,0,0,0,0,0,0	; 84
-				.string 0,0,0,0,0,0,0,0,0,0,0,0	; 85 -
+				.string 27,"[25l",0,0,0,0,0,0,0	; 84 - hide cursor
+				.string 27,"[25h",0,0,0,0,0,0,0	; 85 - show curso
 				.string 27,"[91m",0,0,0,0,0,0,0	; 86 - HI Red
 				.string 27,"[92m",0,0,0,0,0,0,0	; 87 - HI Green
 				.string 27,"[93m",0,0,0,0,0,0,0	; 88 - HI Yellow

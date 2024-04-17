@@ -77,8 +77,10 @@ MENU_MODE:
 	CMP r0, #32
 	BEQ START_GAME
 	B EXIT_UART_HANDLER
+
 GAME_MODE:
 	BL read_character
+	LDR r1, ptr_to_To_BE_dir			;this will be the current direction that we the player is traveling that we might have to adjust
 	;The player can only click w,a,s,d, or space in order to be valid, check all of these.
 
 	;check W
@@ -110,8 +112,10 @@ GAME_MODE:
 
 
 	B EXIT_UART_HANDLER
-PAUSED_MODE:
 
+PAUSED_MODE:					;it will edit the same constant as when the player normally hit space
+								;we want to do this so we make sure they only effect reset while they are paused
+	BL handle_Space
 	B EXIT_UART_HANDLER
 
 EXIT_UART_HANDLER:
@@ -123,19 +127,30 @@ START_GAME:
 	BL change_state
 	B EXIT_UART_HANDLER
 
-handle_W:
+handle_W:;1-UP
+	MOV r2, #1
+	LDRB r2, [r1]
 	B EXIT_UART_HANDLER
 
-handle_A:
+handle_A:;3 left
+	MOV r2, #3
+	LDRB r2, [r1]
 	B EXIT_UART_HANDLER
 
-handle_S:
+handle_S:;2-Down
+	MOV r2, #2
+	LDRB r2, [r1]
 	B EXIT_UART_HANDLER
 
-handle_D:
+handle_D:;4-right
+	MOV r2, #4
+	LDRB r2, [r1]
 	B EXIT_UART_HANDLER
 
-handle_Space:
+handle_Space:;If the player hits space it will set the value to the pick up as 1 to tell our timer the player can now pick up
+	LDR r1, ptr_to_Color_pickup
+	MOV r2, #1
+	STRB r2, [r1]
 	B EXIT_UART_HANDLER
 ;================================================================
 

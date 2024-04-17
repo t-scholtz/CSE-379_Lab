@@ -166,22 +166,29 @@ Switch_Handler:
 	ORR r1,r1,#16
 	STRB r1, [r0,#GPIOICR]
 
+	;load the state value
 	LDR r0, ptr_to_state
-	LDRB r1, [r0]		;load the state value
+	LDRB r1, [r0]
+
+	;checks game mode
 	cmp r1, #2
-	BEQ PAUSE_GAME
+	BEQ GAME_MODE_switch
+
+	;checks game mode
 	cmp r1, #3
-	BEQ RESUME_GAME
+	BEQ PAUSE_MODE_switch
 	B EXIT_SWITCH_HANDLER
-PAUSE_GAME:				;update game state and print pause menu
-	MOV r1, #3
-	STRB r1, [r0]
-	B print_pause
+
+GAME_MODE_switch:			;this will be used to be paused
+	MOV r0, #3
+	BL change_state
+	BL print_pause
 	B EXIT_SWITCH_HANDLER
-RESUME_GAME:			;update game state and print game board
-	MOV r1, #2
-	STRB r1, [r0]
-	B print_game
+
+PAUSE_MODE_switch:			;This is going to be used to resume
+	MOV r0, #2
+	BL print_game
+
 EXIT_SWITCH_HANDLER:
 	POP {r0-r11,lr}
 	BX lr       	; Return

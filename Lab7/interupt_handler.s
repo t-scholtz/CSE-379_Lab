@@ -2,7 +2,9 @@
 
 ;PROGRAM DATA
 ;================================================================
-state:				.byte 0x00 ;State machine: 0 - startup ; 1 - menu ; 2 - game ; 3 - pause ; 4 - vicotry/defeat ; 5 - ;
+state:				.byte 0x00 ;State machine: 0 - startup ; 1 - menu ; 2 - game ; 3 - pause ; 4 - vicotry/defeat; 5- Animation/idle
+To_BE_dir:			.byte 0x00 ;this will be 1-UP, 2-Down, 3-left, 4-right
+Color_pickup:		.byte 0x00 ; this will be 0-don't pick up, 1- pick up
 
 	.text
 
@@ -24,6 +26,7 @@ ptr_to_state:		.word state
 	.global print_menu
 	.global print_game
 	.global print_pause
+	.global read_character
 
 
 ;LIST OF CONSTANTS
@@ -50,37 +53,90 @@ UART0_Handler:
 	;Clear uart hanlder flag reg
 	MOV r0, #0xC000
 	MOVT r0, #0x4000
-	LDRB r1, [r0, #UARTICR]
+	LDRB r1, [r0, #UARTICR]		;load in using the offset 0x044
 	ORR r1, r1, #0x10
 	STRB r1, [r0, #UARTICR]
 
+	;loading in the pointer to the state  State machine: 0 - startup ; 1 - menu ; 2 - game ; 3 - pause ; 4 - vicotry/defeat
 	LDR r0, ptr_to_state
-	LDRB r1, [r0]		;load the state value
+	LDRB r1, [r0]				;load the state value
+	;check menu
 	cmp r1, #1
 	BEQ MENU_MODE
+	;check game mode
 	cmp r1, #2
 	BEQ GAME_MODE
+	;check the pause mode
 	cmp r1, #3
 	BEQ PAUSED_MODE
+	;if we are in startup, or in victory/defeat
 	B EXIT_UART_HANDLER
+
 MENU_MODE:
 	BL read_character
-	CMP r0, #32			;if space pressed - games starts
+	CMP r0, #32
 	BEQ START_GAME
 	B EXIT_UART_HANDLER
 GAME_MODE:
-	;Needs to handle pick up tile + moving player
+	BL read_character
+	;The player can only click w,a,s,d, or space in order to be valid, check all of these.
+
+	;check W
+	CMP r0, #0x57
+	BEQ handle_W
+	CMP r0, #0x77
+	BEQ handle_W
+
+	;check A
+	CMP r0, #0x41
+	BEQ handle_A
+	CMP r0, #0x61
+	BEQ handle_A
+
+	;check S
+	CMP r0, #0x53
+	BEQ handle_S
+	CMP r0, #0x73
+	BEQ handle_S
+
+	;check D
+	CMP r0, #0x44
+	BEQ handle_D
+	CMP r0, #0x64
+	BEQ handle_D
+
+	CMP r0, #0x20
+	BEQ handle_Space
 
 
 	B EXIT_UART_HANDLER
 PAUSED_MODE:
-	;Needs to handle game reset
 
 	B EXIT_UART_HANDLER
 
 EXIT_UART_HANDLER:
 	POP {r0-r11,lr}
 	BX lr
+
+START_GAME:
+	MOV r0, #2
+	BL change_state
+	B EXIT_UART_HANDLER
+
+handle_W:
+	B EXIT_UART_HANDLER
+
+handle_A:
+	B EXIT_UART_HANDLER
+
+handle_S:
+	B EXIT_UART_HANDLER
+
+handle_D:
+	B EXIT_UART_HANDLER
+
+handle_Space:
+	B EXIT_UART_HANDLER
 ;================================================================
 
 ;----------------------------------------------------------------

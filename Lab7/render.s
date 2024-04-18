@@ -43,7 +43,7 @@ logo:				.string 0x82,0x83,0x80,5,10,0x8B," ______    ____   ______   ",0x80,5,1
 
 square:				.string 0x84,"       ", 27, "[1B",27, "[7D       ",27, "[1B",27, "[7D       ", 0
 
-plry:				.string 0x84, "    ",0x80, 0
+plry:				.string 0x84, "   ",0x80, 0
 
 game_mode:			.string "100", 0x00
 
@@ -181,7 +181,6 @@ print_game:
 	BL get_plyr_data ;r0 - face | r1 - face direction | r2 - tile being hled | r3 - player postion - num 1-9
 	MOV r6, r2
 	MOV r7, r3		;save data in reg
-	BL get_face
 	;Copy string into local temp copy
 	LDR r1, ptr_to_rotated_face
 	MOV r9, #9		;for loop counter
@@ -192,23 +191,22 @@ COPY_STR:			;r0 - face string data - r1 - temp space to store a copy of the face
 	BGT COPY_STR
 	BL print_sqr
 
-
-
 	mov r0,r7				;move tile number to r0
+	SUB r0,r0,#1			;sub tile numb by 1
 	mov r1,#3
 	BL div_and_mod			;div mod by 3| quotient in r0 | the remainder in r1|
-
+	ADD r0,r0,#1
+	ADD r1, r1,#1
 	MOV r2, #10
-	MUL r2, r0 	,r2			; x pos - mul by space and add constant offset
-	ADD r2, r2 ,#17
+	MUL r2, r1 	,r2			; x pos - mul by space and add constant offset
+	ADD r2, r2 ,#18
 
-	MOV r2, #4
-	MUL r3, r1 ,r2			; x pos - mul by space and add constant offset
-	ADD r3, r3, #9
+	MOV r5, #4
+	MUL r3, r0 ,r5			; x pos - mul by space and add constant offset
+	ADD r3, r3, #10
 
-	MOV r0, r6
-	MOV r1,r2
-	MOV r2,r3
+	MOV r0,r6
+	MOV r1,r3
 	BL print_plyr	;print the player
 
 	POP {r4-r12,lr}
@@ -328,7 +326,7 @@ PFH_LOOP_J:
 	ADD r6, r6, #1	;j++
 	MOV r1, #0		;x pos for sqaure - reset value
 	MUL r1, r5, r8	;how many blocks right is this square
-	ADD r1, r1, #10	;constant offest for position sqare
+	ADD r1, r1, #9	;constant offest for position sqare
 	MUL r2, r6, r9	;how many blocks right is this square
 	ADD r2, r2, #17	;constant offest for position sqare
 	LDRB r0,[r4],#1	;load byte colour to be printed

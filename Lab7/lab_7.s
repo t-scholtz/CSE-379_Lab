@@ -30,6 +30,8 @@ ptr_to_test_face:		.word test_face
 	.global ansi_print
 	.global print_sqr
 	.global print_face
+	.global print_plyr
+	.global div_and_mod
 
 ;LIST OF CONSTANTS
 ;================================================================
@@ -60,14 +62,108 @@ lab7:
 	MOV r1, #0
 	BL print_face
 
+
+	MOV r0, #100
+	MOV r1, #5
+	MOV r2, #5
+	BL print_plyr
+
 	LDR r0, ptr_to_test_face
 	MOV r1, #2
 	BL print_face
+
+	mov r0,#8				;move tile number to r0
+	mov r1,#3
+	BL div_and_mod			;div mod by 3| quotient in r0 | the remainder in r1|
+	ADD r0,r0,#1
+	ADD r1, r1,#1
+	MOV r2, #10
+	MUL r2, r1 	,r2			; x pos - mul by space and add constant offset
+	ADD r2, r2 ,#18
+
+	MOV r5, #4
+	MUL r3, r0 ,r5			; x pos - mul by space and add constant offset
+	ADD r3, r3, #10
+
+	MOV r0, #102
+	MOV r1,r3
+	BL print_plyr	;print the player
+
+	mov r0,#7				;move tile number to r0
+	mov r1,#3
+	BL div_and_mod			;div mod by 3| quotient in r0 | the remainder in r1|
+	ADD r0,r0,#1
+	ADD r1, r1,#1
+	MOV r2, #10
+	MUL r2, r1 	,r2			; x pos - mul by space and add constant offset
+	ADD r2, r2 ,#20
+
+	MOV r5, #4
+	MUL r3, r0 ,r5			; x pos - mul by space and add constant offset
+	ADD r3, r3, #10
+
+	MOV r0, #102
+	MOV r1,r3
+	BL print_plyr	;print the player
+
+	mov r0,#6				;move tile number to r0
+	mov r1,#3
+	BL div_and_mod			;div mod by 3| quotient in r0 | the remainder in r1|
+	ADD r0,r0,#1
+	ADD r1, r1,#1
+	MOV r2, #10
+	MUL r2, r1 	,r2			; x pos - mul by space and add constant offset
+	ADD r2, r2 ,#20
+
+	MOV r5, #4
+	MUL r3, r0 ,r5			; x pos - mul by space and add constant offset
+	ADD r3, r3, #10
+
+	MOV r0, #102
+	MOV r1,r3
+	BL print_plyr	;print the player
+
+	mov r0,#5				;move tile number to r0
+	mov r1,#3
+	BL div_and_mod			;div mod by 3| quotient in r0 | the remainder in r1|
+	ADD r0,r0,#1
+	ADD r1, r1,#1
+	MOV r2, #10
+	MUL r2, r1 	,r2			; x pos - mul by space and add constant offset
+	ADD r2, r2 ,#20
+
+	MOV r5, #4
+	MUL r3, r0 ,r5			; x pos - mul by space and add constant offset
+	ADD r3, r3, #10
+
+	MOV r0, #102
+	MOV r1,r3
+	BL print_plyr	;print the player
+
+
+
 
 	LDR r0, ptr_to_test_face
 	MOV r1, #3
 	BL print_face
 	mov r5,#0
+
+	mov r0,#8				;move tile number to r0
+	mov r1,#3
+	BL div_and_mod			;div mod by 3| quotient in r0 | the remainder in r1|
+
+
+	MOV r2, #9
+	MUL r2, r0 	,r2			; x pos - mul by space and add constant offset
+	ADD r2, r2 ,#20
+
+	MOV r5, #4
+	MUL r3, r1 ,r5			; x pos - mul by space and add constant offset
+	ADD r3, r3, #10
+
+	MOV r0, #102
+	MOV r1,r3
+	BL print_plyr	;print the player
 
 	LDR r0, ptr_to_test_face
 	MOV r1, #1

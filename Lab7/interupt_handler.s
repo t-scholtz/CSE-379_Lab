@@ -12,6 +12,8 @@ Color_pickup:		.byte 0x00 ; this will be 0-don't pick up, 1- pick up
 ;POINTERS TO DATA
 ;================================================================
 ptr_to_state:		.word state
+ptr_to_To_BE_dir:	.word To_BE_dir
+ptr_to_Color_pickup:	.word Color_pickup
 
 
 ;LIST OF SUBROUTINES
@@ -206,6 +208,9 @@ Timer_Handler:
 	LDRB r6, [r4, #GPTMICR]
 	ORR r6,r6, #0x01
 	STRB r6, [r4, #GPTMICR]
+
+	;Disable timer for testing purposes - delete later
+	B EXIT_TIMER_HANDLER
 
 	LDR r0, ptr_to_state
 	LDRB r0, [r0]		;load the state value

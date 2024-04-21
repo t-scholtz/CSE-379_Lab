@@ -48,6 +48,38 @@ ptr_to_temp:		.word temp
 ;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 ;----------------------------------------------------------------
+;game_reset - Resets the game to the start - presevers time setting
+;but generate a new game board and everything else
+;	Input - none
+;	Output -none
+;----------------------------------------------------------------
+game_reset:
+	PUSH {r4-r11,lr}
+	;Reset player states
+	LDR r0, ptr_to_face
+	MOV r1, #3
+	STRB r1, [r0]	;set start face to 3 for defauly - May need to change?
+	LDR r0, ptr_to_face_dir
+	MOV r1, #0
+	STRB r1, [r0]	;set rotation to 0
+	LDR r0, ptr_to_game_time
+	MOV r1, #0
+	STRB r1, [r0]	;Set game time to 0
+	LDR r0, ptr_to_x_pos
+	MOV r1, #2
+	STRB r1, [r0]	;Set x to 2 mid tile
+	LDR r0, ptr_to_y_pos
+	MOV r1, #2
+	STRB r1, [r0]	;Set y to 2 mid tile
+
+	;generate a new game boards - get Thomas to add here
+	;make sure that player tile value gets updated
+
+	POP {r4-r12,lr}
+	MOV pc, lr
+;================================================================
+
+;----------------------------------------------------------------
 ;get_game_mode_str - returns a string of the selected game mode
 ;	Input - none
 ;	Output - r0 - pointer to address of string storing the game mode
@@ -73,6 +105,7 @@ EXIT_GGMS:
 ;set_game_mode - function description
 ;	Input - r0 - value for game mode - eg, 100, 200, 300, 400, 0
 ;----------------------------------------------------------------
+set_game_mode:
 	PUSH {r4-r11,lr}
 	LDR r1, ptr_to_game_mode
 	STR r0, [r1]
@@ -124,11 +157,53 @@ pick_up:
 
 ;----------------------------------------------------------------
 ;plyr_mov - Moves the player
-;	Input - r0 direction player: 1-up | 2-left | 3-down | 4-right
+;	Input - r0 direction player: up down (-1)| left right (1)
+;		  - r1 value (-1 or 1)
 ;----------------------------------------------------------------
 plyr_mov:
 	PUSH {r4-r11,lr}
+	;check if move x or y
+	CMP r0, #0
+	BLT MOVE_Y
+MOVE_X:
+	LDR r4, ptr_to_x_pos
+	LDRB r0, [r4]
+	ADD r0,r0,r1
+	;check if new value is valid
+	CMP r0,#0
+	BLE
+	CMP r0,#4
+	BGE
+	;new value is valid - save and exit
+	STRB r0,[r4]
+	B EXIT_PLYR_MOVE
 
+MOVE_Y:
+	LDR r4, ptr_to_y_pos
+	LDRB r0, [r4]
+	ADD r0,r0,r1
+	;check if new value is valid
+	;check if new value is valid
+	CMP r0,#0
+	BLE
+	CMP r0,#4
+	BGE
+	;new value is valid - save and exit
+	STRB r0,[r4]
+
+ROTATE_UP:
+
+
+ROTATE_RIGHT:
+
+
+ROTATE_DOWN:
+
+
+ROTATE_LEFT:
+
+
+EXIT_PLYR_MOVE:
 	POP {r4-r12,lr}
 	MOV pc, lr
 ;================================================================

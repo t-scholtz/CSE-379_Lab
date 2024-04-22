@@ -130,22 +130,34 @@ START_GAME:
 	BL change_state
 	B EXIT_UART_HANDLER
 
-handle_W:;1-UP
+handle_W:
+	MVT r0, #1
+	MVT r1, #1
+	BL plyr_mov
 	MOV r2, #1
 	LDRB r2, [r1]
 	B EXIT_UART_HANDLER
 
-handle_A:;3 left
+handle_A:
+	MOV r0, #1
+	MVT r1, #1
+	BL plyr_mov
 	MOV r2, #3
 	LDRB r2, [r1]
 	B EXIT_UART_HANDLER
 
-handle_S:;2-Down
+handle_S:
+	MVT r0, #1
+	MOV r1, #1
+	BL plyr_mov
 	MOV r2, #2
 	LDRB r2, [r1]
 	B EXIT_UART_HANDLER
 
-handle_D:;4-right
+handle_D:
+	MOV r0, #1
+	MOV r1, #1
+	BL plyr_mov
 	MOV r2, #4
 	LDRB r2, [r1]
 	B EXIT_UART_HANDLER
@@ -222,6 +234,9 @@ Timer_Handler:
 	BEQ RENDER_GAME
 	cmp r0, #3
 	BEQ RENDER_PAUSE
+	CMP r0, #4	;to do
+	CMP r0, #5
+	BEQ RENDER_ANIM
 
 RENDER_STARTUP:
 	BL start_up_anim
@@ -234,6 +249,9 @@ RENDER_GAME:
 	B EXIT_TIMER_HANDLER
 RENDER_PAUSE:
 	BL print_pause
+	B EXIT_TIMER_HANDLER
+RENDER_ANIM:
+	BL rotation_anim
 	B EXIT_TIMER_HANDLER
 EXIT_TIMER_HANDLER:
 	POP {r0-r11,lr}

@@ -42,6 +42,11 @@ ptr_to_block_generation:				.word block_generation
 
 ;LIST OF SUBROUTINES
 ;================================================================
+	.global set_tile
+	.global get_tile
+	.global get_adj_face
+	.global get_face
+
 
 ;IMPORTED SUB_ROUTINES
 ;_______________________________________________________________
@@ -93,6 +98,45 @@ set_tile:
 	POP {r4-r11,lr}
 	MOV pc, lr
 ;================================================================
+
+;----------------------------------------------------------------
+;get  face - returns the face in a direction to current
+;face
+;	Input:
+;		r0 - face number
+;	Output:
+;		r0 - pointer to face string
+;----------------------------------------------------------------
+get_face:
+	PUSH {r4-r11,lr}
+	SUB r0, r0, #1				;sub face number to give range (0-5)
+	LDR r4, ptr_to_Direction_Cube
+	LDRB r0, [r4,r0]			;load face value byte
+	POP {r4-r11,lr}
+	MOV pc, lr
+;================================================================
+
+;----------------------------------------------------------------
+;get adj face - returns the face in a direction to current
+;face
+;	Input:
+;		r0 - face number
+;		r1 - direction
+;	Output:
+;		r0 - new face number
+;----------------------------------------------------------------
+get_adj_face:
+	PUSH {r4-r11,lr}
+	MOV r3, #4					;const value to multiply by
+	SUB r0, r0, #1				;sub face number to give range (0-5)
+	MUL r0,r0,r3
+	ADD r0,r0,r1				;calculate relvant offset
+	LDR r4, ptr_to_Direction_Cube
+	LDRB r0, [r4,r0]			;load face value byte
+	POP {r4-r11,lr}
+	MOV pc, lr
+;================================================================
+
 
 ;----------------------------------------------------------------
 ;Generate - Reads the clock to generate color, face, player start color, all use MOD 6

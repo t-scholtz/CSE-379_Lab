@@ -5,8 +5,8 @@
 face:		.byte 0x03	;tile the player is currently on
 face_dir:	.byte 0x00	;how many times rotated left (0-3)
 tile_held:	.byte 0x00	;the colour of the tile the player is holding
-x_pos:		.byte 0x02	;players x location (0-2)
-y_pos:		.byte 0x02	;players y location (0-2)
+x_pos:		.byte 0x02	;players x location (1-3)
+y_pos:		.byte 0x02	;players y location (1-3)
 game_mode:	.word 0x00000064 ;If 0 or neg, will take to be unlimated
 game_time:	.word 0x00000000
 
@@ -26,8 +26,6 @@ ptr_to_game_mode:	.word game_mode
 ptr_to_game_time:	.word game_time
 ptr_to_temp:		.word temp
 
-
-
 ;LIST OF SUBROUTINES
 ;================================================================
 	.global pick_up
@@ -39,6 +37,8 @@ ptr_to_temp:		.word temp
 ;IMPORTED SUB_ROUTINES
 ;_______________________________________________________________
 	.global int2string
+	.global get_adj_face
+	.global rotation_setup
 
 
 ;LIST OF CONSTANTS
@@ -169,11 +169,11 @@ MOVE_X:
 	LDR r4, ptr_to_x_pos
 	LDRB r0, [r4]
 	ADD r0,r0,r1
-	;check if new value is valid
+	;check if new value is valid (1-3)
 	CMP r0,#0
-	BLE
+	BLE ROTATE_LEFT
 	CMP r0,#4
-	BGE
+	BGE ROTATE_RIGHT
 	;new value is valid - save and exit
 	STRB r0,[r4]
 	B EXIT_PLYR_MOVE
@@ -182,27 +182,55 @@ MOVE_Y:
 	LDR r4, ptr_to_y_pos
 	LDRB r0, [r4]
 	ADD r0,r0,r1
-	;check if new value is valid
-	;check if new value is valid
+	;check if new value is valid (1-3)
 	CMP r0,#0
-	BLE
+	BLE ROTATE_UP
 	CMP r0,#4
-	BGE
+	BGE ROTATE_DOWN
 	;new value is valid - save and exit
 	STRB r0,[r4]
+	B EXIT_PLYR_MOVE
 
+	;Load the direction of the roation
+	;pre-pare to update players address value - but only do after setting up rotation animation, otherwise might result in glitch where plyaer jumps acroos board before the rotation happneds
 ROTATE_UP:
-
-
+	MOV r1, #0
+	LDR r8, ptr_to_x_pos
+	MOV r9, #3
+	B ROTATE_HANDLER
 ROTATE_RIGHT:
-
-
+	MOV r1, #0
+	LDR r8, ptr_to_y_pos
+	MOV r9, #1
+	B ROTATE_HANDLER
 ROTATE_DOWN:
-
-
+	MOV r1, #0
+	LDR r8, ptr_to_x_pos
+	MOV r9, #1
+	B ROTATE_HANDLER
 ROTATE_LEFT:
+	MOV r1, #0
+	LDR r8, ptr_to_y_pos
+	MOV r9, #3
+	B ROTATE_HANDLER
+ROTATE_HANDLER:
+	LDR r0, ptr_to_face
+	LDRB r0, [r0]
+	MOV r5,r0			;save a copy of the face value for later in r5
+	MOV r6, r1			;save copy dir
+	BL	get_adj_face 	;get the value of the face we are rotating to
+;		r0 - starting face value
+;		r1 - landing face value
+;		r2 - direction of transition
+	MOV r1, r0
+	MOV r0, r5
+	MOV r2, r6
+	BL rotation_setup
 
-
+	;update players postion and face value number at last second
+	LDR r6, ptr_to_face
+	STRB r9, [r8]
+	STRB r7, [r6]
 EXIT_PLYR_MOVE:
 	POP {r4-r12,lr}
 	MOV pc, lr

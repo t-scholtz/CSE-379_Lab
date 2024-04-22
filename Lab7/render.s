@@ -3,6 +3,7 @@
 ;PROGRAM DATA
 ;================================================================
 startCount:			.byte 0x10
+rotateCount:		.byte 0x04
 menu:				.string 0x82,0x83,0x84,"*********************************",0x0D,0x0A,0x86," ____        _     _ _        ",0x0D,0x0A,"|  _ \ _   _| |__ (_) | _____ ",0x0D,0x0A,"| |_) | | | | '_ \| | |/ / __|",0x0D,0x0A,"|  _ <| |_| | |_) | |   <\__ \ ",0x0D,0x0A,"|_|_\_\\__,_|_.__/|_|_|\_\___/"
 					.string 0x0D,0x0A,0x89,"  ____      _          ",0x0D,0x0A," / ___|   _| |__   ___ ",0x0D,0x0A,"| |__| |_| | |_) |  __/ ",0x0D,0x0A,"| |__| |_| | |_) |  __/ ",0x0D,0x0A," \____\__,_|_.__/ \___| ",0x0D,0x0A,0x82,"*********************************"
 					.string 0x80, 5,14,"Lab 7 - Tim and Tom",0x80, 5,16,"Game time selected: ",0
@@ -53,6 +54,8 @@ temp:				.string "blank Space",0
 rotated_face:		.string 0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x00
 ;temp space used to hold the orienation of face moving to
 transition_face:	.string 0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x00
+;rotation direction value
+rotation_dir:		.byte 0x00
 	.text
 
 
@@ -72,6 +75,8 @@ ptr_to_plry:			.word plry
 ptr_to_temp:			.word temp
 ptr_to_rotated_face:	.word rotated_face
 ptr_to_transition_face:	.word transition_face
+ptr_to_rotateCount:		.word rotateCount
+ptr_to_rotation_dir:	.word rotation_dir
 
 ;LIST OF SUBROUTINES
 ;================================================================
@@ -84,6 +89,9 @@ ptr_to_transition_face:	.word transition_face
 	.global print_pause
 	.global print_plyr
 	.global ptr_to_rotated_face
+	.global rotation_setup
+	.global rotation_anim
+
 
 ;IMPORTED SUB_ROUTINES
 ;_______________________________________________________________
@@ -99,9 +107,85 @@ ptr_to_transition_face:	.word transition_face
 ;================================================================
 	.global get_game_mode_str
 	.global get_face
+	.global change_state
 
 ;CODE
 ;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+;----------------------------------------------------------------
+;rotation_setup - sets up rotation animation and handles state
+; change
+;	Input:
+;		r0 - starting face value
+;		r1 - landing face value
+;		r2 - direction of transition
+;----------------------------------------------------------------
+rotation_setup:
+	PUSH {r4-r12,lr}
+	;save input values
+	MOV r5,r1
+	MOV r6,r2
+	;Store the primary face into memory
+	BL get_face
+	LDR r1, rotated_face
+	MOV r2, #9			;counter
+CPY_STR_1:				;make a local copy of the tile faces
+	SUB r2,r2,#1
+	LDRB r4,[r0],#1
+	STRB r4,[r1],#1
+	CMP r2, #0
+	BGT CPY_STR_1
+	;Store the transction face into memory
+	MOV r0,r5
+	BL get_face
+	LDR r1, transition_face
+	MOV r2, #9			;counter
+CPY_STR_2:				;make a local copy of the tile faces
+	SUB r2,r2,#1
+	LDRB r4,[r0],#1
+	STRB r4,[r1],#1
+	CMP r2, #0
+	BGT CPY_STR_2
+
+	;store rotation direction into memory
+	LDR r5, ptr_to_rotation_dir
+	STRB r2. [r5]
+
+	;reset animation timer to start value
+	LDR r6, ptr_to_rotateCount
+	MOV r7, #4
+	STRB r7, [r6]
+
+	;update game state to play animation
+	MOV r0, #5
+	BL change_state
+
+	POP {r4-r12,lr}
+	MOV pc, lr
+;================================================================
+
+;----------------------------------------------------------------
+;rotation_anim - prints a startup animation and then changes game
+;	state to 1
+;----------------------------------------------------------------
+rotation_anim:
+	PUSH {r4-r12,lr}
+	;load frame number, decriment and store again
+	LDR r0, ptr_to_rotateCount
+	LDRB r1, [r0]
+	SUB r1,r1,#1
+	STRB r1, [r0]
+	;check what frame we are on and print image accordingly
+
+
+	;return to play state of game
+	MOV r0, #2
+	BL change_state
+
+	POP {r4-r12,lr}
+	MOV pc, lr
+;================================================================
+
 
 ;----------------------------------------------------------------
 ;start_up_anim - prints a startup animation and then changes game

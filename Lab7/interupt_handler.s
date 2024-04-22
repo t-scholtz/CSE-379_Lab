@@ -30,6 +30,8 @@ ptr_to_Color_pickup:	.word Color_pickup
 	.global print_game
 	.global print_pause
 	.global read_character
+	.global plyr_mov
+	.global rotation_anim
 
 
 ;LIST OF CONSTANTS
@@ -131,8 +133,8 @@ START_GAME:
 	B EXIT_UART_HANDLER
 
 handle_W:
-	MVT r0, #1
-	MVT r1, #1
+	MVN r0, #1
+	MVN r1, #1
 	BL plyr_mov
 	MOV r2, #1
 	LDRB r2, [r1]
@@ -140,14 +142,14 @@ handle_W:
 
 handle_A:
 	MOV r0, #1
-	MVT r1, #1
+	MVN r1, #1
 	BL plyr_mov
 	MOV r2, #3
 	LDRB r2, [r1]
 	B EXIT_UART_HANDLER
 
 handle_S:
-	MVT r0, #1
+	MVN r0, #1
 	MOV r1, #1
 	BL plyr_mov
 	MOV r2, #2

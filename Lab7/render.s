@@ -127,7 +127,7 @@ rotation_setup:
 	MOV r6,r2
 	;Store the primary face into memory
 	BL get_face
-	LDR r1, rotated_face
+	LDR r1, ptr_to_rotated_face
 	MOV r2, #9			;counter
 CPY_STR_1:				;make a local copy of the tile faces
 	SUB r2,r2,#1
@@ -138,7 +138,7 @@ CPY_STR_1:				;make a local copy of the tile faces
 	;Store the transction face into memory
 	MOV r0,r5
 	BL get_face
-	LDR r1, transition_face
+	LDR r1, ptr_to_transition_face
 	MOV r2, #9			;counter
 CPY_STR_2:				;make a local copy of the tile faces
 	SUB r2,r2,#1
@@ -149,7 +149,7 @@ CPY_STR_2:				;make a local copy of the tile faces
 
 	;store rotation direction into memory
 	LDR r5, ptr_to_rotation_dir
-	STRB r2. [r5]
+	STRB r2, [r5]
 
 	;reset animation timer to start value
 	LDR r6, ptr_to_rotateCount
@@ -175,13 +175,38 @@ rotation_anim:
 	LDRB r1, [r0]
 	SUB r1,r1,#1
 	STRB r1, [r0]
+	;load rotation direction
+	LDR r0 , ptr_to_rotation_dir
+	LDRB r0, [r0]	;roation direction
 	;check what frame we are on and print image accordingly
+	CMP r1, #3
+	BEQ FRAME_1
+	CMP r1, #2
+	BEQ FRAME_2
+	CMP r1, #1
+	BEQ FRAME_3
+	CMP r1, #0
+	BLE FRAME_4
+FRAME_1:
 
+
+
+	B EXIT_ROT_ANIM
+FRAME_2:
+
+
+	B EXIT_ROT_ANIM
+FRAME_3:
+
+
+	B EXIT_ROT_ANIM
+FRAME_4:
 
 	;return to play state of game
 	MOV r0, #2
 	BL change_state
 
+EXIT_ROT_ANIM:
 	POP {r4-r12,lr}
 	MOV pc, lr
 ;================================================================

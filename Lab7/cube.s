@@ -290,7 +290,7 @@ Random_Gen:
 	MOV r6,  #0x0050
 	MOVT r6, #0x4003
 	LDRB r0, [r6]	;this is the memory address of the clock value at any point in time     ;divided
-	MOV r1, #6																					;divisor
+	MOV r1, #6																				;divisor
 
 	BL div_and_mod		;return a number 0-5 in r1
 	;ADD r1, r1, #1		;This is adjusting out value to be 1-6
@@ -300,4 +300,65 @@ Random_Gen:
 
 ;================================================================
 
+;----------------------------------------------------------------
+;CUBE_process - checks cube completness and return a value of 0-5 to show how complete the cube is
+; 				r0 will be used as the block address
+;  				r1 will be used for the tile check
+;				r2 will grab values from r0
+;				r3 will be a stagnant register to check the colors from r2 against
+;				r4 will be the completed sides
+;				r5 will be the tiles that are equal, we want that to be 9 before we add 1 to r4
+;				r6 wiil be the face counter
+;
+;RETURNS 0-5 in r0
+;----------------------------------------------------------------
+CUBE_process:
+	PUSH {r4-r12,lr}
+	;CUBE_check:
+	;loads up the cube
+	LDR r0, ptr_to_block_generation
+	;setting the side count to zero
+	MOV r4, #0
+	;Setting the face count to 6
+	MOV r6, #6
+
+CUBE_check:
+	CMP r6, #0
+	BEQ CUBE_process_FINISH
+
+	;sets up number of times it needs to run which is 8 because we check one first
+	MOV r1, #8
+	;get the first color of the face
+	LDRB r2, [r0], #1
+	;sets the first color to a stagnant register
+	MOV r3, r2
+	;The start of the count
+	MOV r5, #1
+	;change face count
+	SUB r6, r6, #1
+
+ROW_check:
+	LDRB r2, [r0], #1
+	CMP r2, r3
+	ITE EQ
+	ADDEQ r5, r5, #1					;ADD one to the correct counter when the colors are equal
+	SUBEQ r1, r1, #1					;DROPS one of our tile count
+	MOVNE r1, #0						;stop the count if the colors are not equal
+
+	;Checks if we have one full cube yet
+	CMP r5, #9
+	ITE EQ
+	ADDEQ r4, r4, #1
+
+	;Checks if we are done check this face
+	CMP r1, #0
+	BEQ CUBE_check
+	BGT ROW_check
+
+CUBE_process_FINISH:
+	MOV r0, r4
+
+	POP {r4-r12,lr}
+	MOV pc, lr
+;================================================================
 ;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

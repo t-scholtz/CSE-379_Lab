@@ -3,7 +3,7 @@
 ;PROGRAM DATA
 ;================================================================
 startCount:			.byte 0x10
-rotateCount:		.byte 0x04
+rotateCount:		.byte 0x02
 menu:				.string 0x82,0x83,0x84,"*********************************",0x0D,0x0A,0x86," ____        _     _ _        ",0x0D,0x0A,"|  _ \ _   _| |__ (_) | _____ ",0x0D,0x0A,"| |_) | | | | '_ \| | |/ / __|",0x0D,0x0A,"|  _ <| |_| | |_) | |   <\__ \ ",0x0D,0x0A,"|_|_\_\\__,_|_.__/|_|_|\_\___/"
 					.string 0x0D,0x0A,0x89,"  ____      _          ",0x0D,0x0A," / ___|   _| |__   ___ ",0x0D,0x0A,"| |__| |_| | |_) |  __/ ",0x0D,0x0A,"| |__| |_| | |_) |  __/ ",0x0D,0x0A," \____\__,_|_.__/ \___| ",0x0D,0x0A,0x82,"*********************************"
 					.string 0x80, 5,14,"Lab 7 - Tim and Tom",0x80, 5,16,"Game time selected: ",0
@@ -11,20 +11,20 @@ menu_cont:			.string 0x80, 5,18,"Press <space> to start game",0
 
 pause_menu:			.string 0x82,0x83,0x84,0x89 , "*********************************",0x82,0x80,0x6,0x6,"Paused",0x80,0x0,0x12 ,0x89 , "*********************************",0
 
-game_board:			.string 0x82,0x83,0x84,0x0D,0x0A
+game_head:			.string 0x82,0x83,0x84,0x0D,0x0A
 					.string			" _____                                    ",0x0D,0x0A
 					.string			"|  __ \                                   ",0x0D,0x0A
 					.string			"| |  \/ __ _ _ __ ___   ___    ___  _ __  ",0x0D,0x0A
 					.string			"| | __ / _` | '_ ` _ \ / _ \  / _ \| '_ \ ",0x0D,0x0A
 					.string			"| |_\ \ (_| | | | | | |  __/ | (_) | | | |",0x0D,0x0A
 					.string			" \____/\__,_|_| |_| |_|\___|  \___/|_| |_|",0x0D,0x0A
-					.string			"		Score:"
+					.string			"		Score: "
 score_loc:			.string									"							   ",0x0D,0x0A
-					.string			"		Time:"
+					.string			"		Time: "
 time_loc:			.string					"							   ",0x0D,0x0A
-					.string			"		Max Time"
+					.string			"		Max Time: "
 max_loc:			.string 		":						   ",0x0D,0x0A
-					.string			"										   ",0x0D,0x0A
+game_board:			.string			"										   ",0x0D,0x0A
 					.string			"			+-----------------------------+",0x0D,0x0A
 					.string			"			|         |         |         |",0x0D,0x0A
 					.string			"			|         |         |         |",0x0D,0x0A
@@ -62,6 +62,7 @@ trans_A:			.string "			+---------------------------------+",0x0D,0x0A
 					.string "			|       |        |         |      |",0x0D,0x0A
 					.string "			|       |        |         |      |",0x0D,0x0A
 					.string "			+---------------------------------+",0x0D,0x0A,0
+trans_A_string:		.string
 
 trans_B:			.string	"			+-------------------------------------+",0x0D,0x0A
 					.string	"			|   |     |        |        |     |   |",0x0D,0x0A
@@ -75,7 +76,23 @@ trans_B:			.string	"			+-------------------------------------+",0x0D,0x0A
 					.string	"			|   |     |        |        |     |   |",0x0D,0x0A
 					.string	"			|   |     |        |        |     |   |",0x0D,0x0A
 					.string	"			|   |     |        |        |     |   |",0x0D,0x0A
-					.string	"			+-------------------------------------+",0x0D,0x0A
+					.string	"			+-------------------------------------+",0x0D,0x0A,0
+trans_B_string:		.string
+
+trans_C:			.string "			+---------------------------------+",0x0D,0x0A
+					.string "			|      |         |        |       |",0x0D,0x0A
+					.string "			|      |         |        |       |",0x0D,0x0A
+					.string "			|      |         |        |       |",0x0D,0x0A
+					.string "			+---------------------------------+",0x0D,0x0A
+					.string "			|      |         |        |       |",0x0D,0x0A
+					.string "			|      |         |        |       |",0x0D,0x0A
+					.string "			|      |         |        |       |",0x0D,0x0A
+					.string "			+---------------------------------+",0x0D,0x0A
+					.string "			|      |         |        |       |",0x0D,0x0A
+					.string "			|      |         |        |       |",0x0D,0x0A
+					.string "			|      |         |        |       |",0x0D,0x0A
+					.string "			+---------------------------------+",0x0D,0x0A,0
+trans_C_string:		.string
 
 
 
@@ -87,7 +104,7 @@ rotated_face:		.string 0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x00
 ;temp space used to hold the orienation of face moving to
 transition_face:	.string 0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x00
 ;rotation direction value
-rotation_dir:		.byte 0x00
+rotation_dir:		.byte 0x00 ; 1 - up | 2- down | 3  left-| 4 - right|
 	.text
 
 
@@ -101,6 +118,7 @@ ptr_to_menu:			.word menu
 ptr_to_menu_cont:		.word menu_cont
 ptr_to_pause_menu:		.word pause_menu
 ptr_to_game_board:		.word game_board
+ptr_to_game_head:		.word game_head
 
 ptr_to_square:			.word square
 ptr_to_plry:			.word plry
@@ -123,6 +141,7 @@ ptr_to_rotation_dir:	.word rotation_dir
 	.global ptr_to_rotated_face
 	.global rotation_setup
 	.global rotation_anim
+	.global print_game_header
 
 
 ;IMPORTED SUB_ROUTINES
@@ -134,6 +153,7 @@ ptr_to_rotation_dir:	.word rotation_dir
 	.global output_string
 	.global get_plyr_data
 	.global div_and_mod
+	.global get_game_data
 
 ;LIST OF CONSTANTS
 ;================================================================
@@ -143,6 +163,49 @@ ptr_to_rotation_dir:	.word rotation_dir
 
 ;CODE
 ;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+;----------------------------------------------------------------
+;print mass sqrs - r0 takes in a series of bytes in the order of
+; square number, x value, y value and it repeats until 250, at
+;which point it gets the values for the players postion and
+;colour and prints that to screen
+;----------------------------------------------------------------
+print_mass_sqrs:
+	PUSH {r4-r12,lr}
+	MOV r5, r0 ; save pointer to byte data
+PRINT_SQRS:
+	LDRB r0, [r5] #1	;load first byte, check if value is 250 to change to print plr
+	CMP r0, #250
+	BGE PRINT_PLYR
+			;r0 - tile number
+	LDRB r1, [r5] #1		;r1 - x value
+	LDRB r2, [r5] #1		;r2 - y value
+	;check if we're printing for the first face or second face
+	;1-9 first face 10-18 second face
+	CMP r0, #10
+	BGE SECOND_FACE
+	SUB r0,r0,#1
+	LDR r8, rotated_face
+	LDRB r0, [r8,r0]			;load the tile colour from the tile number specified
+
+	B PRINT_TILE
+SECOND_FACE:
+	SUB r0, r0, #10
+	LDR r8, transition_face
+	LDRB r0, [r8,r0]			;load the tile colour from the tile number specified
+
+PRINT_TILE:
+
+	BL print_sqr	 ;r0 - colour| r1 - Y pos|r2 - X pos
+	B PRINT_SQRS
+PRINT_PLYR:
+	LDRB r0, [r5] #1 ;r0 - x value
+	LDRB r1, [r5] #1 ;r0 - y value
+
+
+	POP {r4-r12,lr}
+	MOV pc, lr
+;================================================================
 
 ;----------------------------------------------------------------
 ;rotation_setup - sets up rotation animation and handles state
@@ -185,7 +248,7 @@ CPY_STR_2:				;make a local copy of the tile faces
 
 	;reset animation timer to start value
 	LDR r6, ptr_to_rotateCount
-	MOV r7, #4
+	MOV r7, #2
 	STRB r7, [r6]
 
 	;update game state to play animation
@@ -202,6 +265,8 @@ CPY_STR_2:				;make a local copy of the tile faces
 ;----------------------------------------------------------------
 rotation_anim:
 	PUSH {r4-r12,lr}
+	;print the header
+	BL print_game_header
 	;load frame number, decriment and store again
 	LDR r0, ptr_to_rotateCount
 	LDRB r1, [r0]
@@ -211,31 +276,83 @@ rotation_anim:
 	LDR r0 , ptr_to_rotation_dir
 	LDRB r0, [r0]	;roation direction
 	;check what frame we are on and print image accordingly
-	CMP r1, #3
-	BEQ FRAME_1
 	CMP r1, #2
-	BEQ FRAME_2
+	BEQ FRAME_1
 	CMP r1, #1
-	BEQ FRAME_3
+	BEQ FRAME_2
+	CMP r1, #0
+	BLE FRAME_3
 FRAME_1:
+	CMP r0, #2
+	BEQ DOWN_!
+	CMP r0, #3
+	BEQ LEFT_1
+	CMP r0, #4
+	BGE RIGHT_1
+UP_1:
 
+DOWN_1:
 
+LEFT_1:
+	LDR r0, ptr_to_trans_A_string
+	LDR r5 , ptr_to_trans_A
+	B EXIT_ROT_ANIM
+RIGHT_1:
+	LDR r0, ptr_to_trans_C_string
+	LDR r5 , ptr_to_trans_C
+	B EXIT_ROT_ANIM
 
 	B EXIT_ROT_ANIM
 FRAME_2:
+	CMP r0, #2
+	BEQ DOWN_!
+	CMP r0, #3
+	BEQ LEFT_1
+	CMP r0, #4
+	BGE RIGHT_1
 
+UP_2:
+
+DOWN_2:
+
+LEFT_2:
+RIGHT_2:
+	LDR r0, ptr_to_trans_B_string
+	LDR r5 , ptr_to_trans_B
+	B EXIT_ROT_ANIM
 
 	B EXIT_ROT_ANIM
 FRAME_3:
+	CMP r0, #2
+	BEQ DOWN_!
+	CMP r0, #3
+	BEQ LEFT_1
+	CMP r0, #4
+	BGE RIGHT_1
+UP_3:
 
+DOWN_3:
 
+LEFT_3:
+	LDR r0, ptr_to_trans_C_string
+	LDR r5 , ptr_to_trans_C
+	B FINAL_EXIT_ROT_ANIM
+RIGHT_3:
+	LDR r0, ptr_to_trans_A_string
+	LDR r5 , ptr_to_trans_A
+	B FINAL_EXIT_ROT_ANIM
 
-
+FINAL_EXIT_ROT_ANIM:
 	;return to play state of game
+	MOV r6,r0
 	MOV r0, #2
 	BL change_state
-
+	MOV r0,r6
 EXIT_ROT_ANIM:
+	LDR r0, ptr_to_trans_A_string
+	BL print_mass_sqrs
+	MOV r0,r5
+	BL ansi_print
 	POP {r4-r12,lr}
 	MOV pc, lr
 ;================================================================
@@ -316,7 +433,10 @@ print_menu:
 ;----------------------------------------------------------------
 print_game:
 	PUSH {r4-r12,lr}
+	BL print_game_header	; print game header + score values
+
 	BL get_plyr_data ;r0 - face | r1 - face direction | r2 - tile being hled | r3 - player postion - num 1-9
+	MOV r5, r1
 	MOV r6, r2
 	MOV r7, r3		;save data in reg
 	;Copy string into local temp copy
@@ -327,7 +447,10 @@ COPY_STR:			;r0 - face string data - r1 - temp space to store a copy of the face
 	STRB r2, [r1], #1
 	CMP r9,#0
 	BGT COPY_STR
-	BL print_sqr
+
+	MOV r0,r1	;string location to print
+	MOV r1,r5
+	BL print_face
 
 	mov r0,r7				;move tile number to r0
 	SUB r0,r0,#1			;sub tile numb by 1
@@ -347,6 +470,30 @@ COPY_STR:			;r0 - face string data - r1 - temp space to store a copy of the face
 	MOV r1,r3
 	BL print_plyr	;print the player
 
+	POP {r4-r12,lr}
+	MOV pc, lr
+;================================================================
+
+;----------------------------------------------------------------
+;print_game header - prints game boards header + values
+;----------------------------------------------------------------
+print_game_header:
+	PUSH {r4-r12,lr}
+	BL get_game_data	;r0 - game mode;			r1 - game time;			r2 - score
+	MOV r5,r0
+	MOV r6,r1
+	MOV r7,r2
+	LDR r0, game_head
+	BL ansi_print
+	LDR r0, ptr_to_score_loc
+	MOV r1, r7
+	BL int2string
+	LDR r0, ptr_to_time_loc
+	MOV r1, r6
+	BL int2string
+	LDR r0, ptr_to_max_loc
+	MOV r1, r5
+	BL int2string
 	POP {r4-r12,lr}
 	MOV pc, lr
 ;================================================================

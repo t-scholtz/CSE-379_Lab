@@ -20,7 +20,7 @@ Face_generation:	.string 0x09,0x09,0x09,0x09,0x09,0x09	;This will help us realiz
 Color_Used:			.string 0x0,   0x0,    0x0,  0x0,  0x0,       0x0
 
 
-block_generation:		   ;1  ,2  ,3  ,4  ,5  ,6  ,7  ,8  ,9
+block_generation:		   ;1   ,2   ,3   ,4   ,5   ,6   ,7   ,8   ,9
 					.string 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00;UP_1
 					.string 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00;Bottom_2
 					.string 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00;Front_3
@@ -46,6 +46,7 @@ ptr_to_block_generation:				.word block_generation
 	.global get_tile
 	.global get_adj_face
 	.global get_face
+	.global Generate
 
 
 ;IMPORTED SUB_ROUTINES
@@ -147,14 +148,24 @@ get_adj_face:
 Generate:
 	PUSH {r4-r12,lr}
 
-	;MOV r7, #1			;#tiles per faces
-	MOV r6, #0			;#faces
+;WE NEED TO RESET THE COLOR COUNT HERE TO MAKE SURE THEY ARE ALL SET TO 0 BEFORE GENERATE
+	MOV r0, #0
+	MOV r3, #0
+	LDR r1, ptr_to_Color_Used
+COLOR_RESET:
+	ADD r0, r0, #1
+	;LDR r1, ptr_to_Color_Used
+	STRB r3, [r1], #1	;will this add the one after?
+	CMP r0, #6
+	BEQ BIG_GEN
+	B COLOR_RESET		;GO OVER LOGIC WITH TIM+
+
+
+
 
 BIG_GEN:
 	BL load_face
-
-	;Once all faces are full pick a color for the player to start on
-
+;ONCE THE FACE IS DONE LOADIND WE NEED TO PICK A PLAYER COLOR
 
 	POP {r4-r12,lr}
 	MOV pc, lr
@@ -178,6 +189,7 @@ LOADING_face_LOOP:
 	BEQ load_face_FINISH
 
 	;if there is a face left to fill keep going
+	MOV r1, r6
 	BL load_tiles
 	ADD r6, r6, #1					;Once the tiles are loaded we take on face out of the equation
 
@@ -206,13 +218,13 @@ load_tiles:
 
 	;create a loop that will take you to the cube face and set that to r5
 	LDR r2, ptr_to_block_generation
-	LDRB r5, [r2]						;This will start us off in block 1 tile 1
+	MOV r5, r2						;This will start us off in block 1 tile 1
 
-	MOV r2, r6							;puts the number of face into r2
+	MOV r2, r1							;puts the number of face into r2
 	MOV r9, #0x0						;Once this one get's to 9 the face is all done
 
 face_load_LOOP:
-	CMP r2, #1							;checks to see if we have decremented to the beggining
+	CMP r2, #0							;checks to see if we have decremented to the beggining
 	BEQ tile_load_LOOP
 
 	;if Not down to one, degrement the counter and increment the memory
@@ -231,23 +243,15 @@ Random_GEN_JUMP:
 	BL Random_Gen
 	MOV r7, r1							;storing r1 in r7 temporarly
 		;store that color in mem
-	LDR r3, ptr_to_Color_Used
-Verify_tile_color:
-	;once we have the value in r1 we need to make sure we have a space for that
-	;if
-	CMP r1, #0							;This will tell us if we are in need of switching colors that we check
-	BEQ Verify_Finish
-	;if not
-	SUB r1, r1, #1
-	ADD r3, r3, #1						;Change to incoming color
-	B Verify_tile_color
 
 Verify_Finish:
+	LDR r3, ptr_to_Color_Used
+	ADD r3, r3, r1
 	LDRB r8, [r3]
-	CMP r8, #9
-	BEQ Random_GEN_JUMP
+	CMP r8, #9							;if 9 jump to color switch
+	BEQ COLOR_SWITCH
+	BGT	Verify_Finish
 
-	BGT Verify_Finish					;forced into infinite loop if it can't resolve it's color
 
 Set_Value:
 	;convert the color into a number for you to correctly store!!!!
@@ -255,7 +259,7 @@ Set_Value:
 	STRB r7, [r5]
 	;make sure we still need to loop
 	CMP r9, #0x9
-	ADD r5, r5, #1
+	;ADD r9, r9, #1
 	BLT tile_load_LOOP
 
 tile_load_FINISH						;The entire face we are on should be complete
@@ -263,6 +267,13 @@ tile_load_FINISH						;The entire face we are on should be complete
 
 	POP {r4-r12,lr} ;ASK the TA's and look at the notes if we can replce the lr with the pc like we learned in class
 	MOV pc, lr
+
+COLOR_SWITCH:
+	CMP r1, #5			;This representing the last color
+	ITE EQ
+	MOVEQ r1, #0		;set it to the first color if it's at the last one
+	ADDNE r1, r1, #1	;increment color if it's not at the last one
+	B Verify_Finish
 
 ;================================================================
 
@@ -276,8 +287,9 @@ tile_load_FINISH						;The entire face we are on should be complete
 Random_Gen:
 	PUSH {r4-r12,lr}
 
-	MOV r0,  #0x0050
-	MOVT r0, #0x4003	;this is the memory address of the clock value at any point in time     ;divided
+	MOV r6,  #0x0050
+	MOVT r6, #0x4003
+	LDRB r0, [r6]	;this is the memory address of the clock value at any point in time     ;divided
 	MOV r1, #6																					;divisor
 
 	BL div_and_mod		;return a number 0-5 in r1

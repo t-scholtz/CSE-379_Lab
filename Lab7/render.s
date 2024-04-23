@@ -48,6 +48,38 @@ plry:				.string 0x84, "   ",0x80, 0
 
 game_mode:			.string "100", 0x00
 
+
+trans_A:			.string "			+---------------------------------+",0x0D,0x0A
+					.string "			|       |        |         |      |",0x0D,0x0A
+					.string "			|       |        |         |      |",0x0D,0x0A
+					.string "			|       |        |         |      |",0x0D,0x0A
+					.string "			+---------------------------------+",0x0D,0x0A
+					.string "			|       |        |         |      |",0x0D,0x0A
+					.string "			|       |        |         |      |",0x0D,0x0A
+					.string "			|       |        |         |      |",0x0D,0x0A
+					.string "			+---------------------------------+",0x0D,0x0A
+					.string "			|       |        |         |      |",0x0D,0x0A
+					.string "			|       |        |         |      |",0x0D,0x0A
+					.string "			|       |        |         |      |",0x0D,0x0A
+					.string "			+---------------------------------+",0x0D,0x0A,0
+
+trans_B:			.string	"			+-------------------------------------+",0x0D,0x0A
+					.string	"			|   |     |        |        |     |   |",0x0D,0x0A
+					.string	"			|   |     |        |        |     |   |",0x0D,0x0A
+					.string	"			|   |     |        |        |     |   |",0x0D,0x0A
+					.string	"			+-------------------------------------+",0x0D,0x0A
+					.string	"			|   |     |        |        |     |   |",0x0D,0x0A
+					.string	"			|   |     |        |        |     |   |",0x0D,0x0A
+					.string	"			|   |     |        |        |     |   |",0x0D,0x0A
+					.string	"			+-------------------------------------+",0x0D,0x0A
+					.string	"			|   |     |        |        |     |   |",0x0D,0x0A
+					.string	"			|   |     |        |        |     |   |",0x0D,0x0A
+					.string	"			|   |     |        |        |     |   |",0x0D,0x0A
+					.string	"			+-------------------------------------+",0x0D,0x0A
+
+
+
+
 ;temp space used to store value and such
 temp:				.string "blank Space",0
 ;temp space used to hold current face on screen
@@ -185,8 +217,6 @@ rotation_anim:
 	BEQ FRAME_2
 	CMP r1, #1
 	BEQ FRAME_3
-	CMP r1, #0
-	BLE FRAME_4
 FRAME_1:
 
 
@@ -199,8 +229,7 @@ FRAME_2:
 FRAME_3:
 
 
-	B EXIT_ROT_ANIM
-FRAME_4:
+
 
 	;return to play state of game
 	MOV r0, #2

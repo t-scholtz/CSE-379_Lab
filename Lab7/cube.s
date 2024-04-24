@@ -116,7 +116,7 @@ get_face:
 	MOV r2,#9
 	MUL r0,r0,r2
 	LDR r4, ptr_to_block_generation
-	LDR r0, [r4,r0]			;load face value byte
+	ADD r0, r4,r0			
 	POP {r4-r11,lr}
 	MOV pc, lr
 ;================================================================

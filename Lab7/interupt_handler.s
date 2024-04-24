@@ -22,6 +22,7 @@ ptr_to_Color_pickup:	.word Color_pickup
 	.global Switch_Handler
 	.global Timer_Handler
 	.global change_state
+	.global CUBE_process
 
 ;IMPORTED SUB_ROUTINES
 ;_______________________________________________________________
@@ -32,7 +33,9 @@ ptr_to_Color_pickup:	.word Color_pickup
 	.global read_character
 	.global plyr_mov
 	.global rotation_anim
+	.global CUBE_process
 	.global game_reset
+	.global illuminate_LEDs
 
 
 ;LIST OF CONSTANTS
@@ -128,7 +131,6 @@ EXIT_UART_HANDLER:
 	POP {r0-r11,lr}
 	BX lr
 
-;WHen starting a new game reset players positions score and generate new cube
 START_GAME:
 	BL game_reset
 	MOV r0, #2
@@ -217,7 +219,7 @@ EXIT_SWITCH_HANDLER:
 ;----------------------------------------------------------------
 ;Timer_Handler
 ;----------------------------------------------------------------
-Timer_Handler:
+Timer_Handler:  ;State machine: 0 - startup ; 1 - menu ; 2 - game ; 3 - pause ; 4 - vicotry/defeat; 5- Animation/idle
 	PUSH {r0-r11,lr}
 	;Clear interupt
 	MOV r4, #0x0000
@@ -227,34 +229,113 @@ Timer_Handler:
 	STRB r6, [r4, #GPTMICR]
 
 	;Disable timer for testing purposes - delete later
-	;B EXIT_TIMER_HANDLER
+	B EXIT_TIMER_HANDLER
 
 	LDR r0, ptr_to_state
 	LDRB r0, [r0]		;load the state value
+
 	CMP r0, #0
 	BEQ RENDER_STARTUP
+
 	cmp r0,#1
 	BEQ RENDER_MENU
+
 	cmp r0, #2
 	BEQ RENDER_GAME
+
 	cmp r0, #3
 	BEQ RENDER_PAUSE
-	CMP r0, #4	;to do
+
+	CMP r0, #4
+	BEQ RENDER_VICTORY_FAIL
+
 	CMP r0, #5
 	BEQ RENDER_ANIM
 
 RENDER_STARTUP:
 	BL start_up_anim
 	B EXIT_TIMER_HANDLER
+
 RENDER_MENU:
 	BL print_menu
 	B EXIT_TIMER_HANDLER
+
 RENDER_GAME:
-	BL print_game
+	BL print_game					;gives our player a view of current everything
+	BL CUBE_process					;checks if we need to change the lights
+	;take it's value and illuminate the colors
+	MOV r4, r0
+
+RENDER_GAME_LIGHT_CHECKS:
+	;check if zero faces are finished
+	CMP r4, #0
+	BEQ RENDER_GAME_0
+
+	;checks if 1 face is finished
+	CMP r4, #1
+	BEQ RENDER_GAME_1
+
+	;checks if 2 faces are finished
+	CMP r4, #2
+	BEQ RENDER_GAME_2
+
+	;checks if 3 faces are finished
+	CMP r4, #3
+	BEQ RENDER_GAME_3
+
+	;checks if 4 faces are finished
+	CMP r4, #4
+	BEQ RENDER_GAME_4
+
+	;check if we need to do light finish animation
+	CMP r4, #5
+	BEQ Dancing_LIGHTS
+
+	B RENDER_GAME_CHECKS			;error check
+
+RENDER_GAME_0:
+	MOV r0, #0	;NO LIGHTS 0000
+	B RENDER_GAME_FINISH
+
+RENDER_GAME_1:
+	MOV r0, #1	;ONE LIGHTS 0001
+	B RENDER_GAME_FINISH
+
+RENDER_GAME_2:
+	MOV r0, #3	;TWO LIGHTS 0011
+	B RENDER_GAME_FINISH
+
+RENDER_GAME_3:
+	MOV r0, #7	;THREE LIGHTS 0111
+	B RENDER_GAME_FINISH
+
+RENDER_GAME_4:
+	MOV r0, #15	;FOUR LIGHTS 1111
+	B RENDER_GAME_FINISH
+
+Dancing_LIGHTS:
+	MOV r6,  #0x0050
+	MOVT r6, #0x4003
+	LDRB r0, [r6]				;this is the memory address of the clock value at any point in time     ;divided
+	MOV r1, #5																			;divisor
+
+	BL div_and_mod				;return a number 0-4 in r1
+	MOV r4, r1
+	B RENDER_GAME_LIGHT_CHECKS	;This will pick a random number of lights to light up
+
+
+RENDER_GAME_LIGHT_FINISH:
+	BL illuminate_LEDs
 	B EXIT_TIMER_HANDLER
+
 RENDER_PAUSE:
 	BL print_pause
 	B EXIT_TIMER_HANDLER
+
+RENDER_VICTORY_FAIL:
+	;TO-DO
+	B EXIT_TIMER_HANDLER
+
 RENDER_ANIM:
 	BL rotation_anim
 	B EXIT_TIMER_HANDLER

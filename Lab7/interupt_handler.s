@@ -263,7 +263,7 @@ RENDER_MENU:
 	B EXIT_TIMER_HANDLER
 
 RENDER_GAME:
-	BL Render_game_color_pickup		;Allows us to see if a color should be change on the players current
+	;BL Render_game_color_pickup		;Allows us to see if a color should be change on the players current
 	BL print_game					;gives our player a view of current everything
 	BL CUBE_process					;checks if we need to change the lights
 	;take it's value and illuminate the colors

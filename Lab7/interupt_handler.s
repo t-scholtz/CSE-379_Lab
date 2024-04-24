@@ -267,6 +267,33 @@ RENDER_GAME:
 	MOV r4, r0
 
 RENDER_GAME_LIGHT_CHECKS:
+	B Render_game_light_checks
+
+RENDER_GAME_FINISH:
+	BL illuminate_LEDs
+	B EXIT_TIMER_HANDLER
+
+RENDER_PAUSE:
+	BL print_pause
+	B EXIT_TIMER_HANDLER
+
+RENDER_VICTORY_FAIL:
+	;TO-DO
+	B EXIT_TIMER_HANDLER
+
+RENDER_ANIM:
+	BL rotation_anim
+	B EXIT_TIMER_HANDLER
+EXIT_TIMER_HANDLER:
+	POP {r0-r11,lr}
+	BX lr
+;================================================================
+
+
+;----------------------------------------------------------------
+;Render_game_light_checks ->this is taken out of the handler to make room
+;----------------------------------------------------------------
+Render_game_light_checks:
 	;check if zero faces are finished
 	CMP r4, #0
 	BEQ RENDER_GAME_0
@@ -321,28 +348,10 @@ Dancing_LIGHTS:
 
 	BL div_and_mod				;return a number 0-4 in r1
 	MOV r4, r1
-	B RENDER_GAME_LIGHT_CHECKS	;This will pick a random number of lights to light up
+	B Render_game_light_checks	;This will pick a random number of lights to light up
 
-
-RENDER_GAME_LIGHT_FINISH:
-	BL illuminate_LEDs
-	B EXIT_TIMER_HANDLER
-
-RENDER_PAUSE:
-	BL print_pause
-	B EXIT_TIMER_HANDLER
-
-RENDER_VICTORY_FAIL:
-	;TO-DO
-	B EXIT_TIMER_HANDLER
-
-RENDER_ANIM:
-	BL rotation_anim
-	B EXIT_TIMER_HANDLER
-EXIT_TIMER_HANDLER:
-	POP {r0-r11,lr}
-	BX lr
 ;================================================================
+
 
 
 ;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

@@ -176,7 +176,7 @@ BIG_GEN:
 	MOV r5, r1			;r5 will now be our player color
 
 	;load in tile at tile 5 face 3
-	LDR r1, block_generation
+	LDR r1, ptr_to_block_generation
 	ADD r1, r1, #18		;move 2 faces down to face 3
 	ADD r1, r1, #4		;move 4 tiles to get to tile 5
 
@@ -187,10 +187,10 @@ BIG_GEN:
 	ADDEQ r5, r5, #2
 
 	CMP r5, #107		;if greater than 107 adjust number
-	IT GT
+	IT EQ
 	SUBEQ r5, r5, #4
 
-	STRB r5, r4			;changed the player color as needed
+	STRB r5, [r4]			;changed the player color as needed
 
 
 

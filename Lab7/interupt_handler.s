@@ -231,7 +231,7 @@ Timer_Handler:  ;State machine: 0 - startup ; 1 - menu ; 2 - game ; 3 - pause ; 
 	STRB r6, [r4, #GPTMICR]
 
 	;Disable timer for testing purposes - delete later
-	B EXIT_TIMER_HANDLER
+	;B EXIT_TIMER_HANDLER
 
 	LDR r0, ptr_to_state
 	LDRB r0, [r0]		;load the state value

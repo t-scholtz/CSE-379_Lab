@@ -113,8 +113,10 @@ set_tile:
 get_face:
 	PUSH {r4-r11,lr}
 	SUB r0, r0, #1				;sub face number to give range (0-5)
-	LDR r4, ptr_to_Direction_Cube
-	LDRB r0, [r4,r0]			;load face value byte
+	MOV r2,#9
+	MUL r0,r0,r2
+	LDR r4, ptr_to_block_generation
+	ADD r0, r4,r0			;load face value byte
 	POP {r4-r11,lr}
 	MOV pc, lr
 ;================================================================
@@ -258,7 +260,7 @@ Verify_Finish:
 Set_Value:
 	;convert the color into a number for you to correctly store!!!!
 	ADD r7, r7, #102
-	STRB r7, [r5]
+	STRB r7, [r5], #1
 	;make sure we still need to loop
 	CMP r9, #0x9
 	;ADD r9, r9, #1
@@ -291,7 +293,7 @@ Random_Gen:
 
 	MOV r6,  #0x0050
 	MOVT r6, #0x4003
-	LDRB r0, [r6]	;this is the memory address of the clock value at any point in time     ;divided
+	LDRH r0, [r6]	;this is the memory address of the clock value at any point in time     ;divided
 	MOV r1, #6																				;divisor
 
 	BL div_and_mod		;return a number 0-5 in r1

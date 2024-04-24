@@ -177,9 +177,9 @@ get_game_data:
 ;to render the game screen
 ;	No input
 ;	Output:
-;			r0 - face
-;			r1 - face direction
-;			r2 - tile being hled
+;			r0 - face (1-6)
+;			r1 - face direction (1-4)
+;			r2 - tile being hled byte
 ;			r3 - player postion - num 1-9
 ;----------------------------------------------------------------
 get_plyr_data:

@@ -27,14 +27,14 @@ game_head:			.string 0x82,0x83,0x84,0x0D,0x0A
 					.string			"| | __ / _` | '_ ` _ \ / _ \  / _ \| '_ \ ",0x0D,0x0A
 					.string			"| |_\ \ (_| | | | | | |  __/ | (_) | | | |",0x0D,0x0A
 					.string			" \____/\__,_|_| |_| |_|\___|  \___/|_| |_|",0x0D,0x0A
-					.string			"		Score: "
-score_loc:			.string									"							   ",0x0D,0x0A
-					.string			"		Time: "
-time_loc:			.string					"							   ",0x0D,0x0A
-					.string			"		Max Time: "
-max_loc:			.string 		":						   ",0x0D,0x0A
-game_board:			.string			"										   ",0x0D,0x0A
-					.string			"			+-----------------------------+",0x0D,0x0A
+					.string			"		Score: ",0
+score_loc:			.string			"							   ",0
+lc:					.string			0x0D,0x0A,"		Time: ",0
+time_loc:			.string			"							   "
+tc:					.string			0x0D,0x0A,"		Max Time: "
+max_loc:			.string 		"						   "
+game_board:			.string			"							               "
+					.string			0x0D,0x0A,"			+-----------------------------+",0x0D,0x0A
 					.string			"			|         |         |         |",0x0D,0x0A
 					.string			"			|         |         |         |",0x0D,0x0A
 					.string			"			|         |         |         |",0x0D,0x0A
@@ -53,7 +53,7 @@ logo:				.string 0x82,0x83,0x80,5,10,0x8B," ______    ____   ______   ",0x80,5,1
 
 square:				.string 0x84,"       ", 27, "[1B",27, "[7D       ",27, "[1B",27, "[7D       ", 0
 
-plry:				.string 0x84, "   ",0x80, 0
+plry:				.string 0x84,"   ",0x82,0
 
 game_mode:			.string "100", 0x00
 
@@ -107,7 +107,7 @@ trans_C_string:		.string 0x01,0x12
 
 
 ;temp space used to store value and such
-temp:				.string "blank Space",0
+temp:				.string "blank Space              ",0
 ;temp space used to hold current face on screen
 rotated_face:		.string 0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x00
 ;temp space used to hold the orienation of face moving to
@@ -131,6 +131,8 @@ ptr_to_game_head:		.word game_head
 ptr_to_score_loc:		.word score_loc
 ptr_to_time_loc:		.word time_loc
 ptr_to_max_loc:			.word max_loc
+ptr_to_lc:				.word lc
+ptr_to_tc:				.word tc
 
 ptr_to_square:			.word square
 ptr_to_plry:			.word plry
@@ -387,7 +389,7 @@ start_up_anim:
 	BL ansi_print
 	LDR r4, ptr_to_startCount	;r4 store ref to frames left
 	LDRB r5, [r4]				;r5 num of frames left
-	CMP r5, #10
+	CMP r5, #8
 	BLT ANIM_DONE
 	MOV r0,#101
 	MOV r1, #0x10
@@ -470,7 +472,7 @@ COPY_STR:			;r0 - face string data - r1 - temp space to store a copy of the face
 	SUB r9,r9,#1
 	BGT COPY_STR
 
-	SUB r0,r1,#8 ;string location to print - subtrac number of places incremented by
+	SUB r0,r1,#9 ;string location to print - subtrac number of places incremented by
 	MOV r1,r5
 	BL print_face
 
@@ -482,13 +484,14 @@ COPY_STR:			;r0 - face string data - r1 - temp space to store a copy of the face
 	ADD r1, r1,#1
 	MOV r2, #10
 	MUL r2, r1 	,r2			; x pos - mul by space and add constant offset
-	ADD r2, r2 ,#18
+	ADD r2, r2 ,#19
 
 	MOV r5, #4
 	MUL r3, r0 ,r5			; x pos - mul by space and add constant offset
-	ADD r3, r3, #10
+	ADD r3, r3, #9
 
 	MOV r0,r6
+	;r2 define ealier
 	MOV r1,r3
 	BL print_plyr	;print the player
 
@@ -510,7 +513,7 @@ HEADER_CPY:
 	LDRB r2, [r0], #1
 	CMP	r2, #0
 	BEQ HEADER_CONT
-	STRB r1, [r2] , #1
+	STRB r2, [r1] , #1
 	B HEADER_CPY
 HEADER_CONT:
 	LDR r0, ptr_to_score_loc
@@ -521,6 +524,19 @@ HEADER_CONT:
 	BL int2string
 	LDR r0, ptr_to_game_head
 	BL ansi_print
+
+	LDR r0, ptr_to_score_loc
+	BL ansi_print
+
+	LDR r0, ptr_to_lc
+	BL ansi_print
+
+	LDR r0, ptr_to_time_loc
+	BL ansi_print
+
+	LDR r0, ptr_to_tc
+	BL ansi_print
+
 	POP {r4-r12,lr}
 	MOV pc, lr
 ;================================================================
@@ -627,8 +643,8 @@ print_face_helper:
 	MOV r5, #0	;used in a nested for loop - 3 across - 3 down 	: r5 = i =0
 	MOV r8, #4		;storing constant for multipication[5 for block width because square is 3x3 with extra layer between
 	MOV r9, #10		;storing constant for multipication[4 because square is 3x3 with extra layer between
-	LDR r0, ptr_to_game_board
-	BL ansi_print
+	;LDR r0, ptr_to_game_board
+	;BL ansi_print
 PFH_LOOP_I:
 	MOV r6, #0	;r6 = j = 0
 	ADD r5, r5, #1	;i++

@@ -47,6 +47,7 @@ ptr_to_block_generation:				.word block_generation
 	.global get_adj_face
 	.global get_face
 	.global Generate
+	.global CUBE_process
 
 
 ;IMPORTED SUB_ROUTINES
@@ -340,14 +341,14 @@ CUBE_check:
 ROW_check:
 	LDRB r2, [r0], #1
 	CMP r2, r3
-	ITE EQ
+	ITTE EQ
 	ADDEQ r5, r5, #1					;ADD one to the correct counter when the colors are equal
 	SUBEQ r1, r1, #1					;DROPS one of our tile count
 	MOVNE r1, #0						;stop the count if the colors are not equal
 
 	;Checks if we have one full cube yet
 	CMP r5, #9
-	ITE EQ
+	IT EQ
 	ADDEQ r4, r4, #1
 
 	;Checks if we are done check this face

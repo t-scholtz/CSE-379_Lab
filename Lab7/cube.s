@@ -53,6 +53,7 @@ ptr_to_block_generation:				.word block_generation
 ;IMPORTED SUB_ROUTINES
 ;_______________________________________________________________
 	.global div_and_mod
+	.global get_plyr_data
 
 ;LIST OF CONSTANTS
 ;================================================================
@@ -115,7 +116,7 @@ get_face:
 	MOV r2,#9
 	MUL r0,r0,r2
 	LDR r4, ptr_to_block_generation
-	ADD r0, r4,r0			
+	ADD r0, r4,r0
 	POP {r4-r11,lr}
 	MOV pc, lr
 ;================================================================
@@ -163,12 +164,35 @@ COLOR_RESET:
 	BEQ BIG_GEN
 	B COLOR_RESET		;GO OVER LOGIC WITH TIM+
 
-
-
-
 BIG_GEN:
 	BL load_face
-;ONCE THE FACE IS DONE LOADIND WE NEED TO PICK A PLAYER COLOR
+
+;Generate player color
+	BL get_plyr_data	;r2 will be our address to the player color
+	MOV r4, r2			;r4 will be our address to the player color
+
+	BL Random_Gen		;r1 will have our random color
+	ADD r1, r1, #102
+	MOV r5, r1			;r5 will now be our player color
+
+	;load in tile at tile 5 face 3
+	LDR r1, block_generation
+	ADD r1, r1, #18		;move 2 faces down to face 3
+	ADD r1, r1, #4		;move 4 tiles to get to tile 5
+
+	LDRB r6, [r1]		;r6 will be starting tile color
+
+	CMP r6, r5			;if equal do this
+	IT EQ
+	ADDEQ r5, r5, #2
+
+	CMP r5, #107		;if greater than 107 adjust number
+	IT GT
+	SUBEQ r5, r5, #4
+
+	STRB r5, r4			;changed the player color as needed
+
+
 
 	POP {r4-r12,lr}
 	MOV pc, lr
@@ -292,7 +316,7 @@ Random_Gen:
 
 	MOV r6,  #0x0050
 	MOVT r6, #0x4003
-	LDRB r0, [r6]	;this is the memory address of the clock value at any point in time     ;divided
+	LDRH r0, [r6]	;this is the memory address of the clock value at any point in time     ;divided
 	MOV r1, #6																				;divisor
 
 	BL div_and_mod		;return a number 0-5 in r1

@@ -191,11 +191,12 @@ get_plyr_data:
 	LDR r2, ptr_to_tile_held
 	LDRB r2, [r2]
 	MOV r5, #3
+	LDR r4, ptr_to_x_pos
+	LDRB r4, [r4]
+	SUB r4,r4,#1
+	MUL r3, r4,r5	;multiple y pos by 3
 	LDR r4, ptr_to_y_pos
 	LDRB r4, [r4]
-	MUL r3, r4,r5	;multiple y pos by 3
-	LDR r4, ptr_to_x_pos
-	LDR r4, [r4]
 	ADD r3,r3,r4	; add x value to y*3
 	POP {r4-r11,lr}
 	MOV pc, lr

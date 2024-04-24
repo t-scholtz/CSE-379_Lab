@@ -22,7 +22,6 @@ ptr_to_Color_pickup:	.word Color_pickup
 	.global Switch_Handler
 	.global Timer_Handler
 	.global change_state
-	.global CUBE_process
 
 ;IMPORTED SUB_ROUTINES
 ;_______________________________________________________________
@@ -36,6 +35,7 @@ ptr_to_Color_pickup:	.word Color_pickup
 	.global CUBE_process
 	.global game_reset
 	.global illuminate_LEDs
+	.global div_and_mod
 
 
 ;LIST OF CONSTANTS
@@ -229,7 +229,7 @@ Timer_Handler:  ;State machine: 0 - startup ; 1 - menu ; 2 - game ; 3 - pause ; 
 	STRB r6, [r4, #GPTMICR]
 
 	;Disable timer for testing purposes - delete later
-	B EXIT_TIMER_HANDLER
+	;B EXIT_TIMER_HANDLER
 
 	LDR r0, ptr_to_state
 	LDRB r0, [r0]		;load the state value
@@ -318,7 +318,7 @@ Render_game_light_checks:
 	CMP r4, #5
 	BEQ Dancing_LIGHTS
 
-	B RENDER_GAME_CHECKS			;error check
+	;B RENDER_GAME_CHECKS			;error check
 
 RENDER_GAME_0:
 	MOV r0, #0	;NO LIGHTS 0000

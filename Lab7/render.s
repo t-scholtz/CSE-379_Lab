@@ -46,7 +46,7 @@ game_board:			.string			"										   ",0x0D,0x0A
 					.string			"			|         |         |         |",0x0D,0x0A
 					.string			"			|         |         |         |",0x0D,0x0A
 					.string			"			|         |         |         |",0x0D,0x0A
-					.string			"			+-----------------------------+",0x0D,0x0A ,0
+					.string			"			+-----------------------------+",0x0D,0x0A,0x0D,0x0A,0
 
 logo:				.string 0x82,0x83,0x80,5,10,0x8B," ______    ____   ______   ",0x80,5,11,"/\__  _\ /|  _ \ /\__  _\  ",0x80,5,12,"\/_/\ \/ |/\   | \/_/\ \/  ",0x80,5,13,"   \ \ \  \// __`\/\\ \ \  ",0x80,5,14,"    \ \ \ /|  \L>  <_\ \ \ "
 					.string 0x80,5,15,"     \ \_\| \_____/\/ \ \_\ ",0x80,5,16,"      \/_/ \/____/\/   \/_/",0x80,10,17,0x82,"Lab Games",0
@@ -172,6 +172,7 @@ ptr_to_trans_C_string:	.word trans_C_string
 	.global get_plyr_data
 	.global div_and_mod
 	.global get_game_data
+	.global get_face
 
 ;LIST OF CONSTANTS
 ;================================================================
@@ -457,8 +458,10 @@ print_game:
 	MOV r5, r1
 	MOV r6, r2
 	MOV r7, r3		;save data in reg
+	BL get_face
 	;Copy string into local temp copy
 	LDR r1, ptr_to_rotated_face
+
 	MOV r9, #8	;for loop counter
 COPY_STR:			;r0 - face string data - r1 - temp space to store a copy of the face
 	LDRB r2, [r0], #1
@@ -467,7 +470,7 @@ COPY_STR:			;r0 - face string data - r1 - temp space to store a copy of the face
 	SUB r9,r9,#1
 	BGT COPY_STR
 
-	MOV r0,r1	;string location to print
+	SUB r0,r1,#8 ;string location to print - subtrac number of places incremented by
 	MOV r1,r5
 	BL print_face
 

@@ -1,4 +1,5 @@
 
+
 	.data
 
 ;PROGRAM DATA
@@ -20,8 +21,8 @@ Face_generation:	.string 0x09,0x09,0x09,0x09,0x09,0x09	;This will help us realiz
 Color_Used:			.string 0x0,   0x0,    0x0,  0x0,  0x0,       0x0
 
 
-					;		   ;1   ,2   ,3   ,4   ,5   ,6   ,7   ,8   ,9
-block_generation:	.string 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00;UP_1
+block_generation:		   ;1   ,2   ,3   ,4   ,5   ,6   ,7   ,8   ,9
+					.string 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00;UP_1
 					.string 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00;Bottom_2
 					.string 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00;Front_3
 					.string 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00;Back_4
@@ -112,10 +113,8 @@ set_tile:
 get_face:
 	PUSH {r4-r11,lr}
 	SUB r0, r0, #1				;sub face number to give range (0-5)
-	MOV r2,#9
-	MUL r0,r0,r2
-	LDR r4, ptr_to_block_generation
-	ADD r0, r4, r0		;load face value
+	LDR r4, ptr_to_Direction_Cube
+	LDRB r0, [r4,r0]			;load face value byte
 	POP {r4-r11,lr}
 	MOV pc, lr
 ;================================================================
@@ -342,23 +341,20 @@ CUBE_check:
 
 ROW_check:
 	LDRB r2, [r0], #1
-	;CMP r2, r3
-	;ITE EQ
-	;ADDEQ r5, r5, #1					;ADD one to the correct counter when the colors are equal
-	;CMP r2, r3
-	;ITE EQ
-	;SUBEQ r1, r1, #1					;DROPS one of our tile count
-	;MOVNE r1, #0						;stop the count if the colors are not equal
+	CMP r2, r3
+	ITTE EQ
+	ADDEQ r5, r5, #1					;ADD one to the correct counter when the colors are equal
+	SUBEQ r1, r1, #1					;DROPS one of our tile count
+	MOVNE r1, #0						;stop the count if the colors are not equal
 
 	;Checks if we have one full cube yet
-	;CMP r5, #9
-	;ITE EQ
-	;ADDEQ r4, r4, #1
+	CMP r5, #9
+	IT EQ
+	ADDEQ r4, r4, #1
 
 	;Checks if we are done check this face
 	CMP r1, #0
 	BEQ CUBE_check
-	CMP r1, #0
 	BGT ROW_check
 
 CUBE_process_FINISH:

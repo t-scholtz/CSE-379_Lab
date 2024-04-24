@@ -1,5 +1,4 @@
 
-
 	.data
 
 ;PROGRAM DATA
@@ -21,8 +20,8 @@ Face_generation:	.string 0x09,0x09,0x09,0x09,0x09,0x09	;This will help us realiz
 Color_Used:			.string 0x0,   0x0,    0x0,  0x0,  0x0,       0x0
 
 
-block_generation:		   ;1   ,2   ,3   ,4   ,5   ,6   ,7   ,8   ,9
-					.string 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00;UP_1
+		  				    ;1   ,2   ,3   ,4   ,5   ,6   ,7   ,8   ,9
+block_generation:	.string 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00;UP_1
 					.string 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00;Bottom_2
 					.string 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00;Front_3
 					.string 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00;Back_4
@@ -184,7 +183,7 @@ BIG_GEN:
 ;----------------------------------------------------------------
 load_face:
 	PUSH {r4-r12,lr}
-
+	MOV r6, #0
 	;initializing the value so we can coundown and keep track
 
 LOADING_face_LOOP:
@@ -225,7 +224,7 @@ load_tiles:
 	MOV r5, r2						;This will start us off in block 1 tile 1
 
 	MOV r2, r1							;puts the number of face into r2
-	MOV r9, #0x0						;Once this one get's to 9 the face is all done
+	MOV r9, #0x0						;Once this one get's to 9 the tiles is all done
 
 face_load_LOOP:
 	CMP r2, #0							;checks to see if we have decremented to the beggining
@@ -260,7 +259,7 @@ Verify_Finish:
 Set_Value:
 	;convert the color into a number for you to correctly store!!!!
 	ADD r7, r7, #102
-	STRB r7, [r5]
+	STRB r7, [r5], #1
 	;make sure we still need to loop
 	CMP r9, #0x9
 	;ADD r9, r9, #1

@@ -36,6 +36,7 @@ ptr_to_Color_pickup:	.word Color_pickup
 	.global CUBE_process
 	.global game_reset
 	.global illuminate_LEDs
+	.global div_and_mod
 
 
 ;LIST OF CONSTANTS
@@ -261,6 +262,7 @@ RENDER_MENU:
 	B EXIT_TIMER_HANDLER
 
 RENDER_GAME:
+	BL Render_game_color_pickup		;Allows us to see if a color should be change on the players current
 	BL print_game					;gives our player a view of current everything
 	BL CUBE_process					;checks if we need to change the lights
 	;take it's value and illuminate the colors
@@ -278,12 +280,14 @@ RENDER_PAUSE:
 	B EXIT_TIMER_HANDLER
 
 RENDER_VICTORY_FAIL:
-	;TO-DO
+	; print_victory_fail
+	B Render_game_light_checks
 	B EXIT_TIMER_HANDLER
 
 RENDER_ANIM:
 	BL rotation_anim
 	B EXIT_TIMER_HANDLER
+
 EXIT_TIMER_HANDLER:
 	POP {r0-r11,lr}
 	BX lr
@@ -318,7 +322,7 @@ Render_game_light_checks:
 	CMP r4, #5
 	BEQ Dancing_LIGHTS
 
-	B RENDER_GAME_CHECKS			;error check
+	B Render_game_light_checks			;error check
 
 RENDER_GAME_0:
 	MOV r0, #0	;NO LIGHTS 0000
@@ -344,7 +348,7 @@ Dancing_LIGHTS:
 	MOV r6,  #0x0050
 	MOVT r6, #0x4003
 	LDRB r0, [r6]				;this is the memory address of the clock value at any point in time     ;divided
-	MOV r1, #5																			;divisor
+	MOV r1, #5																							;divisor
 
 	BL div_and_mod				;return a number 0-4 in r1
 	MOV r4, r1
@@ -352,6 +356,11 @@ Dancing_LIGHTS:
 
 ;================================================================
 
+;----------------------------------------------------------------
+;Render_game_color_pickup ->this is taken out of the handler to make room
+;----------------------------------------------------------------
+Render_game_color_pickup:
 
+;================================================================
 
 ;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

@@ -3,17 +3,11 @@
 
 ;PROGRAM DATA
 ;================================================================
-helloworld:		.string 0x82,0x83,0x86,"H",0x87,"E",0x88,"L",0x89
-				.string "L",0x8A,"O ",0x8B,"WOR",0x8C,"LD",0x82,0x0D, 0x0A , 0x00 ;This is a test string which tests colour + screen clear + sylte reset
-nrm:			.string "n T",0x81,0x5,0x5,"this will move the cursor",0x80,0x5,0x5," last bit of text", 0x82, 0
-test_face:		.string 101,102,103,104,105,106,105,104,103,0
+
 	.text
 
 ;POINTERS TO DATA
 ;================================================================
-ptr_to_helloworld:		.word helloworld
-ptr_to_nrm:				.word nrm
-ptr_to_test_face:		.word test_face
 
 ;LIST OF SUBROUTINES
 ;================================================================

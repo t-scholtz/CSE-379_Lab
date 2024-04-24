@@ -140,35 +140,23 @@ START_GAME:
 	B EXIT_UART_HANDLER
 
 handle_W:
-	MVN r0, #1
-	MVN r1, #1
-	BL plyr_mov
 	MOV r2, #1
-	LDRB r2, [r1]
+	STRB r2, [r1]
 	B EXIT_UART_HANDLER
 
 handle_A:
-	MOV r0, #1
-	MVN r1, #1
-	BL plyr_mov
 	MOV r2, #3
-	LDRB r2, [r1]
+	STRB r2, [r1]
 	B EXIT_UART_HANDLER
 
 handle_S:
-	MVN r0, #1
-	MOV r1, #1
-	BL plyr_mov
 	MOV r2, #2
-	LDRB r2, [r1]
+	STRB r2, [r1]
 	B EXIT_UART_HANDLER
 
 handle_D:
-	MOV r0, #1
-	MOV r1, #1
-	BL plyr_mov
 	MOV r2, #4
-	LDRB r2, [r1]
+	STRB r2, [r1]
 	B EXIT_UART_HANDLER
 
 handle_Space:;If the player hits space it will set the value to the pick up as 1 to tell our timer the player can now pick up
@@ -263,6 +251,44 @@ RENDER_MENU:
 	B EXIT_TIMER_HANDLER
 
 RENDER_GAME:
+	;MOVE player
+	LDR r1, ptr_to_To_BE_dir
+	LDRB r0, [r1]
+	CMP r0, #1
+	BEQ MOVE_UP
+	CMP r0, #2
+	BEQ MOVE_DOWN
+	CMP r0, #3
+	BEQ MOVE_LEFT
+	CMP r0, #4
+	BEQ MOVE_RIGHT
+	B END_MOVE
+MOVE_UP:
+	MVN r0, #0
+	MVN r1, #0
+	BL plyr_mov
+	B END_MOVE
+MOVE_DOWN:
+	MVN r0, #0
+	MOV r1, #1
+	BL plyr_mov
+	B END_MOVE
+MOVE_LEFT:
+	MOV r0, #1
+	MVN r1, #0
+	BL plyr_mov
+	B END_MOVE
+MOVE_RIGHT:
+	MOV r0, #1
+	MOV r1, #1
+	BL plyr_mov
+	MOV r2, #4
+
+END_MOVE:
+	MOV r0, #0
+	LDR r1, ptr_to_To_BE_dir
+	STRB r0, [r1]
+
 	;BL Render_game_color_pickup		;Allows us to see if a color should be change on the players current
 	BL print_game					;gives our player a view of current everything
 	BL CUBE_process					;checks if we need to change the lights

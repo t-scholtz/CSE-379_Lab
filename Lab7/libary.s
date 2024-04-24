@@ -209,7 +209,20 @@ gpio_btn_and_LED_init:
 	BL gpio_setup
 	MOV r0, #0x10		;pull up registors
 	STRB r3, [r1,#GPIOPUR]
-
+	;SET BUTTONS ON ALICE Swithes 2-5 - port D Pins 0-3
+	MOV r0, #8			;port d
+	MOV r1, #0x7000		;port d memory address
+	MOVT r1 , #0x4000
+	MOV r2, #0x00		;Pin 2-5 will be read - set 0
+	MOV r3, #0x0F		;Pin 2-5 set active
+	BL gpio_setup
+	;SET LEDS ON ALICE - port B Pins 0-3
+	MOV r0, #2			;port b
+	MOV r1, #0x5000		;port b memory address
+	MOVT r1 , #0x4000
+	MOV r2, #0x0F		;Pin 0-3 will be write - set 1
+	MOV r3, #0x0F		;Pin 0-3 set active
+	BL gpio_setup
 	POP {r4-r12,lr}
 	MOV pc, lr
 ;================================================================

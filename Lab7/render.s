@@ -453,7 +453,7 @@ print_menu:
 ;print_game - prints game board + player + handles transistions
 ;----------------------------------------------------------------
 print_game:
-	PUSH {r4-r12,lr}
+	PUSH {r4-r11,lr}
 	BL print_game_header	; print game header + score values
 
 	BL get_plyr_data ;r0 - face | r1 - face direction | r2 - tile being hled | r3 - player postion - num 1-9
@@ -487,15 +487,15 @@ COPY_STR:			;r0 - face string data - r1 - temp space to store a copy of the face
 	ADD r2, r2 ,#19
 
 	MOV r5, #4
-	MUL r3, r0 ,r5			; x pos - mul by space and add constant offset
-	ADD r3, r3, #9
+	MUL r3, r0 ,r5			;  pos - mul by space and add constant offset
+	ADD r3, r3, #10
 
 	MOV r0,r6
 	;r2 define ealier
 	MOV r1,r3
 	BL print_plyr	;print the player
 
-	POP {r4-r12,lr}
+	POP {r4-r11,lr}
 	MOV pc, lr
 ;================================================================
 

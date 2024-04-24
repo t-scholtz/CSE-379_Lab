@@ -228,7 +228,7 @@ plyr_mov:
 	CMP r0, #0
 	BLT MOVE_Y
 MOVE_X:
-	LDR r4, ptr_to_x_pos
+	LDR r4, ptr_to_y_pos
 	LDRB r0, [r4]
 	ADD r0,r0,r1
 	;check if new value is valid (1-3)
@@ -241,7 +241,7 @@ MOVE_X:
 	B EXIT_PLYR_MOVE
 
 MOVE_Y:
-	LDR r4, ptr_to_y_pos
+	LDR r4, ptr_to_x_pos
 	LDRB r0, [r4]
 	ADD r0,r0,r1
 	;check if new value is valid (1-3)

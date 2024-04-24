@@ -3,13 +3,25 @@
 ;PROGRAM DATA
 ;================================================================
 face:		.byte 0x03	;tile the player is currently on
-face_dir:	.byte 0x00	;how many times rotated left (0-3)
-tile_held:	.byte 0x00	;the colour of the tile the player is holding
+face_dir:	.byte 0x01	;how many times rotated left (0-3)
+tile_held:	.byte 0x01	;the colour of the tile the player is holding
 x_pos:		.byte 0x02	;players x location (1-3)
 y_pos:		.byte 0x02	;players y location (1-3)
-game_mode:	.word 0x00000064 ;If 0 or neg, will take to be unlimated
+game_mode:	.byte 0x01 ;Number between 1-4 (1-100| 2-200|3- 300| 4-400
 game_time:	.word 0x00000000
 score:		.word 0x00000000
+
+
+mode1_str:	.string "100",0
+mode1_val:	.word	0x00000064
+mode2_str:	.string	"200",0
+mode2_val:	.word	0x000000c8
+mode3_str:	.string	"300",0
+mode3_val:	.word	0x0000012c
+mode4_str:	.string	"Unlimated",0
+mode4_val:	.word	0x0FFFFFFF
+
+
 
 temp:		.string "temp spcae used for storage and cacl",0
 unlimated:	.string "unlimited",0
@@ -28,6 +40,15 @@ ptr_to_game_time:	.word game_time
 ptr_to_temp:		.word temp
 ptr_to_score:		.word score
 
+ptr_to_mode1_str:	.word mode1_str
+ptr_to_mode1_val:	.word mode1_val
+ptr_to_mode2_str:	.word mode2_str
+ptr_to_mode2_val:	.word mode2_val
+ptr_to_mode3_str:	.word mode3_str
+ptr_to_mode3_val:	.word mode3_val
+ptr_to_mode4_str:	.word mode4_str
+ptr_to_mode5_val:	.word mode4_val
+
 ;LIST OF SUBROUTINES
 ;================================================================
 	.global pick_up
@@ -36,12 +57,14 @@ ptr_to_score:		.word score
 	.global set_game_mode
 	.global get_plyr_data
 	.global get_game_data
+	.global game_reset
 
 ;IMPORTED SUB_ROUTINES
 ;_______________________________________________________________
 	.global int2string
 	.global get_adj_face
 	.global rotation_setup
+	.global Generate
 
 
 ;LIST OF CONSTANTS
@@ -76,9 +99,10 @@ game_reset:
 	STRB r1, [r0]	;Set y to 2 mid tile
 
 	;generate a new game boards - get Thomas to add here
+	BL Generate
 	;make sure that player tile value gets updated
 
-	POP {r4-r12,lr}
+	POP {r4-r11,lr}
 	MOV pc, lr
 ;================================================================
 
@@ -90,17 +114,26 @@ game_reset:
 get_game_mode_str:
 	PUSH {r4-r11,lr}
 	LDR r0, ptr_to_game_mode
-	LDR r1, [r0]
-	CMP r1, #0		;If 0 or neg, will take to be unlimated
-	BLE UNLIMATED
-	LDR r0, ptr_to_temp
-	BL int2string
-	LDR r0, ptr_to_temp
+	LDRB r1, [r0]	;game mode value
+	CMP r1, #1
+	BEQ MODE1
+	CMP r1, #2
+	BEQ MODE2
+	CMP r1, #3
+	BEQ MODE3
+MODE4:
+	LDR r0,ptr_to_mode4_str
 	B EXIT_GGMS
-UNLIMATED:
-	;LDR r0, ptr_to_unlimated
+MODE1:
+	LDR r0,ptr_to_mode1_str
+	B EXIT_GGMS
+MODE2:
+	LDR r0,ptr_to_mode2_str
+	B EXIT_GGMS
+MODE3:
+	LDR r0,ptr_to_mode3_str
 EXIT_GGMS:
-	POP {r4-r12,lr}
+	POP {r4-r11,lr}
 	MOV pc, lr
 ;================================================================
 
@@ -128,12 +161,14 @@ set_game_mode:
 get_game_data:
 	PUSH {r4-r11,lr}
 	LDR r0, ptr_to_game_mode
-	LDR r0, [r0]
+	LDRB r0, [r0]
+	BL get_game_mode_str
+
 	LDR r1, ptr_to_game_time
 	LDR r1, [r1]
 	LDR r2, ptr_to_score
 	LDR r2, [r2]
-	POP {r4-r12,lr}
+	POP {r4-r11,lr}
 	MOV pc, lr
 ;================================================================
 
@@ -162,7 +197,7 @@ get_plyr_data:
 	LDR r4, ptr_to_x_pos
 	LDR r4, [r4]
 	ADD r3,r3,r4	; add x value to y*3
-	POP {r4-r12,lr}
+	POP {r4-r11,lr}
 	MOV pc, lr
 ;================================================================
 
@@ -176,7 +211,7 @@ pick_up:
 
 
 
-	POP {r4-r12,lr}
+	POP {r4-r11,lr}
 	MOV pc, lr
 ;================================================================
 
@@ -258,7 +293,7 @@ ROTATE_HANDLER:
 	STRB r9, [r8]
 	STRB r7, [r6]
 EXIT_PLYR_MOVE:
-	POP {r4-r12,lr}
+	POP {r4-r11,lr}
 	MOV pc, lr
 ;================================================================
 

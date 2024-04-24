@@ -32,6 +32,7 @@ ptr_to_Color_pickup:	.word Color_pickup
 	.global read_character
 	.global plyr_mov
 	.global rotation_anim
+	.global game_reset
 
 
 ;LIST OF CONSTANTS
@@ -127,7 +128,9 @@ EXIT_UART_HANDLER:
 	POP {r0-r11,lr}
 	BX lr
 
+;WHen starting a new game reset players positions score and generate new cube
 START_GAME:
+	BL game_reset
 	MOV r0, #2
 	BL change_state
 	B EXIT_UART_HANDLER
@@ -224,7 +227,7 @@ Timer_Handler:
 	STRB r6, [r4, #GPTMICR]
 
 	;Disable timer for testing purposes - delete later
-	B EXIT_TIMER_HANDLER
+	;B EXIT_TIMER_HANDLER
 
 	LDR r0, ptr_to_state
 	LDRB r0, [r0]		;load the state value

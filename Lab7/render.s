@@ -4,9 +4,18 @@
 ;================================================================
 startCount:			.byte 0x10
 rotateCount:		.byte 0x02
-menu:				.string 0x82,0x83,0x84,"*********************************",0x0D,0x0A,0x86," ____        _     _ _        ",0x0D,0x0A,"|  _ \ _   _| |__ (_) | _____ ",0x0D,0x0A,"| |_) | | | | '_ \| | |/ / __|",0x0D,0x0A,"|  _ <| |_| | |_) | |   <\__ \ ",0x0D,0x0A,"|_|_\_\\__,_|_.__/|_|_|\_\___/"
-					.string 0x0D,0x0A,0x89,"  ____      _          ",0x0D,0x0A," / ___|   _| |__   ___ ",0x0D,0x0A,"| |__| |_| | |_) |  __/ ",0x0D,0x0A,"| |__| |_| | |_) |  __/ ",0x0D,0x0A," \____\__,_|_.__/ \___| ",0x0D,0x0A,0x82,"*********************************"
-					.string 0x80, 5,14,"Lab 7 - Tim and Tom",0x80, 5,16,"Game time selected: ",0
+menu:				.string 0x82,0x83,0x84,"*********************************",0x0D,0x0A,0x86
+					.string " ____        _     _ _        ",0x0D,0x0A
+					.string "|  _ \ _   _| |__ (_) | _____ ",0x0D,0x0A
+					.string "| |_) | | | | '_ \| | |/ / __|",0x0D,0x0A
+					.string "|  _ <| |_| | |_) | |   <\__ \ ",0x0D,0x0A
+					.string "|_|_\_\\__,_|_.__/|_|_|\_\___/", 0x0D,0x0A,0x89
+					.string "  ____      _          ",0x0D,0x0A
+					.string " / ___|   _| |__   ___ ",0x0D,0x0A
+					.string "| |__| |_| | |_) |  __/ ",0x0D,0x0A
+					.string "| |__| |_| | |_) |  __/ ",0x0D,0x0A
+					.string " \____\__,_|_.__/ \___| ",0x0D,0x0A,0x82, "*********************************"
+					.string 0x80, 5,14,"Lab 7 - Tim and Tom",0x80, 5,16,"Game time selected:",0
 menu_cont:			.string 0x80, 5,18,"Press <space> to start game",0
 
 pause_menu:			.string 0x82,0x83,0x84,0x89 , "*********************************",0x82,0x80,0x6,0x6,"Paused",0x80,0x0,0x12 ,0x89 , "*********************************",0
@@ -62,7 +71,7 @@ trans_A:			.string "			+---------------------------------+",0x0D,0x0A
 					.string "			|       |        |         |      |",0x0D,0x0A
 					.string "			|       |        |         |      |",0x0D,0x0A
 					.string "			+---------------------------------+",0x0D,0x0A,0
-trans_A_string:		.string
+trans_A_string:		.string 0x01,0x12
 
 trans_B:			.string	"			+-------------------------------------+",0x0D,0x0A
 					.string	"			|   |     |        |        |     |   |",0x0D,0x0A
@@ -77,7 +86,7 @@ trans_B:			.string	"			+-------------------------------------+",0x0D,0x0A
 					.string	"			|   |     |        |        |     |   |",0x0D,0x0A
 					.string	"			|   |     |        |        |     |   |",0x0D,0x0A
 					.string	"			+-------------------------------------+",0x0D,0x0A,0
-trans_B_string:		.string
+trans_B_string:		.string 0x01,0x12
 
 trans_C:			.string "			+---------------------------------+",0x0D,0x0A
 					.string "			|      |         |        |       |",0x0D,0x0A
@@ -92,7 +101,7 @@ trans_C:			.string "			+---------------------------------+",0x0D,0x0A
 					.string "			|      |         |        |       |",0x0D,0x0A
 					.string "			|      |         |        |       |",0x0D,0x0A
 					.string "			+---------------------------------+",0x0D,0x0A,0
-trans_C_string:		.string
+trans_C_string:		.string 0x01,0x12
 
 
 
@@ -119,6 +128,9 @@ ptr_to_menu_cont:		.word menu_cont
 ptr_to_pause_menu:		.word pause_menu
 ptr_to_game_board:		.word game_board
 ptr_to_game_head:		.word game_head
+ptr_to_score_loc:		.word score_loc
+ptr_to_time_loc:		.word time_loc
+ptr_to_max_loc:			.word max_loc
 
 ptr_to_square:			.word square
 ptr_to_plry:			.word plry
@@ -127,6 +139,12 @@ ptr_to_rotated_face:	.word rotated_face
 ptr_to_transition_face:	.word transition_face
 ptr_to_rotateCount:		.word rotateCount
 ptr_to_rotation_dir:	.word rotation_dir
+ptr_to_trans_A:			.word trans_A
+ptr_to_trans_A_string:	.word trans_A_string
+ptr_to_trans_B:			.word trans_B
+ptr_to_trans_B_string:	.word trans_B_string
+ptr_to_trans_C:			.word trans_C
+ptr_to_trans_C_string:	.word trans_C_string
 
 ;LIST OF SUBROUTINES
 ;================================================================
@@ -174,24 +192,24 @@ print_mass_sqrs:
 	PUSH {r4-r12,lr}
 	MOV r5, r0 ; save pointer to byte data
 PRINT_SQRS:
-	LDRB r0, [r5] #1	;load first byte, check if value is 250 to change to print plr
+	LDRB r0, [r5], #1	;load first byte, check if value is 250 to change to print plr
 	CMP r0, #250
 	BGE PRINT_PLYR
 			;r0 - tile number
-	LDRB r1, [r5] #1		;r1 - x value
-	LDRB r2, [r5] #1		;r2 - y value
+	LDRB r1, [r5], #1		;r1 - x value
+	LDRB r2, [r5], #1		;r2 - y value
 	;check if we're printing for the first face or second face
 	;1-9 first face 10-18 second face
 	CMP r0, #10
 	BGE SECOND_FACE
 	SUB r0,r0,#1
-	LDR r8, rotated_face
+	LDR r8, ptr_to_rotated_face
 	LDRB r0, [r8,r0]			;load the tile colour from the tile number specified
 
 	B PRINT_TILE
 SECOND_FACE:
 	SUB r0, r0, #10
-	LDR r8, transition_face
+	LDR r8, ptr_to_transition_face
 	LDRB r0, [r8,r0]			;load the tile colour from the tile number specified
 
 PRINT_TILE:
@@ -199,8 +217,8 @@ PRINT_TILE:
 	BL print_sqr	 ;r0 - colour| r1 - Y pos|r2 - X pos
 	B PRINT_SQRS
 PRINT_PLYR:
-	LDRB r0, [r5] #1 ;r0 - x value
-	LDRB r1, [r5] #1 ;r0 - y value
+	LDRB r0, [r5], #1 ;r0 - x value
+	LDRB r1, [r5], #1 ;r0 - y value
 
 
 	POP {r4-r12,lr}
@@ -284,7 +302,7 @@ rotation_anim:
 	BLE FRAME_3
 FRAME_1:
 	CMP r0, #2
-	BEQ DOWN_!
+	BEQ DOWN_1
 	CMP r0, #3
 	BEQ LEFT_1
 	CMP r0, #4
@@ -305,7 +323,7 @@ RIGHT_1:
 	B EXIT_ROT_ANIM
 FRAME_2:
 	CMP r0, #2
-	BEQ DOWN_!
+	BEQ DOWN_1
 	CMP r0, #3
 	BEQ LEFT_1
 	CMP r0, #4
@@ -324,7 +342,7 @@ RIGHT_2:
 	B EXIT_ROT_ANIM
 FRAME_3:
 	CMP r0, #2
-	BEQ DOWN_!
+	BEQ DOWN_1
 	CMP r0, #3
 	BEQ LEFT_1
 	CMP r0, #4
@@ -441,11 +459,12 @@ print_game:
 	MOV r7, r3		;save data in reg
 	;Copy string into local temp copy
 	LDR r1, ptr_to_rotated_face
-	MOV r9, #9		;for loop counter
+	MOV r9, #8	;for loop counter
 COPY_STR:			;r0 - face string data - r1 - temp space to store a copy of the face
 	LDRB r2, [r0], #1
 	STRB r2, [r1], #1
 	CMP r9,#0
+	SUB r9,r9,#1
 	BGT COPY_STR
 
 	MOV r0,r1	;string location to print
@@ -479,21 +498,26 @@ COPY_STR:			;r0 - face string data - r1 - temp space to store a copy of the face
 ;----------------------------------------------------------------
 print_game_header:
 	PUSH {r4-r12,lr}
-	BL get_game_data	;r0 - game mode;			r1 - game time;			r2 - score
-	MOV r5,r0
+	BL get_game_data	;r0 - ptr to game mode string;			r1 - game time;			r2 - score
 	MOV r6,r1
 	MOV r7,r2
-	LDR r0, game_head
-	BL ansi_print
+	LDR r1, ptr_to_max_loc
+	;copy string to other sttring
+HEADER_CPY:
+	LDRB r2, [r0], #1
+	CMP	r2, #0
+	BEQ HEADER_CONT
+	STRB r1, [r2] , #1
+	B HEADER_CPY
+HEADER_CONT:
 	LDR r0, ptr_to_score_loc
 	MOV r1, r7
 	BL int2string
 	LDR r0, ptr_to_time_loc
 	MOV r1, r6
 	BL int2string
-	LDR r0, ptr_to_max_loc
-	MOV r1, r5
-	BL int2string
+	LDR r0, ptr_to_game_head
+	BL ansi_print
 	POP {r4-r12,lr}
 	MOV pc, lr
 ;================================================================

@@ -192,11 +192,9 @@ Switch_Handler:
 	;load the state value
 	LDR r0, ptr_to_state
 	LDRB r1, [r0]
-
 	;checks game mode
 	cmp r1, #2
 	BEQ GAME_MODE_switch
-
 	;checks game mode
 	cmp r1, #3
 	BEQ PAUSE_MODE_switch
@@ -210,6 +208,7 @@ GAME_MODE_switch:			;this will be used to be paused
 
 PAUSE_MODE_switch:			;This is going to be used to resume
 	MOV r0, #2
+	BL change_state
 	BL print_game
 
 EXIT_SWITCH_HANDLER:

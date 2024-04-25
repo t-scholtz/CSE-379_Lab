@@ -103,8 +103,7 @@ set_tile:
 ;================================================================
 
 ;----------------------------------------------------------------
-;get  face - returns the face in a direction to current
-;face
+;get  face - return the ptr to string to face
 ;	Input:
 ;		r0 - face number
 ;	Output:

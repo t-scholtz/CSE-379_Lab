@@ -368,24 +368,24 @@ SAVE_Y:
 ROTATE_UP:
 	;apply rotation tracker and reset it
 	MOV r1, #0
-	LDR r8, ptr_to_x_pos
+	LDR r8, ptr_to_y_pos
 	MOV r9, #3
 	B ROTATE_HANDLER
 ROTATE_RIGHT:
 	;update rotation tracker
-	MOV r1, #0
-	LDR r8, ptr_to_y_pos
+	MOV r1, #1
+	LDR r8, ptr_to_x_pos
 	MOV r9, #1
 	B ROTATE_HANDLER
 ROTATE_DOWN:
 	;update rotation tracker
-	MOV r1, #0
-	LDR r8, ptr_to_x_pos
+	MOV r1, #2
+	LDR r8, ptr_to_y_pos
 	MOV r9, #1
 	B ROTATE_HANDLER
 ROTATE_LEFT:
-	MOV r1, #0
-	LDR r8, ptr_to_y_pos
+	MOV r1, #3
+	LDR r8, ptr_to_x_pos
 	MOV r9, #3
 	B ROTATE_HANDLER
 ROTATE_HANDLER:
@@ -397,15 +397,18 @@ ROTATE_HANDLER:
 ;		r0 - starting face value
 ;		r1 - landing face value
 ;		r2 - direction of transition
+
+	MOV r7,r0 ; save new face direction
+
 	MOV r1, r0
 	MOV r0, r5
 	MOV r2, r6
-	BL rotation_setup
+	;BL rotation_setup
 
 	;update players postion and face value number at last second
 	LDR r6, ptr_to_face
-	STRB r9, [r8]
 	STRB r7, [r6]
+	STRB r9, [r8]
 EXIT_PLYR_MOVE:
 	POP {r4-r11,lr}
 	MOV pc, lr

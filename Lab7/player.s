@@ -11,6 +11,8 @@ game_mode:	.byte 0x01 ;Number between 1-4 (1-100| 2-200|3- 300| 4-400
 game_time:	.word 0x00000000
 score:		.word 0x00000000
 
+rotation_tracker:	.byte 0x00
+
 rot_str:	.string 0x01,0x02,0x03,0x02,0
 
 
@@ -41,6 +43,7 @@ ptr_to_game_mode:	.word game_mode
 ptr_to_game_time:	.word game_time
 ptr_to_temp:		.word temp
 ptr_to_score:		.word score
+ptr_to_rotation_tracker: .word rotation_tracker:
 
 ptr_to_mode1_str:	.word mode1_str
 ptr_to_mode1_val:	.word mode1_val
@@ -62,6 +65,7 @@ ptr_to_rot_str:		.word rot_str
 	.global get_game_data
 	.global game_reset
 	.global game_Time_Score
+	.global get_pylr_abs
 
 ;IMPORTED SUB_ROUTINES
 ;_______________________________________________________________
@@ -358,16 +362,19 @@ SAVE_Y:
 	;Load the direction of the roation
 	;pre-pare to update players address value - but only do after setting up rotation animation, otherwise might result in glitch where plyaer jumps acroos board before the rotation happneds
 ROTATE_UP:
+	;apply rotation tracker and reset it
 	MOV r1, #0
 	LDR r8, ptr_to_x_pos
 	MOV r9, #3
 	B ROTATE_HANDLER
 ROTATE_RIGHT:
+	;update rotation tracker
 	MOV r1, #0
 	LDR r8, ptr_to_y_pos
 	MOV r9, #1
 	B ROTATE_HANDLER
 ROTATE_DOWN:
+	;update rotation tracker
 	MOV r1, #0
 	LDR r8, ptr_to_x_pos
 	MOV r9, #1

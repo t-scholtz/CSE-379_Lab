@@ -2,7 +2,7 @@
 
 ;PROGRAM DATA
 ;================================================================
-startCount:			.byte 0x09
+startCount:			.byte 0x10
 rotateCount:		.byte 0x02
 menu:				.string 0x82,0x83,0x84,"*********************************",0x0D,0x0A,0x86
 					.string " ____        _     _ _        ",0x0D,0x0A
@@ -278,7 +278,7 @@ CPY_STR_2:				;make a local copy of the tile faces
 
 	;store rotation direction into memory
 	LDR r5, ptr_to_rotation_dir
-	STRB r2, [r5]
+	STRB r6, [r5]
 
 	;reset animation timer to start value
 	LDR r6, ptr_to_rotateCount
@@ -299,6 +299,8 @@ CPY_STR_2:				;make a local copy of the tile faces
 ;----------------------------------------------------------------
 rotation_anim:
 	PUSH {r4-r12,lr}
+	;TEMP skip rotation ANIMATION
+	B FINAL_EXIT_ROT_ANIM
 	;print the header
 	BL print_game_header
 	;load frame number, decriment and store again
@@ -384,9 +386,9 @@ FINAL_EXIT_ROT_ANIM:
 	MOV r0,r6
 EXIT_ROT_ANIM:
 	LDR r0, ptr_to_trans_A_string
-	BL print_mass_sqrs
-	MOV r0,r5
-	BL ansi_print
+	;BL print_mass_sqrs
+	;MOV r0,r5
+	;BL ansi_print
 	POP {r4-r12,lr}
 	MOV pc, lr
 ;================================================================
@@ -402,26 +404,26 @@ start_up_anim:
 	BL ansi_print
 	LDR r4, ptr_to_startCount	;r4 store ref to frames left
 	LDRB r5, [r4]				;r5 num of frames left
-	CMP r5, #8
+	CMP r5, #9
 	BLT ANIM_DONE
-	MOV r0,#101
+	MOV r0,#107
 	MOV r1, #0x10
-	SUB r1, r1, r5
+	SUB r1, r1,r5
 	MOV r2, #5
 	BL print_sqr
 	B ANIM_COND
 ANIM_DONE:
-	MOV r0,#101
+	MOV r0,#107
 	MOV r1, #7
 	MOV r2, #5
 	BL print_sqr
 	MOV r0,#102
 	MOV r1, #7
-	MOV r2, #13
+	MOV r2, #14
 	BL print_sqr
 	MOV r0,#103
 	MOV r1, #7
-	MOV r2, #21
+	MOV r2, #23
 	BL print_sqr
 	MOV r0,#104
 	MOV r1, #19
@@ -429,11 +431,11 @@ ANIM_DONE:
 	BL print_sqr
 	MOV r0,#105
 	MOV r1, #19
-	MOV r2, #13
+	MOV r2, #14
 	BL print_sqr
 	MOV r0,#106
 	MOV r1, #19
-	MOV r2, #21
+	MOV r2, #23
 	BL print_sqr
 ANIM_COND:
 	SUB r5,r5,#1

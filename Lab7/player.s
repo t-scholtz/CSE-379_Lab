@@ -11,6 +11,8 @@ game_mode:	.byte 0x01 ;Number between 1-4 (1-100| 2-200|3- 300| 4-400
 game_time:	.word 0x00000000
 score:		.word 0x00000000
 
+rot_str:	.string 0x01,0x02,0x03,0x02,0
+
 
 mode1_str:	.string "100",0
 mode1_val:	.word	0x00000064
@@ -48,6 +50,7 @@ ptr_to_mode3_str:	.word mode3_str
 ptr_to_mode3_val:	.word mode3_val
 ptr_to_mode4_str:	.word mode4_str
 ptr_to_mode5_val:	.word mode4_val
+ptr_to_rot_str:		.word rot_str
 
 ;LIST OF SUBROUTINES
 ;================================================================
@@ -72,6 +75,72 @@ ptr_to_mode5_val:	.word mode4_val
 
 ;CODE
 ;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+;----------------------------------------------------------------
+;get pylr abs - returns the player absolute postion
+;	Take no input
+;	Output - r3 - returns a value 1-9 of the player abs position
+;----------------------------------------------------------------
+get_pylr_abs:
+	PUSH {r4-r11,lr}
+	LDR r4, ptr_to_x_pos
+	LDRB r4, [r4]
+	SUB r4,r4,#1
+	MUL r3, r4,r5	;multiple y pos by 3
+	LDR r4, ptr_to_y_pos
+	LDRB r4, [r4]
+	ADD r3,r3,r4	; add x value to y*3
+
+	LDR r5, ptr_to_face_dir
+	LDRB r5, [r5]
+ABS_LOOP:
+	CMP r5, #0
+	BLE EXIT_ABS_LOOP
+	BL rot_tile
+	SUB r5,r5,#1
+	B ABS_LOOP
+EXIT_ABS_LOOP:
+	POP {r4-r11,lr}
+	MOV pc, lr
+;================================================================
+
+;----------------------------------------------------------------
+;rot tile - returns in a tile num (1-9) and rot number and
+;calculates rotated number
+;	input r3 - input tile
+;	output r3 - new tile number
+;----------------------------------------------------------------
+rot_tile:
+	PUSH {r4-r11,lr}
+	CMP r3,#1
+	MOV r3, #3
+	B EXIT_ROT_TILE
+	CMP r3,#2
+	MOV r3, #5
+	B EXIT_ROT_TILE
+	CMP r3,#3
+	MOV r3, #9
+	B EXIT_ROT_TILE
+	CMP r3,#4
+	MOV r3, #2
+	B EXIT_ROT_TILE
+	CMP r3,#5
+	B EXIT_ROT_TILE
+	CMP r3,#6
+	MOV r3, #8
+	B EXIT_ROT_TILE
+	CMP r3,#7
+	MOV r3, #1
+	B EXIT_ROT_TILE
+	CMP r3,#8
+	MOV r3, #4
+	B EXIT_ROT_TILE
+	CMP r3,#9
+	MOV r3, #7
+EXIT_ROT_TILE:
+	POP {r4-r11,lr}
+	MOV pc, lr
+;================================================================
 
 ;----------------------------------------------------------------
 ;game_reset - Resets the game to the start - presevers time setting
@@ -236,6 +305,22 @@ MOVE_X:
 	BLE ROTATE_LEFT
 	CMP r0,#4
 	BGE ROTATE_RIGHT
+	;check if tile would be same colour as players colour
+	LDR r6, ptr_to_tile_held
+	LDRB r6, [r6] ;players colour
+	LDR r4, ptr_to_x_pos
+	LDRB r4, [r4]
+	SUB r4,r4,#1
+	MUL r3, r4,r5	;multiple y pos by 3
+	LDR r4, ptr_to_y_pos
+	LDRB r4, [r4]
+	ADD r3,r3,r4
+	SUB r3,r3,#1	;Player tile number
+	BL get_rotated_face 	;r0 have string ptr to rotated tile face
+	LDRB r5,[r6,r3]
+	CMP r5,r6
+	BEQ	EXIT_PLYR_MOVE		;if values are eqaul don;t move their
+SAVE_X:
 	;new value is valid - save and exit
 	STRB r0,[r4]
 	B EXIT_PLYR_MOVE
@@ -249,6 +334,22 @@ MOVE_Y:
 	BLE ROTATE_UP
 	CMP r0,#4
 	BGE ROTATE_DOWN
+	;check if tile would be same colour as players colour
+	LDR r6, ptr_to_tile_held
+	LDRB r6, [r6] ;players colour
+	LDR r4, ptr_to_x_pos
+	LDRB r4, [r4]
+	SUB r4,r4,#1
+	MUL r3, r4,r5	;multiple y pos by 3
+	LDR r4, ptr_to_y_pos
+	LDRB r4, [r4]
+	ADD r3,r3,r4
+	SUB r3,r3,#1	;Player tile number
+	BL get_rotated_face 	;r0 have string ptr to rotated tile face
+	LDRB r5,[r6,r3]
+	CMP r5,r6
+	BEQ	EXIT_PLYR_MOVE		;if values are eqaul don;t move their
+SAVE_Y:
 	;new value is valid - save and exit
 	STRB r0,[r4]
 	B EXIT_PLYR_MOVE

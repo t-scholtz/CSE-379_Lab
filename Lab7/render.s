@@ -227,6 +227,18 @@ PRINT_PLYR:
 	POP {r4-r12,lr}
 	MOV pc, lr
 ;================================================================
+;----------------------------------------------------------------
+;get rotated face- return memory address to rot string
+;	OUTPUt r0 - address of string
+;----------------------------------------------------------------
+get_rotated_face:
+	PUSH {lr}
+	LDR r0, ptr_to_rotated_face
+	POP {lr}
+	MOV pc, lr
+;================================================================
+
+
 
 ;----------------------------------------------------------------
 ;rotation_setup - sets up rotation animation and handles state

@@ -7,14 +7,16 @@
 state:				.byte 0x00 ;State machine: 0 - startup ; 1 - menu ; 2 - game ; 3 - pause ; 4 - vicotry/defeat; 5- Animation/idle
 To_BE_dir:			.byte 0x00 ;this will be 1-UP, 2-Down, 3-left, 4-right
 Color_pickup:		.byte 0x00 ; this will be 0-don't pick up, 1- pick up
+Internal_timer:		.byte 0x00 ;this timer will need to be reset at the beggining of every game
 
 	.text
 
 ;POINTERS TO DATA
 ;================================================================
-ptr_to_state:		.word state
-ptr_to_To_BE_dir:	.word To_BE_dir
-ptr_to_Color_pickup:	.word Color_pickup
+ptr_to_state:				.word state
+ptr_to_To_BE_dir:			.word To_BE_dir
+ptr_to_Color_pickup:		.word Color_pickup
+ptr_to_Internal_timer		.word Internal_timer
 
 
 ;LIST OF SUBROUTINES
@@ -38,7 +40,10 @@ ptr_to_Color_pickup:	.word Color_pickup
 	.global game_reset
 	.global illuminate_LEDs
 	.global div_and_mod
-
+	.global game_Time_Score
+	.global set_tile
+	.global get_tile
+	.global get_plyr_data
 
 ;LIST OF CONSTANTS
 ;================================================================
@@ -90,6 +95,12 @@ MENU_MODE:
 	B EXIT_UART_HANDLER
 
 GAME_MODE:
+	;THE SECOND WE KNOW IT IS IN GAMEMODE we can increment the score
+	BL game_Time_Score				;Score address in r1
+	LDRB r4, [r1]
+	ADD r4, r4, #1
+	STRB r4, [r1]
+
 	BL read_character
 	LDR r1, ptr_to_To_BE_dir			;this will be the current direction that we the player is traveling that we might have to adjust
 	;The player can only click w,a,s,d, or space in order to be valid, check all of these.
@@ -140,23 +151,35 @@ START_GAME:
 	B EXIT_UART_HANDLER
 
 handle_W:
+	MVN r0, #1
+	MVN r1, #1
+	BL plyr_mov
 	MOV r2, #1
-	STRB r2, [r1]
+	LDRB r2, [r1]
 	B EXIT_UART_HANDLER
 
 handle_A:
+	MOV r0, #1
+	MVN r1, #1
+	BL plyr_mov
 	MOV r2, #3
-	STRB r2, [r1]
+	LDRB r2, [r1]
 	B EXIT_UART_HANDLER
 
 handle_S:
+	MVN r0, #1
+	MOV r1, #1
+	BL plyr_mov
 	MOV r2, #2
-	STRB r2, [r1]
+	LDRB r2, [r1]
 	B EXIT_UART_HANDLER
 
 handle_D:
+	MOV r0, #1
+	MOV r1, #1
+	BL plyr_mov
 	MOV r2, #4
-	STRB r2, [r1]
+	LDRB r2, [r1]
 	B EXIT_UART_HANDLER
 
 handle_Space:;If the player hits space it will set the value to the pick up as 1 to tell our timer the player can now pick up
@@ -247,56 +270,36 @@ RENDER_STARTUP:
 	B EXIT_TIMER_HANDLER
 
 RENDER_MENU:
+	;Resetting my internal timer to make sure it can be reused
+	LDR r0, ptr_to_Internal_timer
+	MOV r1, #0
+	STRB r1, [r0]
+
 	BL print_menu
 	B EXIT_TIMER_HANDLER
 
 RENDER_GAME:
-	;MOVE player
-	LDR r1, ptr_to_To_BE_dir
-	LDRB r0, [r1]
-	CMP r0, #1
-	BEQ MOVE_UP
-	CMP r0, #2
-	BEQ MOVE_DOWN
-	CMP r0, #3
-	BEQ MOVE_LEFT
-	CMP r0, #4
-	BEQ MOVE_RIGHT
-	B END_MOVE
-MOVE_UP:
-	MVN r0, #0
-	MVN r1, #0
-	BL plyr_mov
-	B END_MOVE
-MOVE_DOWN:
-	MVN r0, #0
-	MOV r1, #1
-	BL plyr_mov
-	B END_MOVE
-MOVE_LEFT:
-	MOV r0, #1
-	MVN r1, #0
-	BL plyr_mov
-	B END_MOVE
-MOVE_RIGHT:
-	MOV r0, #1
-	MOV r1, #1
-	BL plyr_mov
-	MOV r2, #4
+	;UPDATE the timer value
+	LDR r1, ptr_to_Internal_timer		;grab the internal timer address
+	LDRB r0, [r1]						;r1 grabs the timer value  		;divided
+	ADD r0, r0, #1
+	STRB r0, [r1]						;storing the old value back before we mess with it
+	MOV r0, #2															;divisor
+	;run div and mod to see if even or ODD
+	BL div_and_mod						;r1 is the remainder  r0 will be the divided value
+	MOV r3, r0							;put the divided value in r3
+	BL game_Time_Score				;this will allow us access to the the timer address in r0
+	;STORE THE NEW TIME VALUE, NOT TESTED
+	STRB r3, [r0]
 
-END_MOVE:
-	MOV r0, #0
-	LDR r1, ptr_to_To_BE_dir
-	STRB r0, [r1]
-
-	;BL Render_game_color_pickup		;Allows us to see if a color should be change on the players current
+	BL Render_game_color_pickup		;Allows us to see if a color should be change on the players current
 	BL print_game					;gives our player a view of current everything
 	BL CUBE_process					;checks if we need to change the lights
 	;take it's value and illuminate the colors
 	MOV r4, r0
 
 RENDER_GAME_LIGHT_CHECKS:
-	B Render_game_light_checks
+	BL Render_game_light_checks
 
 RENDER_GAME_FINISH:
 	BL illuminate_LEDs
@@ -384,9 +387,48 @@ Dancing_LIGHTS:
 ;================================================================
 
 ;----------------------------------------------------------------
-;Render_game_color_pickup ->this is taken out of the handler to make room
+;Render_game_color_pickup ->So if the player hits space
 ;----------------------------------------------------------------
 Render_game_color_pickup:
+	PUSH {r4-r11,lr}
+
+	LDR r1, ptr_to_Color_pickup
+	LDRB r2, [r1]					;Gets the value of either 1 or 0 to see if the color of the player and the square need to be switched
+
+INITIAL_Render_game_color_pickup:
+	CMP r2, #0
+	BEQ Render_game_color_pickup_FINISH
+	;otherwise it should be greater than
+
+	;resetting the value to 0
+	MOV r2, #0
+	STRB r2, [r1]
+
+	;Grab the tile and the current player color //TALK TO TIM ABOUT CHANGING LINE 378 FOR THE PLAYER DATA
+	BL get_plyr_data				;r2 will be the address of the player color
+	LDRB r4, [r2]					;r4 player color held, r0 will be the face held, r3 is the tile num
+	MOV r5, r0						;r5 will be the face held
+	MOV r6, r3						;r6 will be the tile num held
+
+	;get the tile color that the player is on
+	MOV r1, r3						;tile num is now also in r1
+	BL get_tile						;tile color will be in r0
+	MOV r7, r0						;r7 tile color currently
+
+	;SET tile	r0 - face number   r1 - tile number   r3 - new tile colour
+	MOV r0, r5
+	MOV r1, r6
+	MOV r3, r4
+	BL set_tile
+
+	;SET player color
+	STRB r7, [r2]
+
+Render_game_color_pickup_FINISH:
+
+	POP {r4-r11,lr}
+	MOV pc, lr
+
 
 ;================================================================
 

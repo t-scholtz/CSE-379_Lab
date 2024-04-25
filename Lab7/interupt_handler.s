@@ -151,35 +151,23 @@ START_GAME:
 	B EXIT_UART_HANDLER
 
 handle_W:
-	MVN r0, #1
-	MVN r1, #1
-	BL plyr_mov
 	MOV r2, #1
-	LDRB r2, [r1]
+	STRB r2, [r1]
 	B EXIT_UART_HANDLER
 
 handle_A:
-	MOV r0, #1
-	MVN r1, #1
-	BL plyr_mov
 	MOV r2, #3
-	LDRB r2, [r1]
+	STRB r2, [r1]
 	B EXIT_UART_HANDLER
 
 handle_S:
-	MVN r0, #1
-	MOV r1, #1
-	BL plyr_mov
 	MOV r2, #2
-	LDRB r2, [r1]
+	STRB r2, [r1]
 	B EXIT_UART_HANDLER
 
 handle_D:
-	MOV r0, #1
-	MOV r1, #1
-	BL plyr_mov
 	MOV r2, #4
-	LDRB r2, [r1]
+	STRB r2, [r1]
 	B EXIT_UART_HANDLER
 
 handle_Space:;If the player hits space it will set the value to the pick up as 1 to tell our timer the player can now pick up
@@ -279,6 +267,21 @@ RENDER_MENU:
 	B EXIT_TIMER_HANDLER
 
 RENDER_GAME:
+	;Move player
+	LDR r2, ptr_to_To_BE_dir
+	LDRB r1, [r2]
+	MOV r0,#0
+	STRB r0, [r2]
+	CMP r1,#1
+	BEQ MOVE_UP
+	CMP r1,#2
+	BEQ MOVE_DOWN
+	CMP r1,#3
+	BEQ MOVE_LEFT
+	CMP r1,#4
+	BEQ MOVE_RIGHT
+
+RENDER_CONT:
 	;UPDATE the timer value
 	LDR r1, ptr_to_Internal_timer		;grab the internal timer address
 	LDRB r0, [r1]						;r1 grabs the timer value  		;divided
@@ -321,6 +324,30 @@ RENDER_ANIM:
 EXIT_TIMER_HANDLER:
 	POP {r0-r11,lr}
 	BX lr
+
+MOVE_UP:
+	MVN r0, #0
+	MVN r1, #0
+	BL plyr_mov
+	B RENDER_CONT
+
+MOVE_LEFT:
+	MOV r0, #1
+	MVN r1, #0
+	BL plyr_mov
+	B RENDER_CONT
+
+MOVE_DOWN:
+	MVN r0, #0
+	MOV r1, #1
+	BL plyr_mov
+	B RENDER_CONT
+
+MOVE_RIGHT:
+	MOV r0, #1
+	MOV r1, #1
+	BL plyr_mov
+	B RENDER_CONT
 ;================================================================
 
 

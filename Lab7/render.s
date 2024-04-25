@@ -2,7 +2,7 @@
 
 ;PROGRAM DATA
 ;================================================================
-startCount:			.byte 0x10
+startCount:			.byte 0x09
 rotateCount:		.byte 0x02
 menu:				.string 0x82,0x83,0x84,"*********************************",0x0D,0x0A,0x86
 					.string " ____        _     _ _        ",0x0D,0x0A
@@ -53,7 +53,7 @@ logo:				.string 0x82,0x83,0x80,5,10,0x8B," ______    ____   ______   ",0x80,5,1
 
 square:				.string 0x84,"       ", 27, "[1B",27, "[7D       ",27, "[1B",27, "[7D       ", 0
 
-plry:				.string 0x84,"   ",0x82,0
+plry:				.string 0x84,"   ",0x82,0x84,0
 
 game_mode:			.string "100", 0x00
 
@@ -162,7 +162,7 @@ ptr_to_trans_C_string:	.word trans_C_string
 	.global rotation_setup
 	.global rotation_anim
 	.global print_game_header
-
+	.global get_rotated_face
 
 ;IMPORTED SUB_ROUTINES
 ;_______________________________________________________________
@@ -175,6 +175,7 @@ ptr_to_trans_C_string:	.word trans_C_string
 	.global div_and_mod
 	.global get_game_data
 	.global get_face
+
 
 ;LIST OF CONSTANTS
 ;================================================================

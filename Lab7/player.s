@@ -4,7 +4,7 @@
 ;================================================================
 face:		.byte 0x03	;tile the player is currently on
 face_dir:	.byte 0x01	;how many times rotated left (0-3)
-tile_held:	.byte 0x01	;the colour of the tile the player is holding
+tile_held:	.byte 0x65	;the colour of the tile the player is holding
 x_pos:		.byte 0x02	;players x location (1-3)
 y_pos:		.byte 0x02	;players y location (1-3)
 game_mode:	.byte 0x01 ;Number between 1-4 (1-100| 2-200|3- 300| 4-400
@@ -43,7 +43,7 @@ ptr_to_game_mode:	.word game_mode
 ptr_to_game_time:	.word game_time
 ptr_to_temp:		.word temp
 ptr_to_score:		.word score
-ptr_to_rotation_tracker: .word rotation_tracker:
+ptr_to_rotation_tracker: .word rotation_tracker
 
 ptr_to_mode1_str:	.word mode1_str
 ptr_to_mode1_val:	.word mode1_val
@@ -73,6 +73,7 @@ ptr_to_rot_str:		.word rot_str
 	.global get_adj_face
 	.global rotation_setup
 	.global Generate
+	.global get_rotated_face
 
 
 ;LIST OF CONSTANTS
@@ -265,13 +266,14 @@ get_plyr_data:
 	LDR r2, ptr_to_tile_held
 	LDRB r2, [r2]
 	MOV r5, #3
-	LDR r4, ptr_to_x_pos
-	LDRB r4, [r4]
-	SUB r4,r4,#1
-	MUL r3, r4,r5	;multiple y pos by 3
 	LDR r4, ptr_to_y_pos
 	LDRB r4, [r4]
-	ADD r3,r3,r4	; add x value to y*3
+	SUB r4,r4,#1
+	MOV r5, #3
+	MUL r3, r4,r5	;multiple y pos by 3
+	LDR r5, ptr_to_x_pos
+	LDRB r5,[r5]
+	ADD r3,r3,r5;Player tile number
 	POP {r4-r11,lr}
 	MOV pc, lr
 ;================================================================
@@ -302,7 +304,7 @@ plyr_mov:
 	CMP r0, #0
 	BLT MOVE_Y
 MOVE_X:
-	LDR r4, ptr_to_y_pos
+	LDR r4, ptr_to_x_pos
 	LDRB r0, [r4]
 	ADD r0,r0,r1
 	;check if new value is valid (1-3)
@@ -313,25 +315,26 @@ MOVE_X:
 	;check if tile would be same colour as players colour
 	LDR r6, ptr_to_tile_held
 	LDRB r6, [r6] ;players colour
-	LDR r4, ptr_to_x_pos
-	LDRB r4, [r4]
-	SUB r4,r4,#1
-	MUL r3, r4,r5	;multiple y pos by 3
 	LDR r4, ptr_to_y_pos
 	LDRB r4, [r4]
-	ADD r3,r3,r4
-	SUB r3,r3,#1	;Player tile number
-	BL get_rotated_face 	;r0 have string ptr to rotated tile face
-	LDRB r5,[r6,r3]
+	SUB r4,r4,#1
+	MOV r5, #3
+	MUL r3, r4,r5	;multiple y pos by 3
+	ADD r3,r0,r4;Player tile number
+	SUB r3,r3,#1
+	MOV r7, r0	;save r0
+	BL get_rotated_face	;r0 have string ptr to rotated tile face
+	LDRB r5,[r0,r3]
 	CMP r5,r6
 	BEQ	EXIT_PLYR_MOVE		;if values are eqaul don;t move their
 SAVE_X:
 	;new value is valid - save and exit
-	STRB r0,[r4]
+	LDR r4, ptr_to_x_pos
+	STRB r7,[r4]
 	B EXIT_PLYR_MOVE
 
 MOVE_Y:
-	LDR r4, ptr_to_x_pos
+	LDR r4, ptr_to_y_pos
 	LDRB r0, [r4]
 	ADD r0,r0,r1
 	;check if new value is valid (1-3)
@@ -342,21 +345,22 @@ MOVE_Y:
 	;check if tile would be same colour as players colour
 	LDR r6, ptr_to_tile_held
 	LDRB r6, [r6] ;players colour
+	SUB r4,r0,#1	;new y pos
+	MOV r5, #3
+	MUL r3, r4,r5	;multiple y pos by 3
 	LDR r4, ptr_to_x_pos
 	LDRB r4, [r4]
-	SUB r4,r4,#1
-	MUL r3, r4,r5	;multiple y pos by 3
-	LDR r4, ptr_to_y_pos
-	LDRB r4, [r4]
-	ADD r3,r3,r4
-	SUB r3,r3,#1	;Player tile number
-	BL get_rotated_face 	;r0 have string ptr to rotated tile face
-	LDRB r5,[r6,r3]
+	ADD r3,r3,r4	;New Player tile number
+	SUB r3,r3,#1
+	MOV r7, r0 	;save r0
+	BL get_rotated_face	;r0 have string ptr to rotated tile face
+	LDRB r5,[r0,r3]
 	CMP r5,r6
 	BEQ	EXIT_PLYR_MOVE		;if values are eqaul don;t move their
 SAVE_Y:
 	;new value is valid - save and exit
-	STRB r0,[r4]
+	LDR r4, ptr_to_y_pos
+	STRB r7,[r4]
 	B EXIT_PLYR_MOVE
 
 	;Load the direction of the roation

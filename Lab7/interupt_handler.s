@@ -7,7 +7,9 @@
 state:				.byte 0x00 ;State machine: 0 - startup ; 1 - menu ; 2 - game ; 3 - pause ; 4 - vicotry/defeat; 5- Animation/idle
 To_BE_dir:			.byte 0x00 ;this will be 1-UP, 2-Down, 3-left, 4-right
 Color_pickup:		.byte 0x00 ; this will be 0-don't pick up, 1- pick up
+
 Internal_timer:		.byte 0x00 ;this timer will need to be reset at the beggining of every game
+Internal_score:		.byte 0x00 ;This is simply a flag to see if someting was pressed so that the update to the score will occur
 
 	.text
 
@@ -17,6 +19,7 @@ ptr_to_state:				.word state
 ptr_to_To_BE_dir:			.word To_BE_dir
 ptr_to_Color_pickup:		.word Color_pickup
 ptr_to_Internal_timer		.word Internal_timer
+ptr_to_Internal_score		.word Internal_score
 
 
 ;LIST OF SUBROUTINES
@@ -96,10 +99,9 @@ MENU_MODE:
 
 GAME_MODE:
 	;THE SECOND WE KNOW IT IS IN GAMEMODE we can increment the score
-	BL game_Time_Score				;Score address in r1
-	LDRB r4, [r1]
-	ADD r4, r4, #1
-	STRB r4, [r1]
+	LDR r1, ptr_to_Internal_score
+	MOV r2, #0x1
+	STRB r2, [r1]
 
 	BL read_character
 	LDR r1, ptr_to_To_BE_dir			;this will be the current direction that we the player is traveling that we might have to adjust
@@ -286,13 +288,28 @@ RENDER_CONT:
 	LDRB r0, [r1]						;r1 grabs the timer value  		;divided
 	ADD r0, r0, #1
 	STRB r0, [r1]						;storing the old value back before we mess with it
-	MOV r0, #2															;divisor
+	MOV r1, #2															;divisor
 	;run div and mod to see if even or ODD
 	BL div_and_mod						;r1 is the remainder  r0 will be the divided value
 	MOV r3, r0							;put the divided value in r3
-	BL game_Time_Score				;this will allow us access to the the timer address in r0
-	;STORE THE NEW TIME VALUE, NOT TESTED
-	STRB r3, [r0]
+
+	BL game_Time_Score				;timer address in r0
+									;Score address in r1
+	STRB r3, [r0]					;Store our new time
+
+	LDR r0, ptr_to_Internal_score	;get the score bit flag
+	LDRB r2, [r0]
+	LDRB r4, [r1]					;loading the actual score
+
+	CMP r2, #1						;checks if the bit is active
+	ITTTT EQ
+	LDRBEQ r4, [r1]
+	ADDEQ r4, r4, #1				;adding and storing the score back if true
+	STRBEQ r4, [r1]
+
+	MOVEQ r2, #0					;resetting the score flag
+	STRB r2, [r0]
+
 
 	BL Render_game_color_pickup		;Allows us to see if a color should be change on the players current
 	BL print_game					;gives our player a view of current everything

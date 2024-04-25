@@ -61,6 +61,7 @@ ptr_to_rot_str:		.word rot_str
 	.global get_plyr_data
 	.global get_game_data
 	.global game_reset
+	.global game_Time_Score
 
 ;IMPORTED SUB_ROUTINES
 ;_______________________________________________________________
@@ -395,6 +396,22 @@ ROTATE_HANDLER:
 	STRB r9, [r8]
 	STRB r7, [r6]
 EXIT_PLYR_MOVE:
+	POP {r4-r11,lr}
+	MOV pc, lr
+;================================================================
+
+;----------------------------------------------------------------
+;game_Time_Score -> this is a simple function that is meant to give me access to the score and timer
+;					INPUT: NONE
+;					OUTPUT: r0- game_time address
+;							r1- score address
+;----------------------------------------------------------------
+game_Time_Score:
+	PUSH {r4-r11,lr}
+	
+	LDR r0, ptr_to_game_time
+	LDR r1, ptr_to_score
+	
 	POP {r4-r11,lr}
 	MOV pc, lr
 ;================================================================

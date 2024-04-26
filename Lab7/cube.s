@@ -152,7 +152,7 @@ get_adj_face:
 	;step 1 we need to re-oriante the direction of cube movement based on current rotation value
 	;ADD the rotation number to the direction number
 	ADD r0,r1,r2
-	MOV r1,#3
+	MOV r1,#4
 	BL div_and_mod 	;r0/r1
 	MOV r9,r1		;the relative cube rotation direction
 	;step 2 - now that we know the relative direction we are moving we can grab the new tile face
@@ -164,12 +164,12 @@ get_adj_face:
 	MUL r0,r0,r3
 	ADD r0,r0,r9				;calculate relvant offset
 	LDR r4, ptr_to_Direction_Cube
-	LDRB r0, [r4,r0]			;load face value byte
-	MOV r10,r0					;store new face value
+	LDRB r1, [r4,r0]			;load face value byte
+	MOV r10,r1					;store new face value
 	LDR r4, ptr_to_Rotation_Cube
 	LDRB r0, [r4,r0]			;rotational offset
 	ADD r0, r0,r7
-	MOV r1,#3
+	MOV r1,#4
 	BL div_and_mod 	;r0/r1
 	;r1 is the new rotation
 	MOV  r0,r10				;new face value

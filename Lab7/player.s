@@ -368,47 +368,52 @@ SAVE_Y:
 ROTATE_UP:
 	;apply rotation tracker and reset it
 	MOV r1, #0
-	LDR r8, ptr_to_y_pos
+	LDR r11, ptr_to_y_pos
 	MOV r9, #3
 	B ROTATE_HANDLER
 ROTATE_RIGHT:
 	;update rotation tracker
-	MOV r1, #1
-	LDR r8, ptr_to_x_pos
+	MOV r1, #3
+	LDR r11, ptr_to_x_pos
 	MOV r9, #1
 	B ROTATE_HANDLER
 ROTATE_DOWN:
 	;update rotation tracker
 	MOV r1, #2
-	LDR r8, ptr_to_y_pos
+	LDR r11, ptr_to_y_pos
 	MOV r9, #1
 	B ROTATE_HANDLER
 ROTATE_LEFT:
-	MOV r1, #3
-	LDR r8, ptr_to_x_pos
+	MOV r1, #1
+	LDR r11, ptr_to_x_pos
 	MOV r9, #3
 	B ROTATE_HANDLER
 ROTATE_HANDLER:
-	LDR r0, ptr_to_face
-	LDRB r0, [r0]
-	MOV r5,r0			;save a copy of the face value for later in r5
-	MOV r6, r1			;save copy dir
-	BL	get_adj_face 	;get the value of the face we are rotating to
-;		r0 - starting face value
-;		r1 - landing face value
-;		r2 - direction of transition
+	;NOTE _ DO NOT TOUCH R11 OR R9 OR SOMEBODY"S GONNA LOOSE FINGERS!
+	;We have our current rotation value
+	LDR r4, ptr_to_face
+	LDRB r4, [r4]		;side of face we are currently on
+	LDR r5, ptr_to_face_dir
+	LDRB r5, [r5]		;our current rotation value
+	MOV r6,r1 			;direction we're moving in the cube
 
-	MOV r7,r0 ; save new face direction
 
-	MOV r1, r0
-	MOV r0, r5
-	MOV r2, r6
+	MOV r0,r4
+	MOV r1,r5
+	MOV r2,r6
+	BL	get_adj_face	;get the new rotaion and face side we are moving to
+	MOV r7,r0			;new face number
+	MOV r8,r1			;new rotation on the new face
+
+
 	;BL rotation_setup
 
-	;update players postion and face value number at last second
-	LDR r6, ptr_to_face
-	STRB r7, [r6]
-	STRB r9, [r8]
+	;update players postion, face value, and rotation number at the last second
+	LDR r0, ptr_to_face
+	STRB r7, [r0]
+	LDR r0, ptr_to_face_dir
+	STRB r8, [r0]
+	STRB r9, [r11]
 EXIT_PLYR_MOVE:
 	POP {r4-r11,lr}
 	MOV pc, lr

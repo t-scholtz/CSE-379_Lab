@@ -221,6 +221,7 @@ ptr_to_trans_C_string:		.word trans_C_string
 	.global get_face
 
 
+
 ;LIST OF CONSTANTS
 ;================================================================
 	.global get_game_mode_str

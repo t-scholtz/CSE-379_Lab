@@ -7,7 +7,7 @@
 
 Direction_Cube:
 					.string 0x4,0x5,0x3,0x6;UP_1
-					.string 0x3,0x5,0x2,0x6;Bottom_2
+					.string 0x3,0x5,0x4,0x6;Bottom_2
 					.string 0x1,0x5,0x2,0x6;Front_3
 					.string 0x2,0x5,0x1,0x6;Back_4
 					.string 0x1,0x4,0x2,0x3;Left_5
@@ -18,8 +18,8 @@ Rotation_Cube:			  ;up, left, down, right
 					.string 0x0,0x3,0x0,0x1;Bottom_2
 					.string 0x0,0x0,0x0,0x0;Front_3
 					.string 0x0,0x2,0x0,0x2;Back_4
-					.string 0x3,0x0,0x1,0x0;Left_5
-					.string 0x1,0x0,0x3,0x0;Right_6
+					.string 0x3,0x2,0x1,0x0;Left_5
+					.string 0x1,0x0,0x3,0x2;Right_6
 
 
 Face_generation:	.string 0x09,0x09,0x09,0x09,0x09,0x09	;This will help us realize if we are using a used face yet
@@ -85,9 +85,10 @@ get_tile:
 	PUSH {r4-r11,lr}
 	LDR r4, ptr_to_block_generation
 	MOV r5, #9						;constat 9
+	SUB r0,#1
 	MUL r5,r5,r0					;mul 9 by face number ;r5 offset value
 	ADD r5, r5, r1					;add tile number to offset
-	SUB r5,r5,#10					;sub 9 from offset
+	SUB r5,r5,#1
 	LDRB r0, [r4,r5]				;load tile value
 	POP {r4-r11,lr}
 	MOV pc, lr
@@ -104,11 +105,12 @@ get_tile:
 set_tile:
 	PUSH {r4-r11,lr}
 	LDR r4, ptr_to_block_generation
+	SUB r0,r0,#1
 	MOV r5, #9						;constat 9
 	MUL r5,r5,r0					;mul 9 by face number ;r5 offset value
 	ADD r5, r5, r1					;add tile number to offset
-	SUB r5,r5,#10					;sub 10 from offset
 	;SUB r5,r5,#9					;sub 9 from offset
+	SUB r5,r5,#1
 	STRB r3, [r4,r5]				;store new value
 	POP {r4-r11,lr}
 	MOV pc, lr
@@ -153,10 +155,17 @@ get_adj_face:
 
 	;step 1 we need to re-oriante the direction of cube movement based on current rotation value
 	;ADD the rotation number to the direction number
-	ADD r0,r1,r2
-	MOV r1,#4
-	BL div_and_mod 	;r0/r1
-	MOV r9,r1		;the relative cube rotation direction
+	SUB r0,r1,r2
+	CMP r0, #0
+	BGE noOverFlow
+	ADD r0,#4
+
+noOverFlow:
+	MOV r9,r0
+
+	;r9 must have the new direction
+
+
 	;step 2 - now that we know the relative direction we are moving we can grab the new tile face
 	;and the orientation value to change it by
 
@@ -325,6 +334,8 @@ Verify_Finish:
 	LDRB r8, [r3]
 	CMP r8, #9							;if 9 jump to color switch
 	BEQ COLOR_SWITCH
+	ADD r8, r8, #1						;Adds 1 to the 8 so we can see if we are at capacity
+	STRB r8, [r3]						;stores that new value
 	BGT	Verify_Finish
 
 
@@ -361,15 +372,20 @@ COLOR_SWITCH:
 ;----------------------------------------------------------------
 Random_Gen:
 	PUSH {r4-r12,lr}
-
 	MOV r6,  #0x0050
 	MOVT r6, #0x4003
-	LDRH r0, [r6]	;this is the memory address of the clock value at any point in time     ;divided
+
+	LDRB r0, [r6]	;this is the memory address of the clock value at any point in time
+	MOV r5,  #0x0048
+	MOVT r5, #0x4003
+	LDRB r1, [r5]	;this is the memory address of the clock value at any point in time     ;divided
+	ORR r0, r0, r1
+
+	;SUB r0, r0, #1
 	MOV r1, #6																				;divisor
-
 	BL div_and_mod		;return a number 0-5 in r1
-	;ADD r1, r1, #1		;This is adjusting out value to be 1-6
 
+	;ADD r1, r1, #1		;This is adjusting out value to be 1-6
 	POP {r4-r12,lr}
 	MOV pc, lr
 

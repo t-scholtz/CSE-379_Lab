@@ -48,6 +48,7 @@ ptr_to_block_generation:				.word block_generation
 	.global get_face
 	.global Generate
 	.global CUBE_process
+	.global game_Time_Score
 
 
 ;IMPORTED SUB_ROUTINES
@@ -169,7 +170,6 @@ BIG_GEN:
 
 ;Generate player color
 	BL get_plyr_data	;r2 will be our address to the player color
-	MOV r4, r2			;r4 will be our address to the player color
 
 	BL Random_Gen		;r1 will have our random color
 	ADD r1, r1, #102
@@ -187,10 +187,13 @@ BIG_GEN:
 	ADDEQ r5, r5, #2
 
 	CMP r5, #107		;if greater than 107 adjust number
-	IT EQ
-	SUBEQ r5, r5, #4
+	IT GT
+	SUBGT r5, r5, #4
 
-	STRB r5, [r4]			;changed the player color as needed
+	BL game_Time_Score		;r0- game_time address
+							;r1- score address
+							;r2- player color address
+	STRB r5, [r2]			;changed the player color as needed
 
 
 

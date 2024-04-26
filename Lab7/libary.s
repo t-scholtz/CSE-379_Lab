@@ -814,9 +814,7 @@ illuminate_LEDs:
 	MOV r0, #1			;port B
 	BL portINIT			;B address in reg R1
 	;Store LED data
-	LDRB r2, [r1, #GPIODATA] ;grabs data
-	EOR r2, r2, r4			   ;this will give us new pins to be lit up or not
-	STRB r2, [r1, #GPIODATA] ;stores the data to the same place
+	STRB r4, [r1, #GPIODATA] ;stores the data to the same place
 
 	POP {r4-r12,lr}
 	MOV pc, lr

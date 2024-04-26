@@ -4,12 +4,15 @@
 
 ;PROGRAM DATA
 ;================================================================
-state:				.byte 0x00 ;State machine: 0 - startup ; 1 - menu ; 2 - game ; 3 - pause ; 4 - vicotry/defeat; 5- Animation/idle
-To_BE_dir:			.byte 0x00 ;this will be 1-UP, 2-Down, 3-left, 4-right
-Color_pickup:		.byte 0x00 ; this will be 0-don't pick up, 1- pick up
+state:					.byte 0x00 ;State machine: 0 - startup ; 1 - menu ; 2 - game ; 3 - pause ; 4 - vicotry/defeat; 5- Animation/idle
+To_BE_dir:				.byte 0x00 ;this will be 1-UP, 2-Down, 3-left, 4-right
+Color_pickup:			.byte 0x00 ; this will be 0-don't pick up, 1- pick up
 
-Internal_timer:		.byte 0x00 ;this timer will need to be reset at the beggining of every game
-Internal_score:		.byte 0x00 ;This is simply a flag to see if someting was pressed so that the update to the score will occur
+Internal_timer:			.byte 0x00 ;this timer will need to be reset at the beggining of every game
+Internal_score:			.byte 0x00 ;This is simply a flag to see if someting was pressed so that the update to the score will occur
+
+Victory_fail_LOOP		.byte 0x00 ;A way to slowly build up the final screen to look cool
+Victory_fail_flag		.byte 0x00 ;this is how we will know if we print Fail or Vicotry
 
 	.text
 
@@ -20,6 +23,8 @@ ptr_to_To_BE_dir:			.word To_BE_dir
 ptr_to_Color_pickup:		.word Color_pickup
 ptr_to_Internal_timer		.word Internal_timer
 ptr_to_Internal_score		.word Internal_score
+ptr_to_Victory_fail_LOOP	.word Victory_fail_LOOP
+ptr_to_Victory_fail_flag	.word Victory_fail_flag
 
 
 ;LIST OF SUBROUTINES
@@ -48,6 +53,10 @@ ptr_to_Internal_score		.word Internal_score
 	.global get_tile
 	.global get_plyr_data
 	.global illuminate_RGB_LED
+	.global print_Victory
+	.global print_GameEND_Score
+	.global print_GameEND_Time
+	.global print_GameEND_Choice
 
 
 ;LIST OF CONSTANTS
@@ -272,6 +281,10 @@ RENDER_MENU:
 	LDR r0, ptr_to_Internal_timer
 	MOV r1, #0
 	STRB r1, [r0]
+	LDR r0, ptr_to_Victory_fail_flag
+	MOV r1, #0
+	STRB r1, [r0]
+
 
 	BL print_menu
 	B EXIT_TIMER_HANDLER
@@ -325,11 +338,60 @@ RENDER_CONT:
 	BL CUBE_process					;checks if we need to change the lights
 	;take it's value and illuminate the colors
 	MOV r4, r0
+	;quickly checking if we need to set it to the finish state
+
+RENDER_GAME_STATE_POSSIBLE_CHANGE:
+	CMP r4, #5
+	ITTT GE
+	LDRGE r1, ptr_to_state			;loads the states
+	MOVGE r2, #4
+	STRBGE r2, [r1]					;stored 4 back in to change the state
 
 RENDER_GAME_LIGHT_CHECKS:
 	BL Render_game_light_checks
 
-RENDER_GAME_FINISH:
+RENDER_VICTORY_FAIL:
+	LDR r0, ptr_to_Victory_fail_LOOP
+	LDRB r1, [r0]					;gets the state of the victory and fail loop
+	LDR r0, ptr_to_Victory_fail_flag
+	LDRB r2, [r0]					;gets to see if we are failing or VICTORY we will use this to print_Victory
+
+	CMP r1, #0
+	B RENDER_GAME_FINISH_1			;just prints Victory
+
+	CMP r1, #1
+	B RENDER_GAME_FINISH_2			;this will print victory with score
+
+	CMP r1, #2
+	B RENDER_GAME_FINISH_3			;this will print victory with score and time
+
+	CMP r1, #3
+	B RENDER_GAME_FINISH_4			;this will print victory with everything else
+
+RENDER_GAME_FINISH_1:
+	BL print_Victory
+	BL illuminate_LEDs
+	B EXIT_TIMER_HANDLER
+
+RENDER_GAME_FINISH_2:
+	BL print_Victory
+	BL print_GameEND_Score
+	BL illuminate_LEDs
+	B EXIT_TIMER_HANDLER
+
+RENDER_GAME_FINISH_3:
+	BL print_Victory
+	BL print_GameEND_Score
+	BL print_GameEND_Time
+	BL illuminate_LEDs
+	B EXIT_TIMER_HANDLER
+
+RENDER_GAME_FINISH_4:
+
+	BL print_Victory
+	BL print_GameEND_Score
+	BL print_GameEND_Time
+	BL print_GameEND_Choice
 	BL illuminate_LEDs
 	B EXIT_TIMER_HANDLER
 
@@ -337,9 +399,9 @@ RENDER_PAUSE:
 	BL print_pause
 	B EXIT_TIMER_HANDLER
 
-RENDER_VICTORY_FAIL:
+RENDER_GAME_FINISH:
 	; print_victory_fail
-	B Render_game_light_checks
+	;B Render_game_light_checks
 	B EXIT_TIMER_HANDLER
 
 RENDER_ANIM:

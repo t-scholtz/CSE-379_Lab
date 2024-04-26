@@ -18,6 +18,31 @@ menu:				.string 0x82,0x83,0x84,"*********************************",0x0D,0x0A,0x
 					.string 0x80, 5,14,"Lab 7 - Tim and Tom",0x80, 5,16,"Game time selected:",0
 menu_cont:			.string 0x80, 5,18,"Press <space> to start game",0
 
+Victory:			.string 0x82,0x83,0x84,"*********************************",0x0D,0x0A,0x86
+					.string" __      ___      _                   ",0x0D,0x0A
+					.string" \ \    / (_)    | |                  ",0x0D,0x0A
+					.string"  \ \  / / _  ___| |_ ___  _ __ _   _ ",0x0D,0x0A
+					.string"   \ \/ / | |/ __| __/ _ \| '__| | | |",0x0D,0x0A
+					.string"    \  /  | | (__| || (_) | |  | |_| |",0x0D,0x0A
+					.string"     \/   |_|\___|\__\___/|_|   \__, |",0x0D,0x0A
+					.string"                                 __/ |",0x0D,0x0A
+					.string"                                |___/ ",0x0D,0x0A,0x89
+					.string"*********************************",0x0D,0x0A,0x86
+
+Fail:				.string  0x82,0x83,0x84,"*********************************",0x0D,0x0A,0x86
+					.string"  ______    _ _ ",0x0D,0x0A
+					.string" |  ____|  (_) |",0x0D,0x0A
+					.string" | |__ __ _ _| |",0x0D,0x0A
+					.string" |  __/ _` | | |",0x0D,0x0A
+					.string" | | | (_| | | |",0x0D,0x0A
+					.string" |_|  \__,_|_|_|",0x0D,0x0A
+					.string" WOMP WOMP WOMP ",0x0D,0x0A,0x89
+					.string"*********************************",0x0D,0x0A,0x86
+
+Game_ENDING_score:	.string 0x80, 5,14,"FINAL SCORE: ", 0
+Game_ENDING_time:	.string 0x80, 5,16,"TIME TAKEN : ", 0
+Game_ENDING_choice:       .string 0x80, 5,18,"Press <space> to Restart game",0x80, 5,20,"Press <E> to Exit game",0
+
 pause_menu:			.string 0x82,0x83,0x89 , "		*********************************************************************",0x82,0x0D,0x0A,0x0D,0x0A
 					.string "		   _____                                                       _ "    ,0x0D,0x0A
 					.string "		  / ____|                                                     | |"    ,0x0D,0x0A
@@ -130,32 +155,37 @@ rotation_dir:		.byte 0x00 ; 1 - up | 2- down | 3  left-| 4 - right|
 
 ;POINTERS TO DATA
 ;================================================================
-ptr_to_startCount:		.word startCount
-ptr_to_logo:			.word logo
-ptr_to_menu:			.word menu
-ptr_to_menu_cont:		.word menu_cont
-ptr_to_pause_menu:		.word pause_menu
-ptr_to_game_board:		.word game_board
-ptr_to_game_head:		.word game_head
-ptr_to_score_loc:		.word score_loc
-ptr_to_time_loc:		.word time_loc
-ptr_to_max_loc:			.word max_loc
-ptr_to_lc:				.word lc
-ptr_to_tc:				.word tc
+ptr_to_startCount:			.word startCount
+ptr_to_logo:				.word logo
+ptr_to_menu:				.word menu
+ptr_to_Victory:				.word Victory
+ptr_to_Fail:				.word Fail
+ptr_to_Game_ENDING_score:	.word Game_ENDING_score
+ptr_to_Game_ENDING_time:	.word Game_ENDING_time
+ptr_to_Game_ENDING_choice:	.word Game_ENDING_choice
+ptr_to_menu_cont:			.word menu_cont
+ptr_to_pause_menu:			.word pause_menu
+ptr_to_game_board:			.word game_board
+ptr_to_game_head:			.word game_head
+ptr_to_score_loc:			.word score_loc
+ptr_to_time_loc:			.word time_loc
+ptr_to_max_loc:				.word max_loc
+ptr_to_lc:					.word lc
+ptr_to_tc:					.word tc
 
-ptr_to_square:			.word square
-ptr_to_plry:			.word plry
-ptr_to_temp:			.word temp
-ptr_to_rotated_face:	.word rotated_face
-ptr_to_transition_face:	.word transition_face
-ptr_to_rotateCount:		.word rotateCount
-ptr_to_rotation_dir:	.word rotation_dir
-ptr_to_trans_A:			.word trans_A
-ptr_to_trans_A_string:	.word trans_A_string
-ptr_to_trans_B:			.word trans_B
-ptr_to_trans_B_string:	.word trans_B_string
-ptr_to_trans_C:			.word trans_C
-ptr_to_trans_C_string:	.word trans_C_string
+ptr_to_square:				.word square
+ptr_to_plry:				.word plry
+ptr_to_temp:				.word temp
+ptr_to_rotated_face:		.word rotated_face
+ptr_to_transition_face:		.word transition_face
+ptr_to_rotateCount:			.word rotateCount
+ptr_to_rotation_dir:		.word rotation_dir
+ptr_to_trans_A:				.word trans_A
+ptr_to_trans_A_string:		.word trans_A_string
+ptr_to_trans_B:				.word trans_B
+ptr_to_trans_B_string:		.word trans_B_string
+ptr_to_trans_C:				.word trans_C
+ptr_to_trans_C_string:		.word trans_C_string
 
 ;LIST OF SUBROUTINES
 ;================================================================
@@ -172,6 +202,11 @@ ptr_to_trans_C_string:	.word trans_C_string
 	.global rotation_anim
 	.global print_game_header
 	.global get_rotated_face
+	.global print_Victory
+	.global print_GameEND_Score
+	.global print_GameEND_Time
+	.global print_GameEND_Choice
+
 
 ;IMPORTED SUB_ROUTINES
 ;_______________________________________________________________
@@ -469,6 +504,69 @@ print_menu:
 	BL ansi_print
 	LDR r0, ptr_to_menu_cont
 	BL ansi_print
+	POP {r4-r12,lr}
+	MOV pc, lr
+;================================================================
+;----------------------------------------------------------------
+;print_Victory - prints victory stats and menu
+;				INPUT: r2, the victry or NOT flag
+;----------------------------------------------------------------
+print_Victory:
+	PUSH {r4-r12,lr}
+	CMP r2, #0
+	BEQ print_Fail
+
+	LDR r0, ptr_to_Victory			;loads in the VICTORY ACSII COMBO
+	BL ansi_print					;prints the ASCII COMBO
+
+	POP {r4-r12,lr}
+	MOV pc, lr
+;================================================================
+;----------------------------------------------------------------
+;print_Fail - prints Fail stats and menu
+;----------------------------------------------------------------
+print_Fail:
+	PUSH {r4-r12,lr}
+
+	LDR r0, ptr_to_Fail		;loads in the VICTORY ACSII COMBO
+	BL ansi_print					;prints the ASCII COMBO
+
+	POP {r4-r12,lr}
+	MOV pc, lr
+;================================================================
+;----------------------------------------------------------------
+;print_GameEND_Score - prints victory stats and menu
+;----------------------------------------------------------------
+print_GameEND_Score:
+	PUSH {r4-r12,lr}
+
+	LDR r0, ptr_to_Game_ENDING_score		;loads in the VICTORY ACSII COMBO
+	BL ansi_print							;prints the ASCII COMBO
+
+	POP {r4-r12,lr}
+	MOV pc, lr
+;================================================================
+;----------------------------------------------------------------
+;print_GameEND_Time - prints victory stats and menu
+;----------------------------------------------------------------
+print_GameEND_Time:
+	PUSH {r4-r12,lr}
+
+	LDR r0, ptr_to_Game_ENDING_time		;loads in the VICTORY ACSII COMBO
+	BL ansi_print						;prints the ASCII COMBO
+
+	POP {r4-r12,lr}
+	MOV pc, lr
+;================================================================
+;----------------------------------------------------------------
+;print_GameEND_Choice - prints victory stats and menu
+;----------------------------------------------------------------
+print_GameEND_Choice:
+	PUSH {r4-r12,lr}
+
+	LDR r0, ptr_to_Game_ENDING_choice		;loads in the VICTORY ACSII COMBO
+	BL ansi_print							;prints the ASCII COMBO
+
 	POP {r4-r12,lr}
 	MOV pc, lr
 ;================================================================

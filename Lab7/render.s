@@ -511,7 +511,7 @@ print_menu:
 ;print_Victory - prints victory stats and menu
 ;				INPUT: r2, the victry or NOT flag
 ;----------------------------------------------------------------
-print_Victory:
+d:
 	PUSH {r4-r12,lr}
 	CMP r2, #0
 	BEQ print_Fail

@@ -417,6 +417,8 @@ CUBE_check:
 	CMP r6, #0
 	BEQ CUBE_process_FINISH
 
+	;Make a copy of where the tiles are so you can go down by row
+	MOV r9, r0
 	;sets up number of times it needs to run which is 8 because we check one first
 	MOV r1, #8
 	;get the first color of the face
@@ -431,10 +433,11 @@ CUBE_check:
 ROW_check:
 	LDRB r2, [r0], #1
 	CMP r2, r3
-	ITTE EQ
+	ITTEE EQ
 	ADDEQ r5, r5, #1					;ADD one to the correct counter when the colors are equal
 	SUBEQ r1, r1, #1					;DROPS one of our tile count
 	MOVNE r1, #0						;stop the count if the colors are not equal
+	ADDNE r9, r9, #9					;increments one row
 
 	;Checks if we have one full cube yet
 	CMP r5, #9

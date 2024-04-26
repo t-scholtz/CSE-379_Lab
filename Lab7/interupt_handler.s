@@ -62,6 +62,8 @@ ptr_to_Victory_fail_flag	.word Victory_fail_flag
 	.global portINIT
 	.global Alice_Handler
 	.global read_from_push_btns
+	.global get_pylr_absB
+	.global get_game_mode_val
 
 
 ;LIST OF CONSTANTS

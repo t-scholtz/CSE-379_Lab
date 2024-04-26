@@ -424,12 +424,14 @@ EXIT_PLYR_MOVE:
 ;					INPUT: NONE
 ;					OUTPUT: r0- game_time address
 ;							r1- score address
+;							r2- player color address
 ;----------------------------------------------------------------
 game_Time_Score:
 	PUSH {r4-r11,lr}
 	
 	LDR r0, ptr_to_game_time
 	LDR r1, ptr_to_score
+	LDR r2, ptr_to_tile_held
 	
 	POP {r4-r11,lr}
 	MOV pc, lr

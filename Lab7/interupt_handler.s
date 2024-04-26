@@ -456,8 +456,8 @@ INITIAL_Render_game_color_pickup:
 	STRB r2, [r1]
 
 	;Grab the tile and the current player color //TALK TO TIM ABOUT CHANGING LINE 378 FOR THE PLAYER DATA
-	BL get_plyr_data				;r2 will be the address of the player color
-	LDRB r4, [r2]					;r4 player color held, r0 will be the face held, r3 is the tile num
+	BL get_plyr_data				;r2 will be the player color
+	MOV r4, r2					;r4 player color held, r0 will be the face held, r3 is the tile num
 	MOV r5, r0						;r5 will be the face held
 	MOV r6, r3						;r6 will be the tile num held
 
@@ -473,6 +473,9 @@ INITIAL_Render_game_color_pickup:
 	BL set_tile
 
 	;SET player color
+	BL game_Time_Score		;r0- game_time address
+							;r1- score address
+							;r2- player color address
 	STRB r7, [r2]
 
 Render_game_color_pickup_FINISH:

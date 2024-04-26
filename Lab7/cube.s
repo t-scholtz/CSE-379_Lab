@@ -408,6 +408,7 @@ CUBE_process:
 	;CUBE_check:
 	;loads up the cube
 	LDR r0, ptr_to_block_generation
+	MOV r9, r0
 	;setting the side count to zero
 	MOV r4, #0
 	;Setting the face count to 6
@@ -418,7 +419,7 @@ CUBE_check:
 	BEQ CUBE_process_FINISH
 
 	;Make a copy of where the tiles are so you can go down by row
-	MOV r9, r0
+	MOV r0, r9
 	;sets up number of times it needs to run which is 8 because we check one first
 	MOV r1, #8
 	;get the first color of the face
@@ -441,8 +442,9 @@ ROW_check:
 
 	;Checks if we have one full cube yet
 	CMP r5, #9
-	IT EQ
+	ITT EQ
 	ADDEQ r4, r4, #1
+	ADDEQ r9, r9, #9					;increments one row
 
 	;Checks if we are done check this face
 	CMP r1, #0

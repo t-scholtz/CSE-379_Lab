@@ -448,8 +448,7 @@ RENDER_PAUSE:
 	B EXIT_TIMER_HANDLER
 
 RENDER_GAME_FINISH:
-	; print_victory_fail
-	;B Render_game_light_checks
+	BL illuminate_LEDs
 	B EXIT_TIMER_HANDLER
 
 RENDER_ANIM:

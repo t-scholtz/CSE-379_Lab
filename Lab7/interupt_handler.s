@@ -63,8 +63,11 @@ ptr_to_Victory_fail_flag	.word Victory_fail_flag
 	.global Alice_Handler
 	.global read_from_push_btns
 	.global set_game_mode
+<<<<<<< HEAD
+=======
 	.global get_pylr_absB
 	.global get_game_mode_val
+>>>>>>> 3f4ed6a4839cd74b759153a4deda4e6831fe5130
 
 
 ;LIST OF CONSTANTS
@@ -309,13 +312,15 @@ RENDER_MENU:
 	STRB r1, [r0]
 	;Look for user Input
 	BL read_from_push_btns
-	CMP r0, #0x20
-	BGE BUT5
-	CMP r0, #0x10
-	BGE BUT4
+
 	CMP r0, #0x8
-	BGE BUT3
+	BGE BUT5
 	CMP r0, #0x4
+	BGE BUT4
+	CMP r0, #02
+	BGE BUT3
+	CMP r0, #0x1
+
 	BGE BUT2
 	BEQ RENDER_MENU_EXIT
 	;update game mode
@@ -484,21 +489,22 @@ MOVE_RIGHT:
 	B RENDER_CONT
 
 BUT5:	;game 100
-	MOV r0, #1
-	BL set_game_mode
-	B RENDER_MENU_EXIT
-BUT4:	;game 200
-	MOV r0, #2
-	BL set_game_mode
-	B RENDER_MENU_EXIT
-BUT3:	;game 300
-	MOV r0, #3
-	BL set_game_mode
-	B RENDER_MENU_EXIT
-BUT2:	;game unlime
 	MOV r0, #4
 	BL set_game_mode
 	B RENDER_MENU_EXIT
+BUT4:	;game 200
+	MOV r0, #3
+	BL set_game_mode
+	B RENDER_MENU_EXIT
+BUT3:	;game 300
+	MOV r0, #2
+	BL set_game_mode
+	B RENDER_MENU_EXIT
+BUT2:	;game unlime
+	MOV r0, #1
+	BL set_game_mode
+	B RENDER_MENU_EXIT
+
 ;================================================================
 
 

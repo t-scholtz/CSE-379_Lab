@@ -8,10 +8,19 @@
 Direction_Cube:
 					.string 0x4,0x5,0x3,0x6;UP_1
 					.string 0x3,0x5,0x2,0x6;Bottom_2
-					.string 0x1,0x5,0x2,0x3;Front_3
+					.string 0x1,0x5,0x2,0x6;Front_3
 					.string 0x2,0x5,0x1,0x6;Back_4
 					.string 0x1,0x4,0x2,0x3;Left_5
 					.string 0x1,0x3,0x2,0x4;Right_6
+
+Rotation_Cube:			  ;up, left, down, right
+					.string 0x0,0x1,0x0,0x3;UP_1
+					.string 0x0,0x3,0x0,0x1;Bottom_2
+					.string 0x0,0x0,0x0,0x0;Front_3
+					.string 0x0,0x2,0x0,0x2;Back_4
+					.string 0x3,0x0,0x1,0x0;Left_5
+					.string 0x1,0x0,0x3,0x0;Right_6
+
 
 Face_generation:	.string 0x09,0x09,0x09,0x09,0x09,0x09	;This will help us realize if we are using a used face yet
 															;how many tiles are left on each face
@@ -37,6 +46,7 @@ ptr_to_Direction_Cube:					.word Direction_Cube
 ptr_to_Face_generation:					.word Face_generation
 ptr_to_Color_Used:						.word Color_Used
 ptr_to_block_generation:				.word block_generation
+ptr_to_Rotation_Cube:					.word Rotation_Cube
 
 
 
@@ -121,22 +131,49 @@ get_face:
 ;================================================================
 
 ;----------------------------------------------------------------
-;get adj face - returns the face in a direction to current
+;get adj face - takes in the currecnt face, rotaion, and direction
+; of rotation cube, and returns the new face Plus the new relative
+;rotation amout
 ;face
 ;	Input:
 ;		r0 - face number
-;		r1 - direction
+;		r1 - rotation
+;		r2 - direction
 ;	Output:
 ;		r0 - new face number
+;		r1 - new rotation value
 ;----------------------------------------------------------------
 get_adj_face:
 	PUSH {r4-r11,lr}
-	MOV r3, #4					;const value to multiply by
+	MOV r6,r0
+	MOV r7,r1
+	MOV r8,r2
+
+	;step 1 we need to re-oriante the direction of cube movement based on current rotation value
+	;ADD the rotation number to the direction number
+	ADD r0,r1,r2
+	MOV r1,#4
+	BL div_and_mod 	;r0/r1
+	MOV r9,r1		;the relative cube rotation direction
+	;step 2 - now that we know the relative direction we are moving we can grab the new tile face
+	;and the orientation value to change it by
+
+	MOV r0,r6
 	SUB r0, r0, #1				;sub face number to give range (0-5)
+	MOV r3, #4					;const value to multiply by
 	MUL r0,r0,r3
-	ADD r0,r0,r1				;calculate relvant offset
+	ADD r0,r0,r9				;calculate relvant offset
 	LDR r4, ptr_to_Direction_Cube
-	LDRB r0, [r4,r0]			;load face value byte
+	LDRB r1, [r4,r0]			;load face value byte
+	MOV r10,r1					;store new face value
+	LDR r4, ptr_to_Rotation_Cube
+	LDRB r0, [r4,r0]			;rotational offset
+	ADD r0, r0,r7
+	MOV r1,#4
+	BL div_and_mod 	;r0/r1
+	;r1 is the new rotation
+	MOV  r0,r10				;new face value
+
 	POP {r4-r11,lr}
 	MOV pc, lr
 ;================================================================

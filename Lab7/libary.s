@@ -264,22 +264,22 @@ illuminate_RGB_LED:
 	CMP r0, #0;checks error ;Decide with tim if we should loop in here or only print out the message and continue
 	BLS ERRORFOUND;This should be an end of the road subroutine so it will stop us if there is an issue
 	;If white
-	CMP r0, #1
+	CMP r0, #6
 	BEQ whiteOUT
 	;If red
-	CMP r0, #2
+	CMP r0, #4
 	BEQ redOUT
 	;If green
-	CMP r0, #3
+	CMP r0, #1
 	BEQ greenOUT
 	;If blue
-	CMP r0, #4
+	CMP r0, #5
 	BEQ blueOUT
 	;If purple
-	CMP r0, #5
+	CMP r0, #3
 	BEQ purpleOUT
 	;If yellow
-	CMP r0, #6
+	CMP r0, #2
 	BEQ yellowOUT
 	B ERRORFOUND;this is if no options were found; Mabye create a user error sub???
 whiteOUT:

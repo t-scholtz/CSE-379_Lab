@@ -47,6 +47,7 @@ ptr_to_Internal_score		.word Internal_score
 	.global set_tile
 	.global get_tile
 	.global get_plyr_data
+	.global illuminate_RGB_LED
 
 ;LIST OF CONSTANTS
 ;================================================================
@@ -465,6 +466,12 @@ INITIAL_Render_game_color_pickup:
 	MOV r1, r6
 	MOV r3, r4
 	BL set_tile
+
+	;Here, we can update what we are picking up for the on board LED
+	MOV r1, #0x5000
+	MOVT r1, #0x4002
+	SUB r0, r7, #101		;this should properly calculate what the new player LED should be
+	BL illuminate_RGB_LED
 
 	;SET player color
 	BL game_Time_Score		;r0- game_time address

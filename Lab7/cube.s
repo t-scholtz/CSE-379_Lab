@@ -37,7 +37,7 @@ block_generation:	.string 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00;UP_1
 					.string 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00;Left_5
 					.string 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00;Right_6
 					.string 0x0 ;This is a finaly NULL incase we wanted it
-					;it will store the number of the color 0-5, 102-107 Green, Yellow, Blue, Pink, Turquoise, White
+					;it will store the number of the color 0-5, 102-107 Green, Yellow, purple, Pink, blue, White
 	.text
 
 ;POINTERS TO DATA
@@ -65,6 +65,7 @@ ptr_to_Rotation_Cube:					.word Rotation_Cube
 ;_______________________________________________________________
 	.global div_and_mod
 	.global get_plyr_data
+	.global illuminate_RGB_LED
 
 ;LIST OF CONSTANTS
 ;================================================================
@@ -211,6 +212,7 @@ BIG_GEN:
 	ADD r1, r1, #102
 	MOV r5, r1			;r5 will now be our player color
 
+
 	;load in tile at tile 5 face 3
 	LDR r1, ptr_to_block_generation
 	ADD r1, r1, #18		;move 2 faces down to face 3
@@ -225,6 +227,13 @@ BIG_GEN:
 	CMP r5, #107		;if greater than 107 adjust number
 	IT GT
 	SUBGT r5, r5, #4
+
+	;Setting the player color with the on-board LED
+	MOV r1, #0x5000
+	MOVT r1, #0x4002
+	SUB r0, r5, #101		;this should properly calculate what the new player LED should be
+	BL illuminate_RGB_LED
+
 
 	BL game_Time_Score		;r0- game_time address
 							;r1- score address

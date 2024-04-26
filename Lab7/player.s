@@ -74,7 +74,7 @@ ptr_to_rot_str:		.word rot_str
 	.global rotation_setup
 	.global Generate
 	.global get_rotated_face
-
+	.global get_tile
 
 ;LIST OF CONSTANTS
 ;================================================================
@@ -320,7 +320,7 @@ MOVE_X:
 	SUB r4,r4,#1
 	MOV r5, #3
 	MUL r3, r4,r5	;multiple y pos by 3
-	ADD r3,r0,r4;Player tile number
+	ADD r3,r0,r3;Player tile number
 	SUB r3,r3,#1
 	MOV r7, r0	;save r0
 	BL get_rotated_face	;r0 have string ptr to rotated tile face
@@ -370,23 +370,35 @@ ROTATE_UP:
 	MOV r1, #0
 	LDR r11, ptr_to_y_pos
 	MOV r9, #3
+	LDR r10,  ptr_to_x_pos	;new x
+	LDRB r10, [r10]
+	MOV r12, #3		;new Y
 	B ROTATE_HANDLER
 ROTATE_RIGHT:
 	;update rotation tracker
 	MOV r1, #3
 	LDR r11, ptr_to_x_pos
 	MOV r9, #1
+	MOV r10,#1		;new x
+	LDR r12, ptr_to_y_pos		;new Y
+	LDRB r12,[r12]
 	B ROTATE_HANDLER
 ROTATE_DOWN:
 	;update rotation tracker
 	MOV r1, #2
 	LDR r11, ptr_to_y_pos
 	MOV r9, #1
+	LDR r10,  ptr_to_x_pos	;new x
+	LDRB r10, [r10]
+	MOV r12, #1		;new Y
 	B ROTATE_HANDLER
 ROTATE_LEFT:
 	MOV r1, #1
 	LDR r11, ptr_to_x_pos
 	MOV r9, #3
+	MOV r10,#3		;new x
+	LDR r12, ptr_to_y_pos		;new Y
+	LDRB r12,[r12]
 	B ROTATE_HANDLER
 ROTATE_HANDLER:
 	;NOTE _ DO NOT TOUCH R11 OR R9 OR SOMEBODY"S GONNA LOOSE FINGERS!
@@ -405,8 +417,40 @@ ROTATE_HANDLER:
 	MOV r7,r0			;new face number
 	MOV r8,r1			;new rotation on the new face
 
+	;TODO
+	;check if move will cuase the player to step on their own colour, if so don't move
+	;get the value of the tile the player will step on
 
+	;convert the new X and Y to tile number relative to new rotated value
+	;r10 - new x r12 - new y
+	MOV r0,#3
+	SUB r12,r12,#1
+	MUL r3, r12,r0	;multiple y pos by 3
+	ADD r3,r3,r10	; add x value to y*3
+
+	MOV r10,r8
+	MOV r0,r3
+	MOV r12,r3
+MOV_LOOP:
+	CMP r10, #0
+	BLE EXIT_MOV_LOOP
+	BL rot_tile
+	SUB r10,r10,#1
+	B MOV_LOOP
+EXIT_MOV_LOOP:
+	;r0 - is now the correct tile number ofr the face
+	MOV r1,r0
+	MOV r0,r7
+	BL get_tile	;r0 - face number - r1 tile number
+
+	LDR r1, ptr_to_tile_held
+	LDRB r1,[r1]	;Players current tile value
+	CMP r0,r1
+	BEQ EXIT_PLYR_MOVE
+
+	;TODO
 	;BL rotation_setup
+	;TODO
 
 	;update players postion, face value, and rotation number at the last second
 	LDR r0, ptr_to_face

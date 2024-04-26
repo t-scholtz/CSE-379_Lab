@@ -3,7 +3,7 @@
 ;PROGRAM DATA
 ;================================================================
 face:		.byte 0x03	;tile the player is currently on
-face_dir:	.byte 0x01	;how many times rotated left (0-3)
+face_dir:	.byte 0x00	;how many times rotated left (0-3)
 tile_held:	.byte 0x65	;the colour of the tile the player is holding
 x_pos:		.byte 0x02	;players x location (1-3)
 y_pos:		.byte 0x02	;players y location (1-3)
@@ -52,8 +52,9 @@ ptr_to_mode2_val:	.word mode2_val
 ptr_to_mode3_str:	.word mode3_str
 ptr_to_mode3_val:	.word mode3_val
 ptr_to_mode4_str:	.word mode4_str
-ptr_to_mode5_val:	.word mode4_val
+ptr_to_mode4_val:	.word mode4_val
 ptr_to_rot_str:		.word rot_str
+
 
 ;LIST OF SUBROUTINES
 ;================================================================
@@ -66,6 +67,9 @@ ptr_to_rot_str:		.word rot_str
 	.global game_reset
 	.global game_Time_Score
 	.global get_pylr_abs
+	.global get_game_mode_val
+	.global rot_tile
+	.global get_pylr_absB
 
 ;IMPORTED SUB_ROUTINES
 ;_______________________________________________________________
@@ -89,18 +93,19 @@ ptr_to_rot_str:		.word rot_str
 ;----------------------------------------------------------------
 get_pylr_abs:
 	PUSH {r4-r11,lr}
-	LDR r4, ptr_to_x_pos
+	LDR r4, ptr_to_y_pos
 	LDRB r4, [r4]
 	SUB r4,r4,#1
+	MOV r5, #3
 	MUL r3, r4,r5	;multiple y pos by 3
-	LDR r4, ptr_to_y_pos
+	LDR r4, ptr_to_x_pos
 	LDRB r4, [r4]
 	ADD r3,r3,r4	; add x value to y*3
 
 	LDR r5, ptr_to_face_dir
 	LDRB r5, [r5]
 ABS_LOOP:
-	CMP r5, #0
+ 	CMP r5, #0
 	BLE EXIT_ABS_LOOP
 	BL rot_tile
 	SUB r5,r5,#1
@@ -108,6 +113,49 @@ ABS_LOOP:
 EXIT_ABS_LOOP:
 	POP {r4-r11,lr}
 	MOV pc, lr
+;================================================================
+
+;CODE
+;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+;----------------------------------------------------------------
+;get pylr absB - rotates player backwards amout
+;	Take no input
+;	Output - r3 - returns a value 1-9 of the player abs position
+;----------------------------------------------------------------
+get_pylr_absB:
+	PUSH {r4-r11,lr}
+	LDR r4, ptr_to_y_pos
+	LDRB r4, [r4]
+	SUB r4,r4,#1
+	MOV r5, #3
+	MUL r3, r4,r5	;multiple y pos by 3
+	LDR r4, ptr_to_x_pos
+	LDRB r4, [r4]
+	ADD r3,r3,r4	; add x value to y*3
+
+	LDR r5, ptr_to_face_dir
+	LDRB r5, [r5]
+	CMP r5, #1
+	BEQ fix1
+	CMP r5 , #3
+	BEQ fix2
+ABS_LOOP2:
+ 	CMP r5, #0
+	BLE EXIT_ABS_LOOP2
+	BL rot_tile
+	SUB r5,r5,#1
+	B ABS_LOOP2
+EXIT_ABS_LOOP2:
+	POP {r4-r11,lr}
+	MOV pc, lr
+
+fix1:
+	MOV r5, #3
+	B ABS_LOOP2
+fix2:
+	MOV r5, #1
+	B ABS_LOOP2
 ;================================================================
 
 ;----------------------------------------------------------------
@@ -119,29 +167,47 @@ EXIT_ABS_LOOP:
 rot_tile:
 	PUSH {r4-r11,lr}
 	CMP r3,#1
+	BEQ rt13
+	CMP r3,#2
+	BEQ rt26
+	CMP r3,#3
+	BEQ rt39
+	CMP r3,#4
+	BEQ rt42
+	CMP r3,#5
+	BEQ EXIT_ROT_TILE
+	CMP r3,#6
+	BEQ rt68
+	CMP r3,#7
+	BEQ rt71
+	CMP r3,#8
+	BEQ rt84
+	CMP r3,#9
+	BEQ rt97
+	B EXIT_ROT_TILE
+
+rt13:
 	MOV r3, #3
 	B EXIT_ROT_TILE
-	CMP r3,#2
-	MOV r3, #5
+rt26:
+	MOV r3, #6
 	B EXIT_ROT_TILE
-	CMP r3,#3
+rt39:
 	MOV r3, #9
 	B EXIT_ROT_TILE
-	CMP r3,#4
+rt42:
 	MOV r3, #2
 	B EXIT_ROT_TILE
-	CMP r3,#5
-	B EXIT_ROT_TILE
-	CMP r3,#6
+rt68:
 	MOV r3, #8
 	B EXIT_ROT_TILE
-	CMP r3,#7
+rt71:
 	MOV r3, #1
 	B EXIT_ROT_TILE
-	CMP r3,#8
+rt84:
 	MOV r3, #4
 	B EXIT_ROT_TILE
-	CMP r3,#9
+rt97:
 	MOV r3, #7
 EXIT_ROT_TILE:
 	POP {r4-r11,lr}
@@ -213,6 +279,39 @@ EXIT_GGMS:
 ;================================================================
 
 ;----------------------------------------------------------------
+;get_game_mode_val - returns the value of the selected game mode
+;	Input - none
+;	Output - r0 - pointer to address of string storing the game mode
+;----------------------------------------------------------------
+get_game_mode_val:
+	PUSH {r4-r11,lr}
+	LDR r0, ptr_to_game_mode
+	LDRB r1, [r0]	;game mode value
+	CMP r1, #1
+	BEQ MODE1V
+	CMP r1, #2
+	BEQ MODE2V
+	CMP r1, #3
+	BEQ MODE3V
+	LDR r0, ptr_to_mode4_val
+	B EXIT_GGMSV
+MODE1V:
+	LDR r0, ptr_to_mode1_val
+	B EXIT_GGMSV
+MODE2V:
+	LDR r0,ptr_to_mode2_val
+	B EXIT_GGMSV
+MODE3V:
+	LDR r0,ptr_to_mode3_val
+EXIT_GGMSV:
+	LDRB r0,[r0]
+	POP {r4-r11,lr}
+	MOV pc, lr
+;================================================================
+
+
+
+;----------------------------------------------------------------
 ;set_game_mode - function description
 ;	Input - r0 - value for game mode - eg, 100, 200, 300, 400, 0
 ;----------------------------------------------------------------
@@ -253,7 +352,7 @@ get_game_data:
 ;	No input
 ;	Output:
 ;			r0 - face (1-6)
-;			r1 - face direction (1-4)
+;			r1 - face direction (0-3)
 ;			r2 - tile being hled byte
 ;			r3 - player postion - num 1-9
 ;----------------------------------------------------------------
@@ -429,6 +528,18 @@ ROTATE_HANDLER:
 	ADD r3,r3,r10	; add x value to y*3
 
 	MOV r10,r8
+	CMP r10,#1
+	BEQ ROTBACK1
+	CMP r10,#3
+	BEQ ROTBACK2
+	B MOVCONT
+ROTBACK1:
+	MOV r10,#3
+		B MOVCONT
+ROTBACK2:
+	MOV r10,#1
+
+MOVCONT:
 	MOV r0,r3
 	MOV r12,r3
 MOV_LOOP:
@@ -438,6 +549,7 @@ MOV_LOOP:
 	SUB r10,r10,#1
 	B MOV_LOOP
 EXIT_MOV_LOOP:
+	MOV r0,r3
 	;r0 - is now the correct tile number ofr the face
 	MOV r1,r0
 	MOV r0,r7
@@ -469,6 +581,7 @@ EXIT_PLYR_MOVE:
 ;					OUTPUT: r0- game_time address
 ;							r1- score address
 ;							r2- player color address
+;
 ;----------------------------------------------------------------
 game_Time_Score:
 	PUSH {r4-r11,lr}

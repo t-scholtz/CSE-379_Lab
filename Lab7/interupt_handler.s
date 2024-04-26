@@ -308,13 +308,13 @@ RENDER_MENU:
 	;Look for user Input
 	BL read_from_push_btns
 	CMP r0, #0x20
-	BGE BUT5:
+	BGE BUT5
 	CMP r0, #0x10
-	BGE BUT4:
+	BGE BUT4
 	CMP r0, #0x8
-	BGE BUT3:
+	BGE BUT3
 	CMP r0, #0x4
-	BGE BUT2:
+	BGE BUT2
 	BEQ RENDER_MENU_EXIT
 	;update game mode
 

@@ -16,13 +16,13 @@ rotation_tracker:	.byte 0x00
 rot_str:	.string 0x01,0x02,0x03,0x02,0
 
 
-mode1_str:	.string "100",0
+mode1_str:	.string "100     ",0
 mode1_val:	.word	0x00000064
-mode2_str:	.string	"200",0
+mode2_str:	.string	"200     ",0
 mode2_val:	.word	0x000000c8
-mode3_str:	.string	"300",0
+mode3_str:	.string	"300     ",0
 mode3_val:	.word	0x0000012c
-mode4_str:	.string	"Unlimated",0
+mode4_str:	.string	"Unlimted",0
 mode4_val:	.word	0x0FFFFFFF
 
 
@@ -61,7 +61,6 @@ ptr_to_rot_str:		.word rot_str
 	.global pick_up
 	.global plyr_mov
 	.global get_game_mode_str
-	.global set_game_mode
 	.global get_plyr_data
 	.global get_game_data
 	.global game_reset
@@ -70,6 +69,7 @@ ptr_to_rot_str:		.word rot_str
 	.global get_game_mode_val
 	.global rot_tile
 	.global get_pylr_absB
+	.global set_game_mode
 
 ;IMPORTED SUB_ROUTINES
 ;_______________________________________________________________
@@ -85,6 +85,7 @@ ptr_to_rot_str:		.word rot_str
 
 ;CODE
 ;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 
 ;----------------------------------------------------------------
 ;get pylr abs - returns the player absolute postion
@@ -315,12 +316,12 @@ EXIT_GGMSV:
 ;set_game_mode - function description
 ;	Input - r0 - value for game mode - eg, 100, 200, 300, 400, 0
 ;----------------------------------------------------------------
-set_game_mode:
-	PUSH {r4-r11,lr}
-	LDR r1, ptr_to_game_mode
-	STR r0, [r1]
-	POP {r4-r12,lr}
-	MOV pc, lr
+;set_game_mode:;
+;	PUSH {r4-r11,lr}
+;	LDR r1, ptr_to_game_mode
+;	STR r0, [r1]
+;	POP {r4-r12,lr}
+;	MOV pc, lr
 ;================================================================
 
 ;----------------------------------------------------------------
@@ -334,10 +335,7 @@ set_game_mode:
 ;----------------------------------------------------------------
 get_game_data:
 	PUSH {r4-r11,lr}
-	LDR r0, ptr_to_game_mode
-	LDRB r0, [r0]
 	BL get_game_mode_str
-
 	LDR r1, ptr_to_game_time
 	LDR r1, [r1]
 	LDR r2, ptr_to_score
@@ -590,6 +588,19 @@ game_Time_Score:
 	LDR r1, ptr_to_score
 	LDR r2, ptr_to_tile_held
 	
+	POP {r4-r11,lr}
+	MOV pc, lr
+;================================================================
+
+;----------------------------------------------------------------
+;set_game_mode - takes in value 1-4 in r0 and updates game timer
+;----------------------------------------------------------------
+set_game_mode:
+	PUSH {r4-r11,lr}
+
+	LDR r1, ptr_to_game_mode
+	STRB r0, [r1]
+
 	POP {r4-r11,lr}
 	MOV pc, lr
 ;================================================================

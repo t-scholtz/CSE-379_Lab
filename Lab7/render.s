@@ -68,7 +68,7 @@ time_loc:			.string			"							   "
 tc:					.string			0x0D,0x0A,"		Max Time: "
 max_loc:			.string 		"						   "
 game_board:			.string			"							               "
-					.string			0x0D,0x0A,"			+-----------------------------+",0x0D,0x0A
+					.string			0x0D,0x0A,0x0D,0x0A,"			+-----------------------------+",0x0D,0x0A
 					.string			"			|         |         |         |",0x0D,0x0A
 					.string			"			|         |         |         |",0x0D,0x0A
 					.string			"			|         |         |         |",0x0D,0x0A

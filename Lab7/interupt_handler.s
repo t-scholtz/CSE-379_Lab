@@ -515,12 +515,12 @@ INITIAL_Render_game_color_pickup:
 	;otherwise it should be greater than
 
 	;resetting the value to 0
-	MOV r2, #0
+ 	MOV r2, #0
 	STRB r2, [r1]
 
 	;Grab the tile and the current player color //TALK TO TIM ABOUT CHANGING LINE 378 FOR THE PLAYER DATA
 	BL get_plyr_data				;r2 will be the player color
-	MOV r4, r2					;r4 player color held, r0 will be the face held, r3 is the tile num
+    MOV r4, r2					;r4 player color held, r0 will be the face held, r3 is the tile num
 	MOV r5, r0						;r5 will be the face held
 	MOV r6, r3						;r6 will be the tile num held
 

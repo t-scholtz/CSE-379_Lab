@@ -1,6 +1,6 @@
 extern void lab7(void);
 
 
-int main(){
+ int main(){
     lab7();
 }

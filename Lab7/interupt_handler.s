@@ -57,6 +57,11 @@ ptr_to_Victory_fail_flag	.word Victory_fail_flag
 	.global print_GameEND_Score
 	.global print_GameEND_Time
 	.global print_GameEND_Choice
+	.global get_game_mode_val
+	.global get_pylr_absB
+	.global portINIT
+	.global Alice_Handler
+	.global read_from_push_btns
 
 
 ;LIST OF CONSTANTS
@@ -198,6 +203,21 @@ reset_game:
 ;================================================================
 
 ;----------------------------------------------------------------
+;Alice_Handler - handles interupt for sw2-5 being pressed
+;----------------------------------------------------------------
+Alice_Handler:
+	PUSH {r0-r11,lr}
+	MOV r0,#3		;load port D
+	BL portINIT
+	MOVT r0, #0x4002
+	LDRB r1, [r0,#GPIOICR]
+	ORR r1,r1,#16
+	STRB r1, [r0,#GPIOICR]
+
+	POP {r0-r11,lr}
+	BX lr
+
+;----------------------------------------------------------------
 ;Switch_Handler - handles interupt for sw1 being pressed
 ;----------------------------------------------------------------
 Switch_Handler:
@@ -284,8 +304,13 @@ RENDER_MENU:
 	LDR r0, ptr_to_Victory_fail_flag
 	MOV r1, #0
 	STRB r1, [r0]
+	;Look for user Input
+	BL read_from_push_btns
+	CMP r0, #0
+	BEQ RENDER_MENU_EXIT
+	;update game mode
 
-
+RENDER_MENU_EXIT:
 	BL print_menu
 	B EXIT_TIMER_HANDLER
 
@@ -313,11 +338,24 @@ RENDER_CONT:
 	MOV r1, #2															;divisor
 	;run div and mod to see if even or ODD
 	BL div_and_mod						;r1 is the remainder  r0 will be the divided value
-	MOV r3, r0							;put the divided value in r3
+	MOV r4, r0							;put the divided value in r4
+
+	;Check for fail state
+	BL get_game_mode_val
+	MOV r5,r0
 
 	BL game_Time_Score				;timer address in r0
 									;Score address in r1
-	STRB r3, [r0]					;Store our new time
+									;game mode in r3
+
+	LDRB r6, [r0]					;load time value
+	CMP r6,r5
+	BGE	RENDER_VICTORY_FAIL			;if equal or greater than cause fail
+
+
+	STRB r4, [r0]					;Store our new time
+
+
 
 	LDR r0, ptr_to_Internal_score	;get the score bit flag
 	LDRB r2, [r0]
@@ -515,17 +553,19 @@ INITIAL_Render_game_color_pickup:
 	;otherwise it should be greater than
 
 	;resetting the value to 0
- 	MOV r2, #0
+	MOV r2, #0
 	STRB r2, [r1]
 
 	;Grab the tile and the current player color //TALK TO TIM ABOUT CHANGING LINE 378 FOR THE PLAYER DATA
 	BL get_plyr_data				;r2 will be the player color
-    MOV r4, r2						;r4 player color held, r0 will be the face held, r3 is the tile num
+	MOV r4, r2					;r4 player color held, r0 will be the face held, r3 is the tile num
 	MOV r5, r0						;r5 will be the face held
+	BL get_pylr_absB
 	MOV r6, r3						;r6 will be the tile num held
 
 	;get the tile color that the player is on
 	MOV r1, r3						;tile num is now also in r1
+	MOV r0,r5
 	BL get_tile						;tile color will be in r0
 	MOV r7, r0						;r7 tile color currently
 

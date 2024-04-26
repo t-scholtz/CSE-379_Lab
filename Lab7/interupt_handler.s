@@ -49,6 +49,7 @@ ptr_to_Internal_score		.word Internal_score
 	.global get_plyr_data
 	.global illuminate_RGB_LED
 
+
 ;LIST OF CONSTANTS
 ;================================================================
 UARTICR:			.equ 0x044  	;Interrupt clear register
@@ -139,8 +140,9 @@ GAME_MODE:
 	B EXIT_UART_HANDLER
 
 PAUSED_MODE:					;it will edit the same constant as when the player normally hit space
-								;we want to do this so we make sure they only effect reset while they are paused
-	BL handle_Space
+	BL read_character				;we want to do this so we make sure they only effect reset while they are paused
+	CMP r0, #0x20
+	BEQ reset_game
 	B EXIT_UART_HANDLER
 
 EXIT_UART_HANDLER:
@@ -177,6 +179,12 @@ handle_Space:;If the player hits space it will set the value to the pick up as 1
 	LDR r1, ptr_to_Color_pickup
 	MOV r2, #1
 	STRB r2, [r1]
+	MOV r0, #2
+	BL change_state
+	B EXIT_UART_HANDLER
+
+reset_game:
+	BL game_reset
 	B EXIT_UART_HANDLER
 ;================================================================
 
@@ -195,11 +203,9 @@ Switch_Handler:
 	;load the state value
 	LDR r0, ptr_to_state
 	LDRB r1, [r0]
-
 	;checks game mode
 	cmp r1, #2
 	BEQ GAME_MODE_switch
-
 	;checks game mode
 	cmp r1, #3
 	BEQ PAUSE_MODE_switch

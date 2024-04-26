@@ -38,6 +38,9 @@ block_generation:	.string 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00;UP_1
 					.string 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00;Right_6
 					.string 0x0 ;This is a finaly NULL incase we wanted it
 					;it will store the number of the color 0-5, 102-107 Green, Yellow, purple, Pink, blue, White
+
+NOP_const:			.byte 0x00
+NOP_2const:			.byte 0x00
 	.text
 
 ;POINTERS TO DATA
@@ -47,6 +50,8 @@ ptr_to_Face_generation:					.word Face_generation
 ptr_to_Color_Used:						.word Color_Used
 ptr_to_block_generation:				.word block_generation
 ptr_to_Rotation_Cube:					.word Rotation_Cube
+ptr_to_NOP_const:						.word NOP_const
+ptr_to_NOP_2const:						.word NOP_2const
 
 
 
@@ -325,6 +330,8 @@ Verify_Finish:
 	LDRB r8, [r3]
 	CMP r8, #9							;if 9 jump to color switch
 	BEQ COLOR_SWITCH
+	ADD r8, r8, #1						;Adds 1 to the 8 so we can see if we are at capacity
+	STRB r8, [r3]						;stores that new value
 	BGT	Verify_Finish
 
 
@@ -334,7 +341,6 @@ Set_Value:
 	STRB r7, [r5], #1
 	;make sure we still need to loop
 	CMP r9, #0x9
-	;ADD r9, r9, #1
 	BLT tile_load_LOOP
 
 tile_load_FINISH						;The entire face we are on should be complete
@@ -362,9 +368,17 @@ COLOR_SWITCH:
 Random_Gen:
 	PUSH {r4-r12,lr}
 
+
+
 	MOV r6,  #0x0050
 	MOVT r6, #0x4003
-	LDRH r0, [r6]	;this is the memory address of the clock value at any point in time     ;divided
+	LDRB r0, [r6]	;this is the memory address of the clock value at any point in time
+	MOV r5,  #0x0048
+	MOVT r5, #0x4003
+	LDRB r1, [r5]	;this is the memory address of the clock value at any point in time     ;divided
+	ORR r0, r0, r1
+	;SUB r0, r0, #1
+
 	MOV r1, #6																				;divisor
 
 	BL div_and_mod		;return a number 0-5 in r1

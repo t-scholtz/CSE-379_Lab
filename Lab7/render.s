@@ -24,7 +24,7 @@ menu_cont:			.string 0x80, 5,18,"Press <space> to start game"
 
 
 
-Victory:			.string 0x82,0x83,0x84,"*********************************",0x0D,0x0A,0x86
+Victory:			.string 0x82,0x83,0x87,"******************************************",0x0D,0x0A
 					.string" __      ___      _                   ",0x0D,0x0A
 					.string" \ \    / (_)    | |                  ",0x0D,0x0A
 					.string"  \ \  / / _  ___| |_ ___  _ __ _   _ ",0x0D,0x0A
@@ -32,18 +32,20 @@ Victory:			.string 0x82,0x83,0x84,"*********************************",0x0D,0x0A,
 					.string"    \  /  | | (__| || (_) | |  | |_| |",0x0D,0x0A
 					.string"     \/   |_|\___|\__\___/|_|   \__, |",0x0D,0x0A
 					.string"                                 __/ |",0x0D,0x0A
-					.string"                                |___/ ",0x0D,0x0A,0x89
-					.string"*********************************",0x0D,0x0A,0x86,0
+					.string"                                |___/ ",0x0D,0x0A
+					.string"******************************************",0x0D,0x0A
+					.string 0x0D,0x0A,0x0D,0x0A,0x82,"	Press <spcae> to reset the game",0x0D,0x0A,0
 
-Fail:				.string  0x82,0x83,0x84,"*********************************",0x0D,0x0A,0x86
+Fail:				.string 0x82,0x83,0x86,"*********************************",0x0D,0x0A
 					.string"  ______    _ _ ",0x0D,0x0A
 					.string" |  ____|  (_) |",0x0D,0x0A
 					.string" | |__ __ _ _| |",0x0D,0x0A
 					.string" |  __/ _` | | |",0x0D,0x0A
 					.string" | | | (_| | | |",0x0D,0x0A
 					.string" |_|  \__,_|_|_|",0x0D,0x0A
-					.string" WOMP WOMP WOMP ",0x0D,0x0A,0x89
-					.string"*********************************",0x0D,0x0A,0x86,0
+					.string 0x8A," WOMP WOMP WOMP ",0x0D,0x0A,0x86
+					.string"*********************************",0x0D,0x0A
+					.string 0x0D,0x0A,0x0D,0x0A,0x82,"	Press <spcae> to reset the game",0x0D,0x0A,0
 
 Game_ENDING_score:	.string 0x80, 5,14,"FINAL SCORE: ", 0
 Game_ENDING_time:	.string 0x80, 5,16,"TIME TAKEN : ", 0
@@ -225,6 +227,7 @@ ptr_to_trans_C_string:		.word trans_C_string
 	.global div_and_mod
 	.global get_game_data
 	.global get_face
+	.global  game_Time_Score
 
 
 
@@ -550,6 +553,14 @@ print_GameEND_Score:
 	LDR r0, ptr_to_Game_ENDING_score		;loads in the VICTORY ACSII COMBO
 	BL ansi_print							;prints the ASCII COMBO
 
+	BL game_Time_Score ;r0 - game time r1 - score value
+
+	LDR r0, ptr_to_temp
+	LDR r1, [r1]
+	BL int2string
+	LDR r0, ptr_to_temp
+	BL ansi_print
+
 	POP {r4-r12,lr}
 	MOV pc, lr
 ;================================================================
@@ -561,6 +572,14 @@ print_GameEND_Time:
 
 	LDR r0, ptr_to_Game_ENDING_time		;loads in the VICTORY ACSII COMBO
 	BL ansi_print						;prints the ASCII COMBO
+
+	BL game_Time_Score ;r0 - game time r1 - score value
+	LDR r1, [r0]
+	LDR r0, ptr_to_temp
+
+	BL int2string
+	LDR r0, ptr_to_temp
+	BL ansi_print
 
 	POP {r4-r12,lr}
 	MOV pc, lr

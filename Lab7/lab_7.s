@@ -44,9 +44,6 @@ lab7:
 	;run all connection code
 	bl init_all
 
-	BL hacks
-
-
 LOOP:
 	MOV r0, #0x48
 	MOVT r0, #0x4003

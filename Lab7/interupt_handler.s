@@ -470,16 +470,16 @@ RENDER_VICTORY_FAIL:
 	LDRB r2, [r0]					;gets to see if we are failing or VICTORY we will use this to print_Victory
 
 	CMP r1, #0
-	B RENDER_GAME_FINISH_1			;just prints Victory
+	BEQ RENDER_GAME_FINISH_1			;just prints Victory
 
 	CMP r1, #1
-	B RENDER_GAME_FINISH_2			;this will print victory with score
+	BEQ RENDER_GAME_FINISH_2			;this will print victory with score
 
 	CMP r1, #2
-	B RENDER_GAME_FINISH_3			;this will print victory with score and time
+	BEQ RENDER_GAME_FINISH_3			;this will print victory with score and time
 
 	CMP r1, #3
-	B RENDER_GAME_FINISH_4			;this will print victory with everything else
+	BGE RENDER_GAME_FINISH_4			;this will print victory with everything else
 
 RENDER_GAME_FINISH_1:
 	BL print_Victory
@@ -504,7 +504,6 @@ RENDER_GAME_FINISH_4:
 	BL print_Victory
 	BL print_GameEND_Score
 	BL print_GameEND_Time
-	BL print_GameEND_Choice
 	BL Dancing_LIGHTS
 	B EXIT_TIMER_HANDLER
 

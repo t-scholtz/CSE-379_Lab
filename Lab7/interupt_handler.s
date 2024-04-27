@@ -8,8 +8,8 @@ state:					.byte 0x00 ;State machine: 0 - startup ; 1 - menu ; 2 - game ; 3 - pa
 To_BE_dir:				.byte 0x00 ;this will be 1-UP, 2-Down, 3-left, 4-right
 Color_pickup:			.byte 0x00 ; this will be 0-don't pick up, 1- pick up
 
-Internal_timer:			.byte 0x00 ;this timer will need to be reset at the beggining of every game
-Internal_score:			.byte 0x00 ;This is simply a flag to see if someting was pressed so that the update to the score will occur
+Internal_timer:			.word 0x00000000 ;this timer will need to be reset at the beggining of every game
+Internal_score:			.word 0x00000000 ;This is simply a flag to see if someting was pressed so that the update to the score will occur
 
 Victory_fail_LOOP		.byte 0x00 ;A way to slowly build up the final screen to look cool
 Victory_fail_flag		.byte 0x00 ;this is how we will know if we print Fail or Vicotry
@@ -63,8 +63,11 @@ ptr_to_Victory_fail_flag	.word Victory_fail_flag
 	.global Alice_Handler
 	.global read_from_push_btns
 	.global set_game_mode
+	.global Reset_timer
+
 	.global get_pylr_absB
 	.global get_game_mode_val
+
 
 
 ;LIST OF CONSTANTS
@@ -98,6 +101,10 @@ UART0_Handler:
 	;loading in the pointer to the state  State machine: 0 - startup ; 1 - menu ; 2 - game ; 3 - pause ; 4 - vicotry/defeat
 	LDR r0, ptr_to_state
 	LDRB r1, [r0]				;load the state value
+
+	;start up
+	cmp r1, #0
+	BEQ START_UP_MODE
 	;check menu
 	cmp r1, #1
 	BEQ MENU_MODE
@@ -108,6 +115,24 @@ UART0_Handler:
 	cmp r1, #3
 	BEQ PAUSED_MODE
 	;if we are in startup, or in victory/defeat
+	cmp r1, #4
+	BEQ VIC_DEF
+
+	B EXIT_UART_HANDLER
+
+VIC_DEF:
+	BL read_character
+	CMP r0, #32
+	BNE BABYSKIP
+	MOV r0,#2
+	BL change_state
+BABYSKIP:
+	B EXIT_UART_HANDLER
+
+
+
+START_UP_MODE:
+	BL read_character
 	B EXIT_UART_HANDLER
 
 MENU_MODE:
@@ -202,6 +227,9 @@ handle_Space:;If the player hits space it will set the value to the pick up as 1
 
 reset_game:
 	BL game_reset
+	;chaged game state
+	MOV r0,#2
+	BL change_state
 	B EXIT_UART_HANDLER
 ;================================================================
 
@@ -262,6 +290,17 @@ EXIT_SWITCH_HANDLER:
 ;----------------------------------------------------------------
 ;Timer_Handler
 ;----------------------------------------------------------------
+Reset_timer:  ;State machine: 0 - startup ; 1 - menu ; 2 - game ; 3 - pause ; 4 - vicotry/defeat; 5- Animation/idle
+	PUSH {r4-r11,lr}
+	LDR r0, ptr_to_Internal_timer
+	MOV r1, #0
+	STR r1, [r0]
+	POP {r4-r11,lr}
+	MOV pc, lr
+
+;----------------------------------------------------------------
+;Timer_Handler
+;----------------------------------------------------------------
 Timer_Handler:  ;State machine: 0 - startup ; 1 - menu ; 2 - game ; 3 - pause ; 4 - vicotry/defeat; 5- Animation/idle
 	PUSH {r0-r11,lr}
 	;Clear interupt
@@ -270,9 +309,6 @@ Timer_Handler:  ;State machine: 0 - startup ; 1 - menu ; 2 - game ; 3 - pause ; 
 	LDRB r6, [r4, #GPTMICR]
 	ORR r6,r6, #0x01
 	STRB r6, [r4, #GPTMICR]
-
-	;Disable timer for testing purposes - delete later
-	;B EXIT_TIMER_HANDLER
 
 	LDR r0, ptr_to_state
 	LDRB r0, [r0]		;load the state value
@@ -300,22 +336,21 @@ RENDER_STARTUP:
 	B EXIT_TIMER_HANDLER
 
 RENDER_MENU:
-	;Resetting my internal timer to make sure it can be reused
-	LDR r0, ptr_to_Internal_timer
-	MOV r1, #0
-	STRB r1, [r0]
+
 	LDR r0, ptr_to_Victory_fail_flag
 	MOV r1, #0
 	STRB r1, [r0]
 	;Look for user Input
 	BL read_from_push_btns
-	CMP r0, #0x20
-	BGE BUT5
-	CMP r0, #0x10
-	BGE BUT4
+
 	CMP r0, #0x8
-	BGE BUT3
+	BGE BUT5
 	CMP r0, #0x4
+	BGE BUT4
+	CMP r0, #02
+	BGE BUT3
+	CMP r0, #0x1
+
 	BGE BUT2
 	BEQ RENDER_MENU_EXIT
 	;update game mode
@@ -342,9 +377,9 @@ RENDER_GAME:
 RENDER_CONT:
 	;UPDATE the timer value
 	LDR r1, ptr_to_Internal_timer		;grab the internal timer address
-	LDRB r0, [r1]						;r1 grabs the timer value  		;divided
+	LDR r0, [r1]						;r1 grabs the timer value  		;divided
 	ADD r0, r0, #1
-	STRB r0, [r1]						;storing the old value back before we mess with it
+	STR r0, [r1]						;storing the old value back before we mess with it
 	MOV r1, #2															;divisor
 	;run div and mod to see if even or ODD
 	BL div_and_mod						;r1 is the remainder  r0 will be the divided value
@@ -484,21 +519,22 @@ MOVE_RIGHT:
 	B RENDER_CONT
 
 BUT5:	;game 100
-	MOV r0, #1
-	BL set_game_mode
-	B RENDER_MENU_EXIT
-BUT4:	;game 200
-	MOV r0, #2
-	BL set_game_mode
-	B RENDER_MENU_EXIT
-BUT3:	;game 300
-	MOV r0, #3
-	BL set_game_mode
-	B RENDER_MENU_EXIT
-BUT2:	;game unlime
 	MOV r0, #4
 	BL set_game_mode
 	B RENDER_MENU_EXIT
+BUT4:	;game 200
+	MOV r0, #3
+	BL set_game_mode
+	B RENDER_MENU_EXIT
+BUT3:	;game 300
+	MOV r0, #2
+	BL set_game_mode
+	B RENDER_MENU_EXIT
+BUT2:	;game unlime
+	MOV r0, #1
+	BL set_game_mode
+	B RENDER_MENU_EXIT
+
 ;================================================================
 
 

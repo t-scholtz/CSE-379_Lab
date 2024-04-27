@@ -87,10 +87,7 @@ read_from_push_btns:
 	MOV r0,#3
 	BL portINIT
 	LDRB r0, [r1,#GPIODATA]
-	;AND r0, #0x3C 		;convert it so 1 is off and 0 is on
-	;EOR r0,r0, #0x3C
-	;LSR r0,r0,#2
-	;TODO flip bits around right now 5,4,3,2  - need 2,3,4,5
+
 	POP {r4-r12,lr}
 	MOV pc, lr
 ;================================================================
@@ -234,7 +231,7 @@ gpio_btn_and_LED_init:
 	MOV r1, #0x7000		;port d memory address
 	MOVT r1 , #0x4000
 	MOV r2, #0x00		;Pin 2-5 will be read - set 0
-	MOV r3, #0x3C		;Pin 2-5 set active
+	MOV r3, #0x0F	;Pin 2-5 set active
 	BL gpio_setup
 	;SET LEDS ON ALICE - port B Pins 0-3
 	MOV r0, #2			;port b

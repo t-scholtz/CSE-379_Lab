@@ -387,7 +387,7 @@ RENDER_CONT:
 
 	;Check for fail state
 	BL get_game_mode_val
-	MOV r5,r0
+	MOV r5, r0
 
 	BL game_Time_Score				;timer address in r0
 									;Score address in r1

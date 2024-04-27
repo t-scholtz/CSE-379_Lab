@@ -309,7 +309,7 @@ MODE2V:
 MODE3V:
 	LDR r0,ptr_to_mode3_val
 EXIT_GGMSV:
-	LDRB r0,[r0]
+	LDR r0,[r0]
 	POP {r4-r11,lr}
 	MOV pc, lr
 ;================================================================

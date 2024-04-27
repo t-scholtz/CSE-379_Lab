@@ -529,6 +529,7 @@ print_Victory:
 	LDR r0, ptr_to_Victory			;loads in the VICTORY ACSII COMBO
 	BL ansi_print					;prints the ASCII COMBO
 
+print_vic_exit:
 	POP {r4-r12,lr}
 	MOV pc, lr
 ;================================================================
@@ -536,13 +537,10 @@ print_Victory:
 ;print_Fail - prints Fail stats and menu
 ;----------------------------------------------------------------
 print_Fail:
-	PUSH {r4-r12,lr}
-
 	LDR r0, ptr_to_Fail		;loads in the VICTORY ACSII COMBO
 	BL ansi_print					;prints the ASCII COMBO
+	B print_vic_exit
 
-	POP {r4-r12,lr}
-	MOV pc, lr
 ;================================================================
 ;----------------------------------------------------------------
 ;print_GameEND_Score - prints victory stats and menu

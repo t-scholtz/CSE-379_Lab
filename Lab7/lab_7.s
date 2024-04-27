@@ -50,7 +50,6 @@ LOOP:
 	LDR r1,[r0]
 	B LOOP
 
-
 	;Exit routine
 END_PROGRAM:
 	POP {r4-r12,lr}

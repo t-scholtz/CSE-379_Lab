@@ -88,7 +88,7 @@ GPTMICR:			.equ 0x024		;Interrupt Servicing in the Handler
 hacks:
 	PUSH {r0-r11,lr}
 
-	MOV r1,#1
+	MOV r1,#0
 	LDR r0, ptr_to_Victory_fail_flag
 	STRB r1,[r0]
 

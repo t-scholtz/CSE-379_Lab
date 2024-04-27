@@ -9,7 +9,7 @@
 	.global read_string
 	.global output_string
 	.global illuminate_RGB_LED
-	.global illuminate_LEDs
+	.global illuminate_LEDs2
 	.global read_tiva_push_button
 	.global div_and_mod
 	.global int2string
@@ -819,5 +819,25 @@ illuminate_LEDs:
 	POP {r4-r12,lr}
 	MOV pc, lr
 ;================================================================
+
+;----------------------------------------------------------------
+;illuminate_LEDs2:	-illuminates the sister board LEDs
+;			input   -half a byte in r0 describing what LEDs to light up
+;			output	-LED light
+;----------------------------------------------------------------
+illuminate_LEDs2:
+	PUSH {r4-r12,lr}
+	MOV r4, r0			;keep safe this is the half byte
+	MOV r0, #1			;port B
+	BL portINIT			;B address in reg R1
+	LDRB r0, [r1, #GPIODATA]
+	EOR r4,r4,r0
+	;Store LED data
+	STRB r4, [r1, #GPIODATA] ;stores the data to the same place
+
+	POP {r4-r12,lr}
+	MOV pc, lr
+;================================================================
+
 
 ;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

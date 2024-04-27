@@ -26,6 +26,7 @@
 	.global print_face
 	.global print_plyr
 	.global div_and_mod
+	.global hacks
 
 ;LIST OF CONSTANTS
 ;================================================================
@@ -42,6 +43,9 @@ lab7:
 	PUSH {r4-r12,lr}
 	;run all connection code
 	bl init_all
+
+	BL hacks
+
 
 LOOP:
 	MOV r0, #0x48

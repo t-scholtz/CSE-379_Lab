@@ -47,6 +47,7 @@ ptr_to_Victory_fail_flag	.word Victory_fail_flag
 	.global CUBE_process
 	.global game_reset
 	.global illuminate_LEDs
+	.global illuminate_LEDs2
 	.global div_and_mod
 	.global game_Time_Score
 	.global set_tile
@@ -67,6 +68,7 @@ ptr_to_Victory_fail_flag	.word Victory_fail_flag
 
 	.global get_pylr_absB
 	.global get_game_mode_val
+	.global hacks
 
 
 
@@ -78,6 +80,24 @@ GPTMICR:			.equ 0x024		;Interrupt Servicing in the Handler
 
 ;CODE
 ;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+;----------------------------------------------------------------
+;hacks
+;----------------------------------------------------------------
+hacks:
+	PUSH {r0-r11,lr}
+
+	MOV r1,#1
+	LDR r0, ptr_to_Victory_fail_flag
+	STRB r1,[r0]
+
+	MOV r0 ,#4
+	BL change_state
+	POP {r4-r11,lr}
+	MOV pc, lr
+;----------------------------------------------------------------
+
 
 ;----------------------------------------------------------------
 ;change_state - updates state value to value in r0
@@ -124,7 +144,7 @@ VIC_DEF:
 	BL read_character
 	CMP r0, #32
 	BNE BABYSKIP
-	MOV r0,#2
+	MOV r0,#1
 	BL change_state
 BABYSKIP:
 	B EXIT_UART_HANDLER
@@ -444,6 +464,8 @@ RENDER_GAME_LIGHT_CHECKS:
 RENDER_VICTORY_FAIL:
 	LDR r0, ptr_to_Victory_fail_LOOP
 	LDRB r1, [r0]					;gets the state of the victory and fail loop
+	ADD r2,r1,#1
+	STRB r2,[r0]
 	LDR r0, ptr_to_Victory_fail_flag
 	LDRB r2, [r0]					;gets to see if we are failing or VICTORY we will use this to print_Victory
 
@@ -461,20 +483,20 @@ RENDER_VICTORY_FAIL:
 
 RENDER_GAME_FINISH_1:
 	BL print_Victory
-	BL illuminate_LEDs
+	BL Dancing_LIGHTS
 	B EXIT_TIMER_HANDLER
 
 RENDER_GAME_FINISH_2:
 	BL print_Victory
 	BL print_GameEND_Score
-	BL illuminate_LEDs
+	BL Dancing_LIGHTS
 	B EXIT_TIMER_HANDLER
 
 RENDER_GAME_FINISH_3:
 	BL print_Victory
 	BL print_GameEND_Score
 	BL print_GameEND_Time
-	BL illuminate_LEDs
+	BL Dancing_LIGHTS
 	B EXIT_TIMER_HANDLER
 
 RENDER_GAME_FINISH_4:
@@ -483,7 +505,7 @@ RENDER_GAME_FINISH_4:
 	BL print_GameEND_Score
 	BL print_GameEND_Time
 	BL print_GameEND_Choice
-	BL illuminate_LEDs
+	BL Dancing_LIGHTS
 	B EXIT_TIMER_HANDLER
 
 RENDER_PAUSE:
@@ -491,7 +513,7 @@ RENDER_PAUSE:
 	B EXIT_TIMER_HANDLER
 
 RENDER_GAME_FINISH:
-	BL illuminate_LEDs
+	BL illuminate_LEDs2
 	B EXIT_TIMER_HANDLER
 
 RENDER_ANIM:
@@ -568,6 +590,8 @@ Render_game_light_checks:
 
 	;checks if 4 faces are finished
 	CMP r4, #4
+	BEQ RENDER_GAME_4
+	CMP r4, #0
 	BEQ RENDER_GAME_4
 
 	;check if we need to do light finish animation

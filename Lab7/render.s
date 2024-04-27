@@ -16,7 +16,11 @@ menu:				.string 0x82,0x83,0x84,"*********************************",0x0D,0x0A,0x
 					.string "| |__| |_| | |_) |  __/ ",0x0D,0x0A
 					.string " \____\__,_|_.__/ \___| ",0x0D,0x0A,0x82, "*********************************"
 					.string 0x80, 5,14,"Lab 7 - Tim and Tom",0x80, 5,16,"Game time selected:",0
-menu_cont:			.string 0x80, 5,18,"Press <space> to start game",0
+menu_cont:			.string 0x80, 5,18,"Press <space> to start game"
+					.string 0x80, 5,20,0x87,"Intructions:"
+					.string 0x80, 5,21,"*Use WASD to move around the board"
+					.string 0x80, 5,22,"*Use <space-bar> to pick up tiles"
+					.string 0x80, 5,23,"*Use sw1 to pause the game",0
 
 
 
@@ -29,7 +33,7 @@ Victory:			.string 0x82,0x83,0x84,"*********************************",0x0D,0x0A,
 					.string"     \/   |_|\___|\__\___/|_|   \__, |",0x0D,0x0A
 					.string"                                 __/ |",0x0D,0x0A
 					.string"                                |___/ ",0x0D,0x0A,0x89
-					.string"*********************************",0x0D,0x0A,0x86
+					.string"*********************************",0x0D,0x0A,0x86,0
 
 Fail:				.string  0x82,0x83,0x84,"*********************************",0x0D,0x0A,0x86
 					.string"  ______    _ _ ",0x0D,0x0A
@@ -39,7 +43,7 @@ Fail:				.string  0x82,0x83,0x84,"*********************************",0x0D,0x0A,0
 					.string" | | | (_| | | |",0x0D,0x0A
 					.string" |_|  \__,_|_|_|",0x0D,0x0A
 					.string" WOMP WOMP WOMP ",0x0D,0x0A,0x89
-					.string"*********************************",0x0D,0x0A,0x86
+					.string"*********************************",0x0D,0x0A,0x86,0
 
 Game_ENDING_score:	.string 0x80, 5,14,"FINAL SCORE: ", 0
 Game_ENDING_time:	.string 0x80, 5,16,"TIME TAKEN : ", 0
@@ -69,7 +73,7 @@ lc:					.string			0x0D,0x0A,"		Time: ",0
 time_loc:			.string			"							   "
 tc:					.string			0x0D,0x0A,"		Max Time: "
 max_loc:			.string 		"						   "
-game_board:			.string			"							               "
+game_board:			.string			"						"
 					.string			0x0D,0x0A,0x0D,0x0A,"			+-----------------------------+",0x0D,0x0A
 					.string			"			|         |         |         |",0x0D,0x0A
 					.string			"			|         |         |         |",0x0D,0x0A
@@ -85,7 +89,7 @@ game_board:			.string			"							               "
 					.string			"			+-----------------------------+",0x0D,0x0A,0x0D,0x0A,0
 
 logo:				.string 0x82,0x83,0x80,5,10,0x8B," ______    ____   ______   ",0x80,5,11,"/\__  _\ /|  _ \ /\__  _\  ",0x80,5,12,"\/_/\ \/ |/\   | \/_/\ \/  ",0x80,5,13,"   \ \ \  \// __`\/\\ \ \  ",0x80,5,14,"    \ \ \ /|  \L>  <_\ \ \ "
-					.string 0x80,5,15,"     \ \_\| \_____/\/ \ \_\ ",0x80,5,16,"      \/_/ \/____/\/   \/_/",0x80,10,17,0x82,"Lab Games",0
+					.string 0x80,5,15,"     \ \_\| \_____/\/ \ \_\ ",0x80,5,16,"      \/_/ \/____/\/   \/_/",0x80,14,17,0x82,"Lab Games",0
 
 square:				.string 0x84,"       ", 27, "[1B",27, "[7D       ",27, "[1B",27, "[7D       ", 0
 

@@ -72,7 +72,7 @@ score_loc:			.string			"							   ",0
 lc:					.string			0x0D,0x0A,"		Time: ",0
 time_loc:			.string			"							   "
 tc:					.string			0x0D,0x0A,"		Max Time: "
-max_loc:			.string 		"						   "
+max_loc:			.string 		"		"
 game_board:			.string			"						"
 					.string			0x0D,0x0A,0x0D,0x0A,"			+-----------------------------+",0x0D,0x0A
 					.string			"			|         |         |         |",0x0D,0x0A

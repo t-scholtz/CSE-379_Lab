@@ -233,8 +233,11 @@ game_reset:
 	MOV r1, #0
 	STRB r1, [r0]	;set rotation to 0
 	LDR r0, ptr_to_game_time
-	MOV r1, #2
+	MOV r1, #0
 	STRB r1, [r0]	;Set game time to 0
+	LDR r0, ptr_to_score
+	MOV r1, #0
+	STRB r1, [r0]
 	LDR r0, ptr_to_x_pos
 	MOV r1, #2
 	STRB r1, [r0]	;Set x to 2 mid tile

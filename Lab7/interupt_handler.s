@@ -295,6 +295,9 @@ Reset_timer:  ;State machine: 0 - startup ; 1 - menu ; 2 - game ; 3 - pause ; 4 
 	LDR r0, ptr_to_Internal_timer
 	MOV r1, #0
 	STR r1, [r0]
+	LDR r0, ptr_to_Internal_score
+	MOV r1, #0
+	STR r1, [r0]
 	POP {r4-r11,lr}
 	MOV pc, lr
 

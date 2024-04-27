@@ -7,7 +7,7 @@ face_dir:	.byte 0x00	;how many times rotated left (0-3)
 tile_held:	.byte 0x65	;the colour of the tile the player is holding
 x_pos:		.byte 0x02	;players x location (1-3)
 y_pos:		.byte 0x02	;players y location (1-3)
-game_mode:	.byte 0x01 ;Number between 1-4 (1-100| 2-200|3- 300| 4-400
+game_mode:	.byte 0x02 ;Number between 1-4 (1-100| 2-200|3- 300| 4-400
 game_time:	.word 0x00000000
 score:		.word 0x00000000
 
@@ -233,7 +233,7 @@ game_reset:
 	MOV r1, #0
 	STRB r1, [r0]	;set rotation to 0
 	LDR r0, ptr_to_game_time
-	MOV r1, #0
+	MOV r1, #2
 	STRB r1, [r0]	;Set game time to 0
 	LDR r0, ptr_to_x_pos
 	MOV r1, #2

@@ -18,6 +18,8 @@ menu:				.string 0x82,0x83,0x84,"*********************************",0x0D,0x0A,0x
 					.string 0x80, 5,14,"Lab 7 - Tim and Tom",0x80, 5,16,"Game time selected:",0
 menu_cont:			.string 0x80, 5,18,"Press <space> to start game",0
 
+
+
 Victory:			.string 0x82,0x83,0x84,"*********************************",0x0D,0x0A,0x86
 					.string" __      ___      _                   ",0x0D,0x0A
 					.string" \ \    / (_)    | |                  ",0x0D,0x0A

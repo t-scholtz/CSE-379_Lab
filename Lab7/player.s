@@ -56,6 +56,7 @@ ptr_to_mode4_val:	.word mode4_val
 ptr_to_rot_str:		.word rot_str
 
 
+
 ;LIST OF SUBROUTINES
 ;================================================================
 	.global pick_up
@@ -79,6 +80,7 @@ ptr_to_rot_str:		.word rot_str
 	.global Generate
 	.global get_rotated_face
 	.global get_tile
+	.global Reset_timer
 
 ;LIST OF CONSTANTS
 ;================================================================
@@ -243,6 +245,8 @@ game_reset:
 	;generate a new game boards - get Thomas to add here
 	BL Generate
 	;make sure that player tile value gets updated
+
+	BL Reset_timer
 
 	POP {r4-r11,lr}
 	MOV pc, lr

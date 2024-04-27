@@ -348,8 +348,8 @@ Verify_Finish:
 
 Set_Value:
 	;convert the color into a number for you to correctly store!!!!
-	ADD r7, r7, #102
-	STRB r7, [r5], #1
+	ADD r1, r1, #102
+	STRB r1, [r5], #1
 	;make sure we still need to loop
 	CMP r9, #0x9
 	;ADD r9, r9, #1

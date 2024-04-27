@@ -25,8 +25,13 @@ Rotation_Cube:			  ;up, left, down, right
 Face_generation:	.string 0x09,0x09,0x09,0x09,0x09,0x09	;This will help us realize if we are using a used face yet
 															;how many tiles are left on each face
 
+SPACE3:				.word 0x0
+SPACE4:				.word 0x0
+
 						   ;Green, Yellow, Blue, Pink, Turquoise, White, we allow this until they have a value of 9
 Color_Used:			.string 0x0,   0x0,    0x0,  0x0,  0x0,       0x0
+SPACE1:				.word 0x0
+SPACE2:				.word 0x0
 
 
 		  				    ;1   ,2   ,3   ,4   ,5   ,6   ,7   ,8   ,9
@@ -249,7 +254,7 @@ BIG_GEN:
 							;r2- player color address
 	STRB r5, [r2]			;changed the player color as needed
 
-
+	LDR r1, ptr_to_Color_Used
 
 	POP {r4-r12,lr}
 	MOV pc, lr
@@ -336,6 +341,8 @@ Verify_Finish:
 	BEQ COLOR_SWITCH
 	ADD r8, r8, #1						;Adds 1 to the 8 so we can see if we are at capacity
 	STRB r8, [r3]						;stores that new value
+
+	CMP r8, #9
 	BGT	Verify_Finish
 
 

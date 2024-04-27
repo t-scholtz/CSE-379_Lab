@@ -429,6 +429,11 @@ RENDER_GAME_STATE_POSSIBLE_CHANGE:
 	LDRGE r1, ptr_to_state			;loads the states
 	MOVGE r2, #4
 	STRBGE r2, [r1]					;stored 4 back in to change the state
+	CMP r4, #5
+	ITTT GE
+	LDRGE r1, ptr_to_Victory_fail_flag
+	MOVGE r2, #1
+	STRGE r2, [r1]
 
 RENDER_GAME_LIGHT_CHECKS:
 	BL Render_game_light_checks
